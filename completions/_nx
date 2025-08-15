@@ -1,0 +1,527 @@
+#compdef nx
+# Zsh completion for nx - High-performance CLI notes application
+# Add to your fpath and run: compinit
+
+_nx() {
+    local context state state_descr line
+    typeset -A opt_args
+
+    # Global options available to all commands
+    local global_opts=(
+        '(--help -h)'{--help,-h}'[Show help]'
+        '--version[Show version information]'
+        '--help-all[Show all help]'
+        '--json[Output in JSON format]'
+        '(--verbose -v)'{--verbose,-v}'[Verbose output]'
+        '(--quiet -q)'{--quiet,-q}'[Quiet output]'
+        '--config[Path to config file]:config file:_files'
+        '--notes-dir[Override notes directory]:directory:_directories'
+        '--no-color[Disable colored output]'
+    )
+
+    _arguments -C \
+        $global_opts \
+        '1: :_nx_commands' \
+        '*:: :->args' \
+        && return 0
+
+    case $state in
+        args)
+            case $words[1] in
+                new)
+                    _arguments \
+                        $global_opts \
+                        '--tags[Tags (comma-separated)]:tags:_nx_tags_list' \
+                        '(--nb --notebook)'{--nb,--notebook}'[Notebook]:notebook:_nx_notebooks' \
+                        '--template[Template name]:template:_nx_templates' \
+                        '--from[Create from template]:template:_nx_templates' \
+                        '--editor[Override editor]:editor:_command_names' \
+                        '--ai-title[Generate title with AI]' \
+                        '--ai-tags[Generate tags with AI]' \
+                        '*:title:' \
+                        && return 0
+                    ;;
+                edit|view|rm)
+                    _arguments \
+                        $global_opts \
+                        '*:note:_nx_note_ids' \
+                        && return 0
+                    ;;
+                mv)
+                    _arguments \
+                        $global_opts \
+                        '(--nb --notebook)'{--nb,--notebook}'[Target notebook]:notebook:_nx_notebooks' \
+                        '*:note:_nx_note_ids' \
+                        && return 0
+                    ;;
+                ls)
+                    _arguments \
+                        $global_opts \
+                        '--tag[Filter by tag]:tag:_nx_tags' \
+                        '(--nb --notebook)'{--nb,--notebook}'[Filter by notebook]:notebook:_nx_notebooks' \
+                        '--since[Notes since date]:date:_nx_dates' \
+                        '--until[Notes until date]:date:_nx_dates' \
+                        '--limit[Maximum results]:number:' \
+                        '--sort[Sort order]:sort:(modified created title)' \
+                        && return 0
+                    ;;
+                grep)
+                    _arguments \
+                        $global_opts \
+                        '--regex[Use regex matching]' \
+                        '--content[Search content only]' \
+                        '--case-sensitive[Case sensitive search]' \
+                        '--limit[Maximum results]:number:' \
+                        '*:query:' \
+                        && return 0
+                    ;;
+                open)
+                    _arguments \
+                        $global_opts \
+                        '*:title:_nx_note_titles' \
+                        && return 0
+                    ;;
+                backlinks)
+                    _arguments \
+                        $global_opts \
+                        '*:note:_nx_note_ids' \
+                        && return 0
+                    ;;
+                tags)
+                    _arguments \
+                        $global_opts \
+                        && return 0
+                    ;;
+                export)
+                    _arguments \
+                        $global_opts \
+                        '--to[Output directory]:directory:_directories' \
+                        '--since[Export notes since date]:date:_nx_dates' \
+                        '--until[Export notes until date]:date:_nx_dates' \
+                        '--tag[Filter by tag]:tag:_nx_tags' \
+                        '--notebook[Filter by notebook]:notebook:_nx_notebooks' \
+                        '1:format:(md json pdf html)' \
+                        && return 0
+                    ;;
+                ask)
+                    _arguments \
+                        $global_opts \
+                        '--max-tokens[Maximum response tokens]:number:' \
+                        '--temperature[Response creativity]:temperature:' \
+                        '*:question:' \
+                        && return 0
+                    ;;
+                summarize|tag-suggest|title|rewrite|tasks|suggest-links)
+                    local cmd_opts=()
+                    case $words[1] in
+                        summarize)
+                            cmd_opts+=(
+                                '--style[Summary style]:style:(bullets paragraphs outline)'
+                                '--max-length[Maximum length]:number:'
+                            )
+                            ;;
+                        tag-suggest)
+                            cmd_opts+=(
+                                '--max-tags[Maximum tags]:number:'
+                            )
+                            ;;
+                        title)
+                            cmd_opts+=(
+                                '--style[Title style]:style:(descriptive creative formal)'
+                            )
+                            ;;
+                        rewrite)
+                            cmd_opts+=(
+                                '--tone[Writing tone]:tone:(formal casual professional academic)'
+                                '--style[Writing style]:style:(concise detailed creative)'
+                            )
+                            ;;
+                        tasks)
+                            cmd_opts+=(
+                                '--priority[Filter by priority]:priority:(high medium low)'
+                                '--format[Output format]:format:(markdown json)'
+                            )
+                            ;;
+                        suggest-links)
+                            cmd_opts+=(
+                                '--max-links[Maximum links]:number:'
+                            )
+                            ;;
+                    esac
+                    cmd_opts+=(
+                        '--apply[Apply changes automatically]'
+                    )
+                    _arguments \
+                        $global_opts \
+                        $cmd_opts \
+                        '*:note:_nx_note_ids' \
+                        && return 0
+                    ;;
+                outline)
+                    _arguments \
+                        $global_opts \
+                        '--create[Create note from outline]' \
+                        '--depth[Outline depth]:number:' \
+                        '*:topic:' \
+                        && return 0
+                    ;;
+                ui)
+                    _arguments \
+                        $global_opts \
+                        && return 0
+                    ;;
+                notebook)
+                    _arguments \
+                        $global_opts \
+                        '1:subcommand:(list create rename delete info)' \
+                        '*:: :->notebook_args' \
+                        && return 0
+
+                    case $state in
+                        notebook_args)
+                            case $words[1] in
+                                list|info)
+                                    _arguments \
+                                        '--stats[Show statistics]' \
+                                        && return 0
+                                    ;;
+                                create)
+                                    _arguments \
+                                        '*:name:' \
+                                        && return 0
+                                    ;;
+                                rename)
+                                    _arguments \
+                                        '1:old_name:_nx_notebooks' \
+                                        '2:new_name:' \
+                                        && return 0
+                                    ;;
+                                delete)
+                                    _arguments \
+                                        '--force[Force deletion]' \
+                                        '*:name:_nx_notebooks' \
+                                        && return 0
+                                    ;;
+                                info)
+                                    _arguments \
+                                        '*:name:_nx_notebooks' \
+                                        && return 0
+                                    ;;
+                            esac
+                            ;;
+                    esac
+                    ;;
+                attach)
+                    _arguments \
+                        $global_opts \
+                        '--name[Custom attachment name]:name:' \
+                        '--copy[Copy file instead of move]' \
+                        '--move[Move file (default)]' \
+                        '1:note:_nx_note_ids' \
+                        '2:file:_files' \
+                        && return 0
+                    ;;
+                import)
+                    _arguments \
+                        $global_opts \
+                        '--format[Import format]:format:(obsidian notion markdown)' \
+                        '--recursive[Recursive import]' \
+                        '--notebook[Target notebook]:notebook:_nx_notebooks' \
+                        '1:type:(dir file obsidian notion)' \
+                        '2:path:_files' \
+                        && return 0
+                    ;;
+                tpl)
+                    _arguments \
+                        $global_opts \
+                        '1:subcommand:(list add remove show use)' \
+                        '*:: :->tpl_args' \
+                        && return 0
+
+                    case $state in
+                        tpl_args)
+                            case $words[1] in
+                                list)
+                                    _arguments \
+                                        '--category[Filter by category]:category:' \
+                                        && return 0
+                                    ;;
+                                add)
+                                    _arguments \
+                                        '--file[Template file]:file:_files' \
+                                        '--force[Overwrite existing]' \
+                                        '1:name:' \
+                                        && return 0
+                                    ;;
+                                remove|show)
+                                    _arguments \
+                                        '*:template:_nx_templates' \
+                                        && return 0
+                                    ;;
+                                use)
+                                    _arguments \
+                                        '(--var -v)*'{--var,-v}'[Template variable]:var:' \
+                                        '*:template:_nx_templates' \
+                                        && return 0
+                                    ;;
+                            esac
+                            ;;
+                    esac
+                    ;;
+                meta)
+                    _arguments \
+                        $global_opts \
+                        '--set[Set metadata]:key_value:' \
+                        '--remove[Remove metadata key]:key:' \
+                        '--list[List all metadata]' \
+                        '1:note:_nx_note_ids' \
+                        && return 0
+                    ;;
+                reindex)
+                    _arguments \
+                        $global_opts \
+                        '1:operation:(rebuild optimize validate stats)' \
+                        && return 0
+                    ;;
+                backup)
+                    _arguments \
+                        $global_opts \
+                        '1:subcommand:(create list restore verify cleanup)' \
+                        '*:: :->backup_args' \
+                        && return 0
+
+                    case $state in
+                        backup_args)
+                            case $words[1] in
+                                create)
+                                    _arguments \
+                                        '--to[Output file]:file:_files' \
+                                        '--compress[Compression level]:level:(0 1 2 3 4 5 6 7 8 9)' \
+                                        '--metadata[Include metadata]' \
+                                        && return 0
+                                    ;;
+                                restore)
+                                    _arguments \
+                                        '--force[Force restore]' \
+                                        '--verify[Verify before restore]' \
+                                        '*:backup:_files -g "*.tar.gz"' \
+                                        && return 0
+                                    ;;
+                                verify)
+                                    _arguments \
+                                        '*:backup:_files -g "*.tar.gz"' \
+                                        && return 0
+                                    ;;
+                                cleanup)
+                                    _arguments \
+                                        '--keep[Number to keep]:number:' \
+                                        '--older-than[Delete older than]:timespec:' \
+                                        && return 0
+                                    ;;
+                            esac
+                            ;;
+                    esac
+                    ;;
+                gc)
+                    _arguments \
+                        $global_opts \
+                        '--dry-run[Show what would be done]' \
+                        '--force[Force without confirmation]' \
+                        '1:operation:(cleanup optimize vacuum stats all)' \
+                        && return 0
+                    ;;
+                doctor)
+                    _arguments \
+                        $global_opts \
+                        '--fix[Attempt to fix issues]' \
+                        '--verbose[Detailed output]' \
+                        '--quick[Quick checks only]' \
+                        '(--category -c)'{--category,-c}'[Check category]:category:(config storage git tools performance)' \
+                        && return 0
+                    ;;
+                config)
+                    _arguments \
+                        $global_opts \
+                        '1:subcommand:(get set list path validate reset)' \
+                        '*:: :->config_args' \
+                        && return 0
+
+                    case $state in
+                        config_args)
+                            case $words[1] in
+                                get|set|reset)
+                                    _arguments \
+                                        '1:key:_nx_config_keys' \
+                                        '2:value:' \
+                                        && return 0
+                                    ;;
+                            esac
+                            ;;
+                    esac
+                    ;;
+                encrypt)
+                    _arguments \
+                        $global_opts \
+                        '--decrypt[Decrypt instead of encrypt]' \
+                        '--all[Apply to all notes]' \
+                        '(--key-file -k)'{--key-file,-k}'[Key file]:file:_files' \
+                        '--generate-key[Generate new key]' \
+                        '(--output-key -o)'{--output-key,-o}'[Output key file]:file:_files' \
+                        '*:note:_nx_note_ids' \
+                        && return 0
+                    ;;
+                sync)
+                    _arguments \
+                        $global_opts \
+                        '(--remote -r)'{--remote,-r}'[Remote URL]:url:' \
+                        '(--branch -b)'{--branch,-b}'[Branch]:branch:(main master develop)' \
+                        '(--message -m)'{--message,-m}'[Commit message]:message:' \
+                        '(--force -f)'{--force,-f}'[Force push]' \
+                        '--no-auto-resolve[Disable auto conflict resolution]' \
+                        '(--strategy -s)'{--strategy,-s}'[Merge strategy]:strategy:(merge rebase fast-forward)' \
+                        '--user-name[Git user name]:name:' \
+                        '--user-email[Git user email]:email:' \
+                        '1:operation:(status init clone pull push sync)' \
+                        && return 0
+                    ;;
+            esac
+            ;;
+    esac
+
+    return 1
+}
+
+# Define completion functions for nx-specific items
+_nx_commands() {
+    local commands=(
+        'new:Create a new note'
+        'edit:Edit a note in $EDITOR'
+        'view:View a note'
+        'ls:List notes'
+        'rm:Remove a note'
+        'mv:Move a note between notebooks'
+        'grep:Search notes with grep'
+        'open:Fuzzy find and open a note'
+        'backlinks:Show backlinks to a note'
+        'tags:Manage note tags'
+        'export:Export notes to various formats'
+        'ask:Ask questions over your notes using AI'
+        'summarize:Generate AI summary of a note'
+        'tag-suggest:Suggest tags for a note using AI'
+        'title:Suggest better titles for a note using AI'
+        'rewrite:Rewrite note content with different tone using AI'
+        'tasks:Extract action items and tasks from note content using AI'
+        'suggest-links:Suggest links to related notes using AI'
+        'outline:Generate hierarchical outlines for topics using AI'
+        'ui:Launch interactive TUI'
+        'notebook:Manage notebooks'
+        'attach:Attach file to note'
+        'import:Import notes from files or directories'
+        'tpl:Template management'
+        'meta:Metadata management'
+        'reindex:Rebuild and optimize search index'
+        'backup:Create and manage backups'
+        'gc:Garbage collection and storage optimization'
+        'doctor:Run comprehensive system health checks'
+        'config:Manage configuration settings'
+        'encrypt:Encrypt/decrypt notes'
+        'sync:Git synchronization'
+    )
+    _describe 'commands' commands
+}
+
+_nx_note_ids() {
+    local note_ids
+    if (( $+commands[nx] )); then
+        note_ids=(${(f)"$(nx ls --json 2>/dev/null | jq -r '.[].id' 2>/dev/null || nx ls 2>/dev/null | awk '{print $1}' | head -20)"})
+        if (( ${#note_ids[@]} )); then
+            _describe 'note IDs' note_ids
+        fi
+    fi
+}
+
+_nx_note_titles() {
+    local titles
+    if (( $+commands[nx] )); then
+        titles=(${(f)"$(nx ls --json 2>/dev/null | jq -r '.[].title' 2>/dev/null || nx ls 2>/dev/null | cut -d' ' -f2- | head -20)"})
+        if (( ${#titles[@]} )); then
+            _describe 'note titles' titles
+        fi
+    fi
+}
+
+_nx_notebooks() {
+    local notebooks
+    if (( $+commands[nx] )); then
+        notebooks=(${(f)"$(nx notebook list --json 2>/dev/null | jq -r '.[].name' 2>/dev/null || nx notebook list 2>/dev/null | awk '{print $1}')"})
+        if (( ${#notebooks[@]} )); then
+            _describe 'notebooks' notebooks
+        fi
+    fi
+}
+
+_nx_tags() {
+    local tags
+    if (( $+commands[nx] )); then
+        tags=(${(f)"$(nx tags --json 2>/dev/null | jq -r '.[]' 2>/dev/null || nx tags 2>/dev/null | awk '{print $1}')"})
+        if (( ${#tags[@]} )); then
+            _describe 'tags' tags
+        fi
+    fi
+}
+
+_nx_tags_list() {
+    # For comma-separated tag input
+    _nx_tags
+}
+
+_nx_templates() {
+    local templates
+    if (( $+commands[nx] )); then
+        templates=(${(f)"$(nx tpl list --json 2>/dev/null | jq -r '.[].name' 2>/dev/null || nx tpl list 2>/dev/null | awk '{print $1}')"})
+        if (( ${#templates[@]} )); then
+            _describe 'templates' templates
+        fi
+    fi
+}
+
+_nx_config_keys() {
+    local config_keys=(
+        'root:Root data directory'
+        'notes_dir:Notes directory'
+        'attachments_dir:Attachments directory'
+        'trash_dir:Trash directory'
+        'index_file:Search index file'
+        'editor:Default editor'
+        'indexer:Search indexer type'
+        'encryption:Encryption type'
+        'age_recipient:Age encryption recipient'
+        'sync:Sync type'
+        'git_remote:Git remote URL'
+        'git_user_name:Git user name'
+        'git_user_email:Git user email'
+        'default_notebook:Default notebook'
+        'ai.provider:AI provider'
+        'ai.model:AI model'
+        'ai.api_key:AI API key'
+        'ai.max_tokens:AI max tokens'
+        'ai.temperature:AI temperature'
+        'performance.cache_size_mb:Cache size in MB'
+        'performance.max_file_size_mb:Max file size in MB'
+    )
+    _describe 'config keys' config_keys
+}
+
+_nx_dates() {
+    local dates=(
+        'today:Today'
+        'yesterday:Yesterday'
+        'week:One week ago'
+        'month:One month ago'
+        'year:One year ago'
+    )
+    _describe 'dates' dates
+}
+
+# Register the completion
+_nx "$@"
