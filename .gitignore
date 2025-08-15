@@ -1,0 +1,103 @@
+# Build directories
+build/
+install/
+out/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+nx
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# CPack
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Testing
+Testing/
+*.gcov
+*.gcda
+*.gcno
+
+# Valgrind
+*.memcheck
+*.helgrind
+*.drd
+
+# Sanitizers
+*.san
+
+# Profiling
+*.prof
+gmon.out
+
+# vcpkg
+vcpkg_installed/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Logs
+*.log
+
+# Development data (nx app data)
+.nx/
+notes/
+attachments/
+config.toml
+
+# Test corpus
+test_corpus/
+
+# Backup files
+*.bak
+*.backup
