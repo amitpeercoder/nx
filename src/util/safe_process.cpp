@@ -21,17 +21,6 @@ namespace {
   static struct termios saved_termios;
   static bool termios_saved = false;
 
-  /**
-   * @brief Create pipe with error handling
-   */
-  Result<std::pair<int, int>> createPipe() {
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-      return std::unexpected(makeError(ErrorCode::kSystemError, 
-                                       "Failed to create pipe: " + std::string(strerror(errno))));
-    }
-    return std::make_pair(pipefd[0], pipefd[1]);
-  }
 
   /**
    * @brief Read all data from file descriptor

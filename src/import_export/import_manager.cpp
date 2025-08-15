@@ -393,8 +393,7 @@ std::chrono::system_clock::time_point ImportManager::fileTimeToSystemTime(
   return sctp;
 }
 
-// Specialized importers would be implemented here
-// For now, providing basic stubs
+// Specialized importers implementation
 
 ObsidianImporter::ObsidianImporter(nx::store::NoteStore& note_store) 
   : note_store_(note_store) {

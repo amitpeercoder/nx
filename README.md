@@ -129,18 +129,46 @@ nx notebook delete <name> [--force]              # Delete notebook
 nx notebook info <name> [--stats]                # Show notebook details
 ```
 
-### **Import/Export**
+### **File Attachments**
 ```bash
-nx export md [--to /path]                        # Export as Markdown
-nx export json [--filter "tag:work"]             # Export as JSON
-nx export pdf [--to /path]                       # Export as PDF
+nx attach <note-id> <file-path> [--name "Custom Name"]  # Attach file to note
 ```
 
-### **System**
+### **Templates**
+```bash
+nx tpl list                                      # List all templates
+nx tpl add <name> [--file template.md]           # Create template
+nx tpl remove <name>                             # Remove template
+```
+
+### **Metadata Management**
+```bash
+nx meta <note-id> [--set key=value]              # View or modify metadata
+nx meta <note-id> --remove <key>                 # Remove metadata key
+nx meta <note-id> --list                         # List all metadata
+```
+
+### **Import/Export**
+```bash
+nx import dir <path> [--format obsidian|notion] [--recursive] # Import notes
+nx export md [--to /path] [--since date]         # Export as Markdown
+nx export json [--to /path]                      # Export as JSON
+nx export pdf [--to /path]                       # Export as PDF
+nx export html [--to /path]                      # Export as HTML
+```
+
+### **System Maintenance**
+```bash
+nx reindex [rebuild|optimize|validate|stats]     # Manage search index
+nx backup [create|list|restore|verify] [file]    # Backup operations
+nx gc [cleanup|optimize|vacuum|stats|all]        # Garbage collection
+nx doctor [--quick] [--category storage] [--fix] # System health checks
+```
+
+### **Interactive TUI**
 ```bash
 nx ui                                            # Launch TUI
-nx sync [push|pull]                              # Git synchronization
-nx --version                                     # Show version
+nx                                               # Auto-launch TUI if notes exist
 ```
 
 ## 🔧 Configuration
@@ -208,30 +236,35 @@ nx follows XDG Base Directory specification:
 - Full-text search with SQLite FTS5
 - Interactive TUI with 3-pane layout
 - Comprehensive AI integration
-- Basic export functionality
+- Export functionality (Markdown, JSON, PDF, HTML)
 - Git sync foundation
 - Encryption foundation
 
-### 🚧 **MVP2 In Development** (see [mvp2-plan.md](./mvp2-plan.md))
+### ✅ **MVP2 Phase 1 Complete** (see [mvp2-plan.md](./mvp2-plan.md))
+- ✅ **Notebook System**: Complete hierarchical organization
+- ✅ **File Attachment System**: `nx attach` with full TUI integration
+- ✅ **Directory Import**: `nx import dir` with Obsidian/Notion support
+- ✅ **Template Management**: `nx tpl` with creation and management
+- ✅ **Metadata Management**: `nx meta` for flexible metadata handling
+- ✅ **System Maintenance**: Complete suite of maintenance commands
+  - ✅ `nx reindex` - Search index management
+  - ✅ `nx backup` - Comprehensive backup/restore system
+  - ✅ `nx gc` - Garbage collection and optimization
+  - ✅ `nx doctor` - System health checks and diagnostics
 
-**Phase 1 - Core Features:**
-- [ ] File attachment system (`nx attach`)
-- [ ] Directory import (`nx import dir`)
-- [ ] Template management (`nx tpl`)
-- [ ] Metadata commands (`nx meta`)
-- [ ] System maintenance (`nx reindex`, `nx backup`, `nx gc`, `nx doctor`)
+### 🚧 **MVP2 Phase 2 - Power Features** (Next)
+- [ ] Wiki-style `[[links]]` support with auto-completion
+- [ ] Advanced search with boolean queries (AND/OR/NOT)
+- [ ] Shell completions for bash/zsh
+- [ ] Enhanced export formats and filtering
+- [ ] Configuration management system (`nx config`)
 
-**Phase 2 - Power Features:**
-- [ ] Wiki-style `[[links]]` support
-- [ ] Advanced search (boolean queries, field-specific)
-- [ ] Shell completions
-- [ ] Enhanced export formats
-
-**Phase 3 - Advanced:**
-- [ ] Complete encryption workflow
-- [ ] Advanced Git sync with conflict resolution
-- [ ] Performance optimizations
-- [ ] Automation hooks
+### 🚧 **MVP2 Phase 3 - Advanced Features** (Future)
+- [ ] Complete encryption workflow with seamless operations
+- [ ] Advanced Git sync with automatic conflict resolution
+- [ ] Performance optimizations for 100k+ notes
+- [ ] Automation hooks and scripting support
+- [ ] Graph visualization and analytics
 
 ## 🏗️ Architecture
 

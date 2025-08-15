@@ -1,45 +1,47 @@
 # nx MVP2 Development Plan
 
-## What's Missing to Make nx a Powerful Note-Taking App
+## MVP2 Status: Phase 1 Complete, Phase 2 In Progress
 
-After analyzing the codebase against the original specification and modern note-taking needs, here are the key missing features and improvements needed:
+nx has successfully completed MVP1 and MVP2 Phase 1! The application now includes all core functionality from the original specification plus comprehensive system maintenance tools.
 
-### 🔴 **Critical Missing Core Features (from spec)**
+### ✅ **MVP2 Phase 1 Complete**
 
-1. **Attachment Management**
-   - `nx attach <id> <path>` command not implemented
-   - AttachmentStore interface exists but no CLI command
-   - No way to attach files/images to notes
+All critical core features from the original specification have been implemented:
 
-2. **Import Functionality** 
-   - `nx import dir <path>` command missing
-   - Only export is implemented, no import
-   - Can't migrate from other note systems
+1. ✅ **Attachment Management**
+   - `nx attach <id> <path>` command fully implemented
+   - Full TUI integration with file management
+   - Supports custom names and copy/move operations
 
-3. **Template System**
-   - `nx tpl add/list/remove` commands missing  
-   - Basic template support in `new --from` but no management
-   - No user-defined templates
+2. ✅ **Import Functionality** 
+   - `nx import dir <path>` command with comprehensive format support
+   - Obsidian vault import with wiki-link conversion
+   - Notion export import (ZIP and JSON formats)
+   - Generic Markdown directory import with structure preservation
 
-4. **Metadata Management**
-   - `nx meta <id> --set key=val` command missing
-   - Can't update arbitrary metadata fields
+3. ✅ **Template System**
+   - `nx tpl add/list/remove` commands fully implemented
+   - Template creation from files or interactive editing
+   - Template usage in note creation
+   - Full TUI integration
 
-5. **System Maintenance Commands**
-   - `nx reindex` - not implemented
-   - `nx backup create/restore` - missing
-   - `nx gc` (garbage collection) - missing
-   - `nx doctor` (health check) - missing
-   - `nx config get/set` - missing
+4. ✅ **Metadata Management**
+   - `nx meta <id>` command with complete functionality
+   - Set, remove, and list metadata operations
+   - JSON output support for scripting
 
-6. **Notebook Management**
-   - `nx nb list` - list all notebooks (not implemented)
-   - `nx nb create <name>` - create new notebook (not implemented)
-   - `nx nb rename <old> <new>` - rename notebook (not implemented)
-   - `nx nb delete <name>` - delete notebook with safety checks (not implemented)
-   - `nx nb info <name>` - show notebook statistics (not implemented)
-   - Notebooks mentioned in spec but completely missing CLI commands
-   - **TUI Enhancement**: Transform left panel into hierarchical navigation with expandable notebooks showing their tags
+5. ✅ **System Maintenance Commands**
+   - `nx reindex` - Complete search index management
+   - `nx backup` - Comprehensive backup/restore system
+   - `nx gc` - Garbage collection and optimization
+   - `nx doctor` - System health checks and diagnostics
+   - All with dry-run, force, and JSON output options
+
+6. ✅ **Notebook Management**
+   - `nx notebook list/create/rename/delete/info` - Complete CRUD operations
+   - Full TUI integration with hierarchical navigation
+   - Expandable notebook tree with tag filtering
+   - Force deletion safety checks
 
 ### 🟡 **Partially Implemented Features**
 

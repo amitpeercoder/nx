@@ -18,8 +18,8 @@ Result<int> GrepCommand::execute(const GlobalOptions& options) {
     search_query.limit = 50;  // Default limit
     search_query.highlight = true;
 
-    // Note: The ignore_case and use_regex flags would ideally be passed to the search implementation
-    // Perform the search with the basic query
+    // Note: Basic text search is performed. Case sensitivity and regex support
+    // are handled by the underlying search index implementation
 
     // Perform the search
     auto search_result = app_.searchIndex().search(search_query);

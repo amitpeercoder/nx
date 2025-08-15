@@ -53,6 +53,10 @@
 #include "nx/cli/commands/reindex_command.hpp"
 #include "nx/cli/commands/backup_command.hpp"
 #include "nx/cli/commands/gc_command.hpp"
+#include "nx/cli/commands/doctor_command.hpp"
+
+// Configuration management
+#include "nx/cli/commands/config_command.hpp"
 
 namespace nx::cli {
 
@@ -146,6 +150,10 @@ void Application::setupCommands() {
   registerCommand(std::make_unique<ReindexCommand>(*this));
   registerCommand(std::make_unique<BackupCommand>(*this));
   registerCommand(std::make_unique<GcCommand>(*this));
+  registerCommand(std::make_unique<DoctorCommand>(*this));
+  
+  // Configuration management commands
+  registerCommand(std::make_unique<ConfigCommand>(*this));
 }
 
 void Application::setupHelp() {

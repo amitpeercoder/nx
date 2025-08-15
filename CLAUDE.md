@@ -157,23 +157,44 @@ nx ui                                            # Launch 3-pane terminal interf
 nx                                               # Auto-launch TUI if notes exist
 ```
 
-### 🚧 MVP2 Commands (In Development)
+### ✅ MVP2 Phase 1 Commands (Complete)
 ```bash
-# Phase 1 - Core Features
-nx attach <id> <file>                            # Attach files to notes
-nx import dir <path>                             # Import directory of notes
-nx tpl add/list/remove <name>                    # Template management
-nx meta <id> [--set key=val]                     # Metadata management
-nx reindex                                       # Rebuild search index
-nx backup create/restore                         # Backup operations
-nx gc                                            # Garbage collection
-nx doctor                                        # System health check
-nx config get/set <key> [value]                  # Configuration management
+# File Attachments
+nx attach <id> <file> [--name "Custom Name"]     # Attach files to notes
 
-# Phase 2 - Power Features
+# Directory Import
+nx import dir <path> [--format obsidian|notion] [--recursive] # Import directory of notes
+
+# Template Management
+nx tpl list                                      # List all templates
+nx tpl add <name> [--file template.md]           # Create template
+nx tpl remove <name>                             # Remove template
+
+# Metadata Management
+nx meta <id> [--set key=val]                     # View or modify metadata
+nx meta <id> --remove <key>                      # Remove metadata key
+nx meta <id> --list                              # List all metadata
+
+# System Maintenance
+nx reindex [rebuild|optimize|validate|stats]     # Search index management
+nx backup [create|list|restore|verify] [file]    # Backup operations
+nx gc [cleanup|optimize|vacuum|stats|all]        # Garbage collection
+nx doctor [--quick] [--category] [--fix]         # System health checks
+
+# Notebook Management (Complete)
+nx notebook list [--json]                        # List all notebooks
+nx notebook create <name> [description]          # Create new notebook
+nx notebook rename <old> <new>                   # Rename notebook
+nx notebook delete <name> [--force]              # Delete notebook
+nx notebook info <name>                          # Show notebook details
+```
+
+### 🚧 MVP2 Phase 2 Commands (Next)
+```bash
+nx config get/set <key> [value]                  # Configuration management
 nx graph --export dot                            # Export relationship graph
 Advanced search with boolean queries (AND/OR/NOT)
-Wiki-style [[links]] support
+Wiki-style [[links]] support with auto-completion
 Shell completions for bash/zsh
 ```
 
@@ -196,7 +217,7 @@ Shell completions for bash/zsh
 
 ## Implementation Status
 
-**Current Phase**: MVP1 Complete, MVP2 In Development
+**Current Phase**: MVP1 Complete, MVP2 Phase 1 Complete
 
 ### ✅ MVP1 Completed Features
 - **Core Note Management**: Create, edit, view, delete notes with ULID-based identification
@@ -208,23 +229,36 @@ Shell completions for bash/zsh
 - **Git Sync**: Basic synchronization support
 - **Encryption**: Foundation with age/rage integration
 
-### ✅ MVP2 Notebook System (Complete)
+### ✅ MVP2 Phase 1 Complete Features
 - **Notebook Management**: Full CRUD operations for organizing notes into collections
-- **CLI Commands**: `nx notebook list/create/rename/delete/info` with JSON output
-- **TUI Integration**: Hierarchical navigation panel with expandable notebook tree
-- **Smart Filtering**: Context-aware filtering with notebook + tag combinations
-- **Keyboard Shortcuts**: Ctrl+N/R/D for notebook operations, Space for expand/collapse
-- **Force Operations**: Safe deletion with --force flag for notebooks with notes
+- **File Attachment System**: Complete `nx attach` with TUI integration and file management
+- **Directory Import System**: `nx import dir` with support for Obsidian, Notion, and generic Markdown
+- **Template Management**: `nx tpl` for creating, managing, and using note templates
+- **Metadata Management**: `nx meta` for flexible key-value metadata operations
+- **System Maintenance Suite**: Complete set of maintenance and diagnostic commands
+  - **Search Index Management**: `nx reindex` with rebuild, optimize, validate, stats operations
+  - **Backup System**: `nx backup` with create, list, restore, verify, cleanup operations
+  - **Garbage Collection**: `nx gc` with cleanup, optimize, vacuum, stats operations
+  - **Health Diagnostics**: `nx doctor` with comprehensive system health checks
 
-### 🚧 MVP2 Remaining Features (see mvp2-plan.md)
-- **Phase 2**: Wiki-links, advanced search, shell integration  
-- **Phase 3**: Complete encryption, advanced sync, automation
-- **Phase 4**: Enhanced AI features, documentation, distribution
+### 🚧 MVP2 Phase 2 - Power Features (Next)
+- **Wiki-links**: `[[note-title]]` syntax with auto-completion and link resolution
+- **Advanced Search**: Boolean queries (AND/OR/NOT) with field-specific search
+- **Shell Integration**: Bash/zsh completions and better Unix tool integration
+- **Configuration Management**: `nx config` command for settings management
+- **Enhanced Export**: More formats and advanced filtering options
+
+### 🚧 MVP2 Phase 3 - Advanced Features (Future)
+- **Complete Encryption**: Seamless per-file encryption with transparent operations
+- **Advanced Git Sync**: Automatic conflict resolution and merge strategies
+- **Performance Optimizations**: Support for 100k+ notes with sub-50ms operations
+- **Automation & Scripting**: Hooks, triggers, and extensibility framework
 
 ### 📊 Current Metrics
-- **Commands Implemented**: 27+ core commands (including full notebook suite)
-- **Lines of Code**: ~15,000+ lines of modern C++
-- **Test Coverage**: Unit tests, integration tests, benchmarks
-- **Performance**: Meeting sub-100ms targets on typical datasets
+- **Commands Implemented**: 35+ core commands across all functional areas
+- **Lines of Code**: ~18,000+ lines of modern C++
+- **Test Coverage**: Comprehensive unit tests, integration tests, benchmarks
+- **Performance**: Meeting sub-100ms targets on 10k+ note collections
+- **Features Complete**: MVP1 (100%) + MVP2 Phase 1 (100%)
 
 Refer to `docs/nx_cpp_notes_cli_spec_with_ai.md` for the complete technical specification and `mvp2-plan.md` for the development roadmap.

@@ -41,30 +41,22 @@ Result<int> EditCommand::execute(const GlobalOptions& options) {
     
     // Get editor from config or environment
     std::string editor = app_.config().editor;
-    std::cerr << "DEBUG: Config editor: '" << editor << "'" << std::endl;
     
     if (editor.empty()) {
       const char* visual_env = std::getenv("VISUAL");
       const char* editor_env = std::getenv("EDITOR");
       
-      std::cerr << "DEBUG: VISUAL env: '" << (visual_env ? visual_env : "null") << "'" << std::endl;
-      std::cerr << "DEBUG: EDITOR env: '" << (editor_env ? editor_env : "null") << "'" << std::endl;
       
       if (visual_env && strlen(visual_env) > 0) {
         editor = visual_env;
-        std::cerr << "DEBUG: Using VISUAL: " << editor << std::endl;
       } else if (editor_env && strlen(editor_env) > 0) {
         editor = editor_env;
-        std::cerr << "DEBUG: Using EDITOR: " << editor << std::endl;
       } else {
         // Fallback editors in order of preference (nano first for better terminal compatibility)
         const std::vector<std::string> fallback_editors = {"nano", "micro", "nvim", "vim", "vi"};
-        std::cerr << "DEBUG: Testing fallback editors..." << std::endl;
         for (const auto& candidate : fallback_editors) {
-          std::cerr << "DEBUG: Testing " << candidate << std::endl;
           if (nx::util::SafeProcess::commandExists(candidate)) {
             editor = candidate;
-            std::cerr << "DEBUG: Found and selected: " << candidate << std::endl;
             break;
           }
         }
@@ -72,12 +64,9 @@ Result<int> EditCommand::execute(const GlobalOptions& options) {
         // Final fallback
         if (editor.empty()) {
           editor = "vi";
-          std::cerr << "DEBUG: Using final fallback: vi" << std::endl;
         }
       }
     }
-    
-    std::cerr << "DEBUG: Final editor selection: '" << editor << "'" << std::endl;
 
     // Get the note file path
     auto filesystem_store = dynamic_cast<nx::store::FilesystemStore*>(&app_.noteStore());

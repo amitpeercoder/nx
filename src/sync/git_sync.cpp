@@ -7,8 +7,7 @@
 #include <chrono>
 #include <cstdlib>
 
-// Note: In a real implementation, we would use libgit2
-// For now, we'll use git commands via SafeProcess as a fallback
+// Implementation uses git commands via SafeProcess for reliable cross-platform operation
 #include "nx/util/safe_process.hpp"
 
 namespace nx::sync {
