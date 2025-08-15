@@ -200,7 +200,7 @@ Shell completions for bash/zsh
 
 ### ✅ MVP1 Completed Features
 - **Core Note Management**: Create, edit, view, delete notes with ULID-based identification
-- **Interactive TUI**: Full 3-pane interface with tags, notes, and preview panels
+- **Interactive TUI**: Full 3-pane hierarchical interface with notebook/tag navigation
 - **Search System**: SQLite FTS5 with ripgrep fallback for full-text search
 - **AI Integration**: Complete Claude/GPT integration for Q&A, summarization, tagging, etc.
 - **Export System**: Markdown, JSON, PDF, HTML export with date filtering
@@ -208,14 +208,21 @@ Shell completions for bash/zsh
 - **Git Sync**: Basic synchronization support
 - **Encryption**: Foundation with age/rage integration
 
-### 🚧 MVP2 In Development (see mvp2-plan.md)
-- **Phase 1**: Attachment system, import functionality, template management, metadata commands
+### ✅ MVP2 Notebook System (Complete)
+- **Notebook Management**: Full CRUD operations for organizing notes into collections
+- **CLI Commands**: `nx notebook list/create/rename/delete/info` with JSON output
+- **TUI Integration**: Hierarchical navigation panel with expandable notebook tree
+- **Smart Filtering**: Context-aware filtering with notebook + tag combinations
+- **Keyboard Shortcuts**: Ctrl+N/R/D for notebook operations, Space for expand/collapse
+- **Force Operations**: Safe deletion with --force flag for notebooks with notes
+
+### 🚧 MVP2 Remaining Features (see mvp2-plan.md)
 - **Phase 2**: Wiki-links, advanced search, shell integration  
 - **Phase 3**: Complete encryption, advanced sync, automation
 - **Phase 4**: Enhanced AI features, documentation, distribution
 
 ### 📊 Current Metrics
-- **Commands Implemented**: 22+ core commands
+- **Commands Implemented**: 27+ core commands (including full notebook suite)
 - **Lines of Code**: ~15,000+ lines of modern C++
 - **Test Coverage**: Unit tests, integration tests, benchmarks
 - **Performance**: Meeting sub-100ms targets on typical datasets

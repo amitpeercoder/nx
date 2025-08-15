@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "nx/store/filesystem_store.hpp"
+#include "nx/store/filesystem_attachment_store.hpp"
 #include "nx/index/index.hpp"
 #include "nx/util/xdg.hpp"
 
@@ -33,6 +34,26 @@
 // TUI Command includes
 #include "nx/cli/commands/ui_command.hpp"
 
+// Notebook management
+#include "nx/cli/commands/notebook_command.hpp"
+
+// Attachment management
+#include "nx/cli/commands/attach_command.hpp"
+
+// Import/Export management
+#include "nx/cli/commands/import_command.hpp"
+
+// Template management
+#include "nx/cli/commands/tpl_command.hpp"
+
+// Metadata management
+#include "nx/cli/commands/meta_command.hpp"
+
+// System maintenance commands
+#include "nx/cli/commands/reindex_command.hpp"
+#include "nx/cli/commands/backup_command.hpp"
+#include "nx/cli/commands/gc_command.hpp"
+
 namespace nx::cli {
 
 Application::Application() 
@@ -53,8 +74,9 @@ int Application::run(int argc, char* argv[]) {
     app_.parse(argc, argv);
   } catch (const CLI::ParseError& e) {
     return app_.exit(e);
-  } catch (const CLI::RuntimeError& e) {
-    return e.get_exit_code();
+  } catch (const std::exception& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    return 1;
   }
   
   // The command has already been executed by CLI11's callback system
@@ -104,6 +126,26 @@ void Application::setupCommands() {
   
   // TUI command
   registerCommand(std::make_unique<UICommand>(*this));
+  
+  // Notebook management commands
+  registerCommand(std::make_unique<NotebookCommand>(*this));
+  
+  // Attachment management commands
+  registerCommand(std::make_unique<AttachCommand>(*this));
+  
+  // Import/Export commands
+  registerCommand(std::make_unique<ImportCommand>(*this));
+  
+  // Template management commands
+  registerCommand(std::make_unique<TplCommand>(*this));
+  
+  // Metadata management commands
+  registerCommand(std::make_unique<MetaCommand>(*this));
+  
+  // System maintenance commands
+  registerCommand(std::make_unique<ReindexCommand>(*this));
+  registerCommand(std::make_unique<BackupCommand>(*this));
+  registerCommand(std::make_unique<GcCommand>(*this));
 }
 
 void Application::setupHelp() {
@@ -198,6 +240,21 @@ Result<void> Application::initializeServices() {
     return store_init;
   }
   
+  // Initialize notebook manager
+  notebook_manager_ = std::make_unique<nx::store::NotebookManager>(*note_store_);
+  
+  // Initialize attachment store  
+  nx::store::FilesystemAttachmentStore::Config attachment_config;
+  attachment_config.attachments_dir = store_config.attachments_dir;
+  attachment_config.metadata_file = config_->data_dir / "attachments.json";
+  attachment_store_ = std::make_unique<nx::store::FilesystemAttachmentStore>(attachment_config);
+  
+  // Initialize template manager
+  nx::template_system::TemplateManager::Config template_config;
+  template_config.templates_dir = config_->data_dir / "templates";
+  template_config.metadata_file = config_->data_dir / "templates.json";
+  template_manager_ = std::make_unique<nx::template_system::TemplateManager>(template_config);
+  
   // Initialize search index
   if (config_->indexer == nx::config::Config::IndexerType::kFts) {
     search_index_ = nx::index::IndexFactory::createSqliteIndex(config_->index_file);
@@ -251,8 +308,20 @@ nx::store::NoteStore& Application::noteStore() {
   return *note_store_;
 }
 
+nx::store::NotebookManager& Application::notebookManager() {
+  return *notebook_manager_;
+}
+
+nx::store::AttachmentStore& Application::attachmentStore() {
+  return *attachment_store_;
+}
+
 nx::index::Index& Application::searchIndex() {
   return *search_index_;
+}
+
+nx::template_system::TemplateManager& Application::templateManager() {
+  return *template_manager_;
 }
 
 } // namespace nx::cli

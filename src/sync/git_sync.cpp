@@ -2,8 +2,10 @@
 
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 
 // Note: In a real implementation, we would use libgit2
 // For now, we'll use git commands via SafeProcess as a fallback
@@ -440,9 +442,17 @@ Result<void> GitSync::resolveConflicts(const std::vector<std::string>& files,
                                          "Failed to resolve conflict for " + file));
       }
     }
+  } else if (strategy == "manual") {
+    // Interactive manual conflict resolution
+    for (const auto& file : files) {
+      auto manual_result = resolveConflictManually(file);
+      if (!manual_result.has_value()) {
+        return std::unexpected(manual_result.error());
+      }
+    }
   } else {
     return std::unexpected(makeError(ErrorCode::kInvalidArgument,
-                                     "Manual conflict resolution not implemented. Use 'ours' or 'theirs' strategy."));
+                                     "Invalid strategy. Use 'ours', 'theirs', or 'manual'."));
   }
 
   // Stage resolved files
@@ -455,6 +465,130 @@ Result<void> GitSync::resolveConflicts(const std::vector<std::string>& files,
     }
   }
 
+  return {};
+}
+
+Result<void> GitSync::resolveConflictManually(const std::string& file) {
+  // Get the full path to the file
+  auto file_path = repo_path_ / file;
+  
+  if (!std::filesystem::exists(file_path)) {
+    return std::unexpected(makeError(ErrorCode::kFileNotFound,
+                                     "Conflicted file not found: " + file));
+  }
+  
+  std::cout << "\n=== Manual Conflict Resolution ===\n";
+  std::cout << "File: " << file << "\n\n";
+  
+  // Show conflict status
+  auto status_result = nx::util::SafeProcess::executeForOutput("git", 
+    {"status", "--porcelain", file}, repo_path_.string());
+  
+  if (status_result.has_value()) {
+    std::cout << "Status: " << status_result.value() << "\n";
+  }
+  
+  // Present options to the user
+  std::cout << "Choose resolution strategy:\n";
+  std::cout << "  1) Keep our version (local changes)\n";
+  std::cout << "  2) Keep their version (remote changes)\n";
+  std::cout << "  3) Edit manually in editor\n";
+  std::cout << "  4) Show conflict diff\n";
+  std::cout << "  5) Skip this file\n";
+  std::cout << "\nChoice [1-5]: ";
+  
+  std::string choice;
+  std::getline(std::cin, choice);
+  
+  if (choice == "1") {
+    // Use "ours" strategy
+    auto resolve_result = nx::util::SafeProcess::execute("git", 
+      {"checkout", "--ours", file}, repo_path_.string());
+    if (!resolve_result.has_value() || !resolve_result->success()) {
+      return std::unexpected(makeError(ErrorCode::kGitError,
+                                       "Failed to resolve conflict using 'ours' strategy"));
+    }
+    std::cout << "Resolved using local version.\n";
+  } 
+  else if (choice == "2") {
+    // Use "theirs" strategy
+    auto resolve_result = nx::util::SafeProcess::execute("git", 
+      {"checkout", "--theirs", file}, repo_path_.string());
+    if (!resolve_result.has_value() || !resolve_result->success()) {
+      return std::unexpected(makeError(ErrorCode::kGitError,
+                                       "Failed to resolve conflict using 'theirs' strategy"));
+    }
+    std::cout << "Resolved using remote version.\n";
+  }
+  else if (choice == "3") {
+    // Launch editor for manual resolution
+    std::string editor = std::getenv("EDITOR") ? std::getenv("EDITOR") : "vi";
+    
+    std::cout << "Launching editor: " << editor << "\n";
+    std::cout << "Please resolve conflicts manually and save the file.\n";
+    std::cout << "Look for conflict markers: <<<<<<<, =======, >>>>>>>\n\n";
+    
+    std::ostringstream edit_cmd;
+    edit_cmd << editor << " \"" << file_path.string() << "\"";
+    
+    int edit_result = std::system(edit_cmd.str().c_str());
+    if (edit_result != 0) {
+      std::cout << "Editor exited with non-zero status. Conflict may not be resolved.\n";
+    }
+    
+    // Ask user to confirm resolution
+    std::cout << "\nHas the conflict been resolved? (y/N): ";
+    std::string confirm;
+    std::getline(std::cin, confirm);
+    
+    if (confirm != "y" && confirm != "Y") {
+      return std::unexpected(makeError(ErrorCode::kInvalidState,
+                                       "Manual resolution cancelled by user"));
+    }
+    
+    std::cout << "Manual resolution completed.\n";
+  }
+  else if (choice == "4") {
+    // Show conflict diff and recurse for another choice
+    auto diff_result = nx::util::SafeProcess::executeForOutput("git", 
+      {"diff", file}, repo_path_.string());
+    
+    if (diff_result.has_value()) {
+      std::cout << "\n--- Conflict Diff ---\n";
+      std::cout << diff_result.value() << "\n";
+      std::cout << "--- End Diff ---\n\n";
+    } else {
+      std::cout << "Could not show diff.\n";
+    }
+    
+    // Recurse to ask for choice again
+    return resolveConflictManually(file);
+  }
+  else if (choice == "5") {
+    std::cout << "Skipping file: " << file << "\n";
+    return std::unexpected(makeError(ErrorCode::kInvalidState,
+                                     "User chose to skip conflict resolution"));
+  }
+  else {
+    std::cout << "Invalid choice. Please try again.\n";
+    return resolveConflictManually(file); // Recurse for valid input
+  }
+  
+  // Verify that conflict markers are gone (basic check)
+  std::ifstream file_stream(file_path);
+  if (file_stream) {
+    std::string line;
+    while (std::getline(file_stream, line)) {
+      if (line.find("<<<<<<<") != std::string::npos || 
+          line.find("=======") != std::string::npos || 
+          line.find(">>>>>>>") != std::string::npos) {
+        std::cout << "Warning: Conflict markers still found in file.\n";
+        std::cout << "Please ensure all conflicts are properly resolved.\n";
+        break;
+      }
+    }
+  }
+  
   return {};
 }
 

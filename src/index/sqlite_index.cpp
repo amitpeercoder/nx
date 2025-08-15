@@ -746,6 +746,17 @@ Result<void> SqliteIndex::optimize() {
   return result;
 }
 
+Result<void> SqliteIndex::vacuum() {
+  std::lock_guard<std::mutex> lock(db_mutex_);
+  
+  // VACUUM database to reclaim space
+  auto result = checkSqliteResult(
+      sqlite3_exec(db_, "VACUUM", nullptr, nullptr, nullptr),
+      "VACUUM database");
+  
+  return result;
+}
+
 Result<void> SqliteIndex::beginTransaction() {
   std::lock_guard<std::mutex> lock(db_mutex_);
   

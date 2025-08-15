@@ -30,9 +30,11 @@ add_library(nx_core STATIC
     ../src/util/time.cpp
     ../src/util/xdg.cpp
     ../src/util/filesystem.cpp
+    ../src/util/safe_process.cpp
     ../src/store/filesystem_store.cpp
     ../src/store/attachment_store.cpp
     ../src/store/filesystem_attachment_store.cpp
+    ../src/store/notebook_manager.cpp
     ../src/config/config.cpp
     ../src/index/index.cpp
     ../src/index/sqlite_index.cpp
@@ -40,6 +42,7 @@ add_library(nx_core STATIC
     ../src/index/ripgrep_index.cpp
     ../src/cli/application.cpp
     ../src/cli/commands/new_command.cpp
+    ../src/cli/commands/notebook_command.cpp
 )
 
 target_include_directories(nx_core PUBLIC

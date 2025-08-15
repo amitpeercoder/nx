@@ -53,8 +53,8 @@ build CMakeFiles/nx.dir/src/app/main.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Us
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/app/main.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/app
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -64,8 +64,8 @@ build CMakeFiles/nx.dir/src/cli/application.cpp.o: CXX_COMPILER__nx_unscanned_De
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/application.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -75,8 +75,19 @@ build CMakeFiles/nx.dir/src/cli/commands/ask_command.cpp.o: CXX_COMPILER__nx_uns
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/ask_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/attach_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/attach_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/attach_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -86,8 +97,19 @@ build CMakeFiles/nx.dir/src/cli/commands/backlinks_command.cpp.o: CXX_COMPILER__
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/backlinks_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/backup_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/backup_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/backup_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -97,8 +119,41 @@ build CMakeFiles/nx.dir/src/cli/commands/edit_command.cpp.o: CXX_COMPILER__nx_un
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/edit_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/encrypt_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/encrypt_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/encrypt_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/export_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/export_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/export_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/gc_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/gc_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/gc_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -108,8 +163,19 @@ build CMakeFiles/nx.dir/src/cli/commands/grep_command.cpp.o: CXX_COMPILER__nx_un
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/grep_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/import_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/import_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/import_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -119,8 +185,19 @@ build CMakeFiles/nx.dir/src/cli/commands/list_command.cpp.o: CXX_COMPILER__nx_un
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/list_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/meta_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/meta_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/meta_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -130,8 +207,8 @@ build CMakeFiles/nx.dir/src/cli/commands/move_command.cpp.o: CXX_COMPILER__nx_un
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/move_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -141,8 +218,19 @@ build CMakeFiles/nx.dir/src/cli/commands/new_command.cpp.o: CXX_COMPILER__nx_uns
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/new_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/notebook_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/notebook_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/notebook_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -152,8 +240,8 @@ build CMakeFiles/nx.dir/src/cli/commands/open_command.cpp.o: CXX_COMPILER__nx_un
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/open_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -163,8 +251,19 @@ build CMakeFiles/nx.dir/src/cli/commands/outline_command.cpp.o: CXX_COMPILER__nx
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/outline_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/reindex_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/reindex_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/reindex_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -174,8 +273,8 @@ build CMakeFiles/nx.dir/src/cli/commands/remove_command.cpp.o: CXX_COMPILER__nx_
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/remove_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -185,8 +284,8 @@ build CMakeFiles/nx.dir/src/cli/commands/rewrite_command.cpp.o: CXX_COMPILER__nx
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/rewrite_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -196,8 +295,8 @@ build CMakeFiles/nx.dir/src/cli/commands/suggest_links_command.cpp.o: CXX_COMPIL
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/suggest_links_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -207,8 +306,19 @@ build CMakeFiles/nx.dir/src/cli/commands/summarize_command.cpp.o: CXX_COMPILER__
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/summarize_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/sync_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/sync_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/sync_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -218,8 +328,8 @@ build CMakeFiles/nx.dir/src/cli/commands/tag_suggest_command.cpp.o: CXX_COMPILER
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/tag_suggest_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -229,8 +339,8 @@ build CMakeFiles/nx.dir/src/cli/commands/tags_command.cpp.o: CXX_COMPILER__nx_un
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/tags_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -240,8 +350,8 @@ build CMakeFiles/nx.dir/src/cli/commands/tasks_command.cpp.o: CXX_COMPILER__nx_u
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/tasks_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -251,8 +361,19 @@ build CMakeFiles/nx.dir/src/cli/commands/title_command.cpp.o: CXX_COMPILER__nx_u
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/title_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/cli/commands/tpl_command.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/tpl_command.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/tpl_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -262,8 +383,8 @@ build CMakeFiles/nx.dir/src/cli/commands/ui_command.cpp.o: CXX_COMPILER__nx_unsc
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/ui_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -273,8 +394,8 @@ build CMakeFiles/nx.dir/src/cli/commands/view_command.cpp.o: CXX_COMPILER__nx_un
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/cli/commands/view_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/cli/commands
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -284,8 +405,8 @@ build CMakeFiles/nx.dir/src/common.cpp.o: CXX_COMPILER__nx_unscanned_Debug /User
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/common.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -295,8 +416,8 @@ build CMakeFiles/nx.dir/src/config/config.cpp.o: CXX_COMPILER__nx_unscanned_Debu
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/config/config.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/config
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -306,8 +427,8 @@ build CMakeFiles/nx.dir/src/core/metadata.cpp.o: CXX_COMPILER__nx_unscanned_Debu
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/core/metadata.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/core
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -317,8 +438,8 @@ build CMakeFiles/nx.dir/src/core/note.cpp.o: CXX_COMPILER__nx_unscanned_Debug /U
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/core/note.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/core
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -328,10 +449,65 @@ build CMakeFiles/nx.dir/src/core/note_id.cpp.o: CXX_COMPILER__nx_unscanned_Debug
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/core/note_id.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/core
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/crypto/age_crypto.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/crypto/age_crypto.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/crypto/age_crypto.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/crypto
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/import_export/export_manager.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/import_export/export_manager.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/import_export/export_manager.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/import_export
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/import_export/import_manager.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/import_export/import_manager.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/import_export/import_manager.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/import_export
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/import_export/json_exporter.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/import_export/json_exporter.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/import_export/json_exporter.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/import_export
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/import_export/markdown_exporter.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/import_export/markdown_exporter.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/import_export/markdown_exporter.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/import_export
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
   TARGET_PDB = nx.pdb
 
@@ -339,8 +515,8 @@ build CMakeFiles/nx.dir/src/index/index.cpp.o: CXX_COMPILER__nx_unscanned_Debug 
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/index/index.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/index
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -350,8 +526,8 @@ build CMakeFiles/nx.dir/src/index/query_parser.cpp.o: CXX_COMPILER__nx_unscanned
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/index/query_parser.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/index
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -361,8 +537,8 @@ build CMakeFiles/nx.dir/src/index/ripgrep_index.cpp.o: CXX_COMPILER__nx_unscanne
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/index/ripgrep_index.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/index
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -372,8 +548,8 @@ build CMakeFiles/nx.dir/src/index/sqlite_index.cpp.o: CXX_COMPILER__nx_unscanned
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/index/sqlite_index.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/index
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -383,8 +559,8 @@ build CMakeFiles/nx.dir/src/store/attachment_store.cpp.o: CXX_COMPILER__nx_unsca
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/store/attachment_store.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/store
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -394,8 +570,8 @@ build CMakeFiles/nx.dir/src/store/filesystem_attachment_store.cpp.o: CXX_COMPILE
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/store/filesystem_attachment_store.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/store
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -405,10 +581,43 @@ build CMakeFiles/nx.dir/src/store/filesystem_store.cpp.o: CXX_COMPILER__nx_unsca
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/store/filesystem_store.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/store
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/store/notebook_manager.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/store/notebook_manager.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/store/notebook_manager.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/store
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/sync/git_sync.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/sync/git_sync.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/sync/git_sync.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/sync
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/template/template_manager.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/template/template_manager.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/template/template_manager.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/template
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
   TARGET_PDB = nx.pdb
 
@@ -416,8 +625,8 @@ build CMakeFiles/nx.dir/src/tui/tui_app.cpp.o: CXX_COMPILER__nx_unscanned_Debug 
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/tui/tui_app.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/tui
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -427,8 +636,8 @@ build CMakeFiles/nx.dir/src/util/filesystem.cpp.o: CXX_COMPILER__nx_unscanned_De
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/util/filesystem.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/util
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -438,8 +647,30 @@ build CMakeFiles/nx.dir/src/util/http_client.cpp.o: CXX_COMPILER__nx_unscanned_D
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/util/http_client.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/util
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/util/safe_process.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/util/safe_process.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/util/safe_process.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/nx.dir
+  OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/util
+  TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
+  TARGET_PDB = nx.pdb
+
+build CMakeFiles/nx.dir/src/util/security.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/util/security.cpp || cmake_object_order_depends_target_nx
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = CMakeFiles/nx.dir/src/util/security.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/util
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -449,8 +680,8 @@ build CMakeFiles/nx.dir/src/util/time.cpp.o: CXX_COMPILER__nx_unscanned_Debug /U
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/util/time.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/util
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -460,8 +691,8 @@ build CMakeFiles/nx.dir/src/util/xdg.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Us
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = CMakeFiles/nx.dir/src/util/xdg.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
-  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -isystem /opt/homebrew/include
+  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wunused -Wno-unused-parameter -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/opt/homebrew/Cellar/libgit2/1.9.1/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
   OBJECT_DIR = CMakeFiles/nx.dir
   OBJECT_FILE_DIR = CMakeFiles/nx.dir/src/util
   TARGET_COMPILE_PDB = CMakeFiles/nx.dir/
@@ -475,10 +706,10 @@ build CMakeFiles/nx.dir/src/util/xdg.cpp.o: CXX_COMPILER__nx_unscanned_Debug /Us
 #############################################
 # Link the executable nx
 
-build nx: CXX_EXECUTABLE_LINKER__nx_Debug CMakeFiles/nx.dir/src/app/main.cpp.o CMakeFiles/nx.dir/src/cli/application.cpp.o CMakeFiles/nx.dir/src/cli/commands/ask_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/backlinks_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/edit_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/grep_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/list_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/move_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/new_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/open_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/outline_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/remove_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/rewrite_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/suggest_links_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/summarize_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/tag_suggest_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/tags_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/tasks_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/title_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/ui_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/view_command.cpp.o CMakeFiles/nx.dir/src/common.cpp.o CMakeFiles/nx.dir/src/config/config.cpp.o CMakeFiles/nx.dir/src/core/metadata.cpp.o CMakeFiles/nx.dir/src/core/note.cpp.o CMakeFiles/nx.dir/src/core/note_id.cpp.o CMakeFiles/nx.dir/src/index/index.cpp.o CMakeFiles/nx.dir/src/index/query_parser.cpp.o CMakeFiles/nx.dir/src/index/ripgrep_index.cpp.o CMakeFiles/nx.dir/src/index/sqlite_index.cpp.o CMakeFiles/nx.dir/src/store/attachment_store.cpp.o CMakeFiles/nx.dir/src/store/filesystem_attachment_store.cpp.o CMakeFiles/nx.dir/src/store/filesystem_store.cpp.o CMakeFiles/nx.dir/src/tui/tui_app.cpp.o CMakeFiles/nx.dir/src/util/filesystem.cpp.o CMakeFiles/nx.dir/src/util/http_client.cpp.o CMakeFiles/nx.dir/src/util/time.cpp.o CMakeFiles/nx.dir/src/util/xdg.cpp.o | /opt/homebrew/lib/libtomlplusplus.3.dylib /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib /opt/homebrew/lib/libspdlog.1.15.3.dylib /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd /opt/homebrew/lib/libftxui-component.6.1.9.dylib /opt/homebrew/lib/libfmt.11.2.0.dylib /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd /opt/homebrew/lib/libftxui-dom.6.1.9.dylib /opt/homebrew/lib/libftxui-screen.6.1.9.dylib
+build nx: CXX_EXECUTABLE_LINKER__nx_Debug CMakeFiles/nx.dir/src/app/main.cpp.o CMakeFiles/nx.dir/src/cli/application.cpp.o CMakeFiles/nx.dir/src/cli/commands/ask_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/attach_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/backlinks_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/backup_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/edit_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/encrypt_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/export_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/gc_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/grep_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/import_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/list_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/meta_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/move_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/new_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/notebook_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/open_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/outline_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/reindex_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/remove_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/rewrite_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/suggest_links_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/summarize_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/sync_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/tag_suggest_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/tags_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/tasks_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/title_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/tpl_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/ui_command.cpp.o CMakeFiles/nx.dir/src/cli/commands/view_command.cpp.o CMakeFiles/nx.dir/src/common.cpp.o CMakeFiles/nx.dir/src/config/config.cpp.o CMakeFiles/nx.dir/src/core/metadata.cpp.o CMakeFiles/nx.dir/src/core/note.cpp.o CMakeFiles/nx.dir/src/core/note_id.cpp.o CMakeFiles/nx.dir/src/crypto/age_crypto.cpp.o CMakeFiles/nx.dir/src/import_export/export_manager.cpp.o CMakeFiles/nx.dir/src/import_export/import_manager.cpp.o CMakeFiles/nx.dir/src/import_export/json_exporter.cpp.o CMakeFiles/nx.dir/src/import_export/markdown_exporter.cpp.o CMakeFiles/nx.dir/src/index/index.cpp.o CMakeFiles/nx.dir/src/index/query_parser.cpp.o CMakeFiles/nx.dir/src/index/ripgrep_index.cpp.o CMakeFiles/nx.dir/src/index/sqlite_index.cpp.o CMakeFiles/nx.dir/src/store/attachment_store.cpp.o CMakeFiles/nx.dir/src/store/filesystem_attachment_store.cpp.o CMakeFiles/nx.dir/src/store/filesystem_store.cpp.o CMakeFiles/nx.dir/src/store/notebook_manager.cpp.o CMakeFiles/nx.dir/src/sync/git_sync.cpp.o CMakeFiles/nx.dir/src/template/template_manager.cpp.o CMakeFiles/nx.dir/src/tui/tui_app.cpp.o CMakeFiles/nx.dir/src/util/filesystem.cpp.o CMakeFiles/nx.dir/src/util/http_client.cpp.o CMakeFiles/nx.dir/src/util/safe_process.cpp.o CMakeFiles/nx.dir/src/util/security.cpp.o CMakeFiles/nx.dir/src/util/time.cpp.o CMakeFiles/nx.dir/src/util/xdg.cpp.o | /opt/homebrew/lib/libtomlplusplus.3.dylib /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib /opt/homebrew/lib/libspdlog.1.15.3.dylib /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd /opt/homebrew/lib/libftxui-component.6.1.9.dylib /opt/homebrew/lib/libfmt.11.2.0.dylib /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd /opt/homebrew/lib/libftxui-dom.6.1.9.dylib /opt/homebrew/lib/libftxui-screen.6.1.9.dylib
   CONFIG = Debug
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -arch arm64
-  LINK_LIBRARIES = -Wl,-rpath,/opt/homebrew/Cellar/libgit2/1.9.1/lib -Wl,-rpath,/opt/homebrew/lib  /opt/homebrew/lib/libtomlplusplus.3.dylib  /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib  /opt/homebrew/lib/libspdlog.1.15.3.dylib  -lsqlite3  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd  /opt/homebrew/lib/libftxui-component.6.1.9.dylib  -lgit2  /opt/homebrew/lib/libfmt.11.2.0.dylib  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd  /opt/homebrew/lib/libftxui-dom.6.1.9.dylib  /opt/homebrew/lib/libftxui-screen.6.1.9.dylib
+  FLAGS = -g -arch arm64
+  LINK_LIBRARIES = -Wl,-rpath,/opt/homebrew/Cellar/libgit2/1.9.1/lib -Wl,-rpath,/opt/homebrew/lib  /opt/homebrew/lib/libtomlplusplus.3.dylib  /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib  /opt/homebrew/lib/libspdlog.1.15.3.dylib  -lsqlite3  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd  /opt/homebrew/lib/libftxui-component.6.1.9.dylib  -framework Security  -lgit2  /opt/homebrew/lib/libfmt.11.2.0.dylib  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libcurl.tbd  /opt/homebrew/lib/libftxui-dom.6.1.9.dylib  /opt/homebrew/lib/libftxui-screen.6.1.9.dylib
   LINK_PATH = -L/opt/homebrew/Cellar/libgit2/1.9.1/lib
   OBJECT_DIR = CMakeFiles/nx.dir
   POST_BUILD = :
@@ -606,7 +837,7 @@ build cmake_object_order_depends_target_test_common: phony || .
 build tests/CMakeFiles/test_common.dir/common/test_helpers.cpp.o: CXX_COMPILER__test_common_unscanned_Debug /Users/amitpeer/Documents/Code/nx/tests/common/test_helpers.cpp || cmake_object_order_depends_target_test_common
   CONFIG = Debug
   DEP_FILE = tests/CMakeFiles/test_common.dir/common/test_helpers.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64
+  FLAGS = -g -std=c++2b -arch arm64
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/common -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/test_common.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/test_common.dir/common
@@ -616,7 +847,7 @@ build tests/CMakeFiles/test_common.dir/common/test_helpers.cpp.o: CXX_COMPILER__
 build tests/CMakeFiles/test_common.dir/common/temp_directory.cpp.o: CXX_COMPILER__test_common_unscanned_Debug /Users/amitpeer/Documents/Code/nx/tests/common/temp_directory.cpp || cmake_object_order_depends_target_test_common
   CONFIG = Debug
   DEP_FILE = tests/CMakeFiles/test_common.dir/common/temp_directory.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64
+  FLAGS = -g -std=c++2b -arch arm64
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/common -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/test_common.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/test_common.dir/common
@@ -634,7 +865,7 @@ build tests/CMakeFiles/test_common.dir/common/temp_directory.cpp.o: CXX_COMPILER
 build tests/libtest_common.a: CXX_STATIC_LIBRARY_LINKER__test_common_Debug tests/CMakeFiles/test_common.dir/common/test_helpers.cpp.o tests/CMakeFiles/test_common.dir/common/temp_directory.cpp.o
   ARCH_FLAGS = -arch arm64
   CONFIG = Debug
-  LANGUAGE_COMPILE_FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g
+  LANGUAGE_COMPILE_FLAGS = -g
   OBJECT_DIR = tests/CMakeFiles/test_common.dir
   POST_BUILD = :
   PRE_LINK = :
@@ -655,7 +886,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/common.cpp.o: CXX_COMPILER__nx_core_un
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/common.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src
@@ -666,7 +897,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/core/note_id.cpp.o: CXX_COMPILER__nx_c
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/core/note_id.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/core
@@ -677,7 +908,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/core/metadata.cpp.o: CXX_COMPILER__nx_
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/core/metadata.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/core
@@ -688,7 +919,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/core/note.cpp.o: CXX_COMPILER__nx_core
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/core/note.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/core
@@ -699,7 +930,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/util/time.cpp.o: CXX_COMPILER__nx_core
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/util/time.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/util
@@ -710,7 +941,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/util/xdg.cpp.o: CXX_COMPILER__nx_core_
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/util/xdg.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/util
@@ -721,7 +952,18 @@ build tests/CMakeFiles/nx_core.dir/__/src/util/filesystem.cpp.o: CXX_COMPILER__n
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/util/filesystem.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
+  OBJECT_DIR = tests/CMakeFiles/nx_core.dir
+  OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/util
+  TARGET_COMPILE_PDB = tests/CMakeFiles/nx_core.dir/nx_core.pdb
+  TARGET_PDB = tests/libnx_core.pdb
+
+build tests/CMakeFiles/nx_core.dir/__/src/util/safe_process.cpp.o: CXX_COMPILER__nx_core_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/util/safe_process.cpp || cmake_object_order_depends_target_nx_core
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/util/safe_process.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/util
@@ -732,7 +974,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/store/filesystem_store.cpp.o: CXX_COMP
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/store/filesystem_store.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/store
@@ -743,7 +985,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/store/attachment_store.cpp.o: CXX_COMP
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/store/attachment_store.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/store
@@ -754,7 +996,18 @@ build tests/CMakeFiles/nx_core.dir/__/src/store/filesystem_attachment_store.cpp.
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/store/filesystem_attachment_store.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
+  OBJECT_DIR = tests/CMakeFiles/nx_core.dir
+  OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/store
+  TARGET_COMPILE_PDB = tests/CMakeFiles/nx_core.dir/nx_core.pdb
+  TARGET_PDB = tests/libnx_core.pdb
+
+build tests/CMakeFiles/nx_core.dir/__/src/store/notebook_manager.cpp.o: CXX_COMPILER__nx_core_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/store/notebook_manager.cpp || cmake_object_order_depends_target_nx_core
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/store/notebook_manager.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/store
@@ -765,7 +1018,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/config/config.cpp.o: CXX_COMPILER__nx_
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/config/config.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/config
@@ -776,7 +1029,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/index/index.cpp.o: CXX_COMPILER__nx_co
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/index/index.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/index
@@ -787,7 +1040,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/index/sqlite_index.cpp.o: CXX_COMPILER
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/index/sqlite_index.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/index
@@ -798,7 +1051,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/index/query_parser.cpp.o: CXX_COMPILER
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/index/query_parser.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/index
@@ -809,7 +1062,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/index/ripgrep_index.cpp.o: CXX_COMPILE
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/index/ripgrep_index.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/index
@@ -820,7 +1073,7 @@ build tests/CMakeFiles/nx_core.dir/__/src/cli/application.cpp.o: CXX_COMPILER__n
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/cli/application.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/cli
@@ -831,7 +1084,18 @@ build tests/CMakeFiles/nx_core.dir/__/src/cli/commands/new_command.cpp.o: CXX_CO
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/cli/commands/new_command.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
+  OBJECT_DIR = tests/CMakeFiles/nx_core.dir
+  OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/cli/commands
+  TARGET_COMPILE_PDB = tests/CMakeFiles/nx_core.dir/nx_core.pdb
+  TARGET_PDB = tests/libnx_core.pdb
+
+build tests/CMakeFiles/nx_core.dir/__/src/cli/commands/notebook_command.cpp.o: CXX_COMPILER__nx_core_unscanned_Debug /Users/amitpeer/Documents/Code/nx/src/cli/commands/notebook_command.cpp || cmake_object_order_depends_target_nx_core
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = tests/CMakeFiles/nx_core.dir/__/src/cli/commands/notebook_command.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_core.dir/__/src/cli/commands
@@ -846,10 +1110,10 @@ build tests/CMakeFiles/nx_core.dir/__/src/cli/commands/new_command.cpp.o: CXX_CO
 #############################################
 # Link the static library tests/libnx_core.a
 
-build tests/libnx_core.a: CXX_STATIC_LIBRARY_LINKER__nx_core_Debug tests/CMakeFiles/nx_core.dir/__/src/common.cpp.o tests/CMakeFiles/nx_core.dir/__/src/core/note_id.cpp.o tests/CMakeFiles/nx_core.dir/__/src/core/metadata.cpp.o tests/CMakeFiles/nx_core.dir/__/src/core/note.cpp.o tests/CMakeFiles/nx_core.dir/__/src/util/time.cpp.o tests/CMakeFiles/nx_core.dir/__/src/util/xdg.cpp.o tests/CMakeFiles/nx_core.dir/__/src/util/filesystem.cpp.o tests/CMakeFiles/nx_core.dir/__/src/store/filesystem_store.cpp.o tests/CMakeFiles/nx_core.dir/__/src/store/attachment_store.cpp.o tests/CMakeFiles/nx_core.dir/__/src/store/filesystem_attachment_store.cpp.o tests/CMakeFiles/nx_core.dir/__/src/config/config.cpp.o tests/CMakeFiles/nx_core.dir/__/src/index/index.cpp.o tests/CMakeFiles/nx_core.dir/__/src/index/sqlite_index.cpp.o tests/CMakeFiles/nx_core.dir/__/src/index/query_parser.cpp.o tests/CMakeFiles/nx_core.dir/__/src/index/ripgrep_index.cpp.o tests/CMakeFiles/nx_core.dir/__/src/cli/application.cpp.o tests/CMakeFiles/nx_core.dir/__/src/cli/commands/new_command.cpp.o
+build tests/libnx_core.a: CXX_STATIC_LIBRARY_LINKER__nx_core_Debug tests/CMakeFiles/nx_core.dir/__/src/common.cpp.o tests/CMakeFiles/nx_core.dir/__/src/core/note_id.cpp.o tests/CMakeFiles/nx_core.dir/__/src/core/metadata.cpp.o tests/CMakeFiles/nx_core.dir/__/src/core/note.cpp.o tests/CMakeFiles/nx_core.dir/__/src/util/time.cpp.o tests/CMakeFiles/nx_core.dir/__/src/util/xdg.cpp.o tests/CMakeFiles/nx_core.dir/__/src/util/filesystem.cpp.o tests/CMakeFiles/nx_core.dir/__/src/util/safe_process.cpp.o tests/CMakeFiles/nx_core.dir/__/src/store/filesystem_store.cpp.o tests/CMakeFiles/nx_core.dir/__/src/store/attachment_store.cpp.o tests/CMakeFiles/nx_core.dir/__/src/store/filesystem_attachment_store.cpp.o tests/CMakeFiles/nx_core.dir/__/src/store/notebook_manager.cpp.o tests/CMakeFiles/nx_core.dir/__/src/config/config.cpp.o tests/CMakeFiles/nx_core.dir/__/src/index/index.cpp.o tests/CMakeFiles/nx_core.dir/__/src/index/sqlite_index.cpp.o tests/CMakeFiles/nx_core.dir/__/src/index/query_parser.cpp.o tests/CMakeFiles/nx_core.dir/__/src/index/ripgrep_index.cpp.o tests/CMakeFiles/nx_core.dir/__/src/cli/application.cpp.o tests/CMakeFiles/nx_core.dir/__/src/cli/commands/new_command.cpp.o tests/CMakeFiles/nx_core.dir/__/src/cli/commands/notebook_command.cpp.o
   ARCH_FLAGS = -arch arm64
   CONFIG = Debug
-  LANGUAGE_COMPILE_FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g
+  LANGUAGE_COMPILE_FLAGS = -g
   OBJECT_DIR = tests/CMakeFiles/nx_core.dir
   POST_BUILD = :
   PRE_LINK = :
@@ -870,7 +1134,7 @@ build tests/CMakeFiles/unit_tests.dir/unit/core/test_metadata.cpp.o: CXX_COMPILE
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/unit_tests.dir/unit/core/test_metadata.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/unit_tests.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/unit_tests.dir/unit/core
@@ -881,7 +1145,7 @@ build tests/CMakeFiles/unit_tests.dir/unit/core/test_note.cpp.o: CXX_COMPILER__u
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/unit_tests.dir/unit/core/test_note.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/unit_tests.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/unit_tests.dir/unit/core
@@ -892,7 +1156,7 @@ build tests/CMakeFiles/unit_tests.dir/unit/core/test_note_id.cpp.o: CXX_COMPILER
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/unit_tests.dir/unit/core/test_note_id.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/unit_tests.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/unit_tests.dir/unit/core
@@ -903,7 +1167,7 @@ build tests/CMakeFiles/unit_tests.dir/unit/index/test_query_parser.cpp.o: CXX_CO
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/unit_tests.dir/unit/index/test_query_parser.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/unit_tests.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/unit_tests.dir/unit/index
@@ -914,7 +1178,7 @@ build tests/CMakeFiles/unit_tests.dir/unit/index/test_ripgrep_index.cpp.o: CXX_C
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/unit_tests.dir/unit/index/test_ripgrep_index.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/unit_tests.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/unit_tests.dir/unit/index
@@ -925,10 +1189,21 @@ build tests/CMakeFiles/unit_tests.dir/unit/index/test_sqlite_index.cpp.o: CXX_CO
   CONFIG = Debug
   DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/unit_tests.dir/unit/index/test_sqlite_index.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/unit_tests.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/unit_tests.dir/unit/index
+  TARGET_COMPILE_PDB = tests/CMakeFiles/unit_tests.dir/
+  TARGET_PDB = tests/unit_tests.pdb
+
+build tests/CMakeFiles/unit_tests.dir/unit/store/test_notebook_manager.cpp.o: CXX_COMPILER__unit_tests_unscanned_Debug /Users/amitpeer/Documents/Code/nx/tests/unit/store/test_notebook_manager.cpp || cmake_object_order_depends_target_unit_tests
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = tests/CMakeFiles/unit_tests.dir/unit/store/test_notebook_manager.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
+  OBJECT_DIR = tests/CMakeFiles/unit_tests.dir
+  OBJECT_FILE_DIR = tests/CMakeFiles/unit_tests.dir/unit/store
   TARGET_COMPILE_PDB = tests/CMakeFiles/unit_tests.dir/
   TARGET_PDB = tests/unit_tests.pdb
 
@@ -940,9 +1215,9 @@ build tests/CMakeFiles/unit_tests.dir/unit/index/test_sqlite_index.cpp.o: CXX_CO
 #############################################
 # Link the executable tests/unit_tests
 
-build tests/unit_tests tests/unit_tests[1]_tests.cmake | ${cmake_ninja_workdir}tests/unit_tests[1]_tests.cmake: CXX_EXECUTABLE_LINKER__unit_tests_Debug tests/CMakeFiles/unit_tests.dir/unit/core/test_metadata.cpp.o tests/CMakeFiles/unit_tests.dir/unit/core/test_note.cpp.o tests/CMakeFiles/unit_tests.dir/unit/core/test_note_id.cpp.o tests/CMakeFiles/unit_tests.dir/unit/index/test_query_parser.cpp.o tests/CMakeFiles/unit_tests.dir/unit/index/test_ripgrep_index.cpp.o tests/CMakeFiles/unit_tests.dir/unit/index/test_sqlite_index.cpp.o | tests/libnx_core.a tests/libtest_common.a /opt/homebrew/lib/libgtest.a /opt/homebrew/lib/libgtest_main.a /opt/homebrew/lib/libtomlplusplus.3.dylib /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib /opt/homebrew/lib/libspdlog.1.15.3.dylib /opt/homebrew/lib/libfmt.11.2.0.dylib /opt/homebrew/lib/libgtest.a || tests/libnx_core.a tests/libtest_common.a
+build tests/unit_tests tests/unit_tests[1]_tests.cmake | ${cmake_ninja_workdir}tests/unit_tests[1]_tests.cmake: CXX_EXECUTABLE_LINKER__unit_tests_Debug tests/CMakeFiles/unit_tests.dir/unit/core/test_metadata.cpp.o tests/CMakeFiles/unit_tests.dir/unit/core/test_note.cpp.o tests/CMakeFiles/unit_tests.dir/unit/core/test_note_id.cpp.o tests/CMakeFiles/unit_tests.dir/unit/index/test_query_parser.cpp.o tests/CMakeFiles/unit_tests.dir/unit/index/test_ripgrep_index.cpp.o tests/CMakeFiles/unit_tests.dir/unit/index/test_sqlite_index.cpp.o tests/CMakeFiles/unit_tests.dir/unit/store/test_notebook_manager.cpp.o | tests/libnx_core.a tests/libtest_common.a /opt/homebrew/lib/libgtest.a /opt/homebrew/lib/libgtest_main.a /opt/homebrew/lib/libtomlplusplus.3.dylib /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib /opt/homebrew/lib/libspdlog.1.15.3.dylib /opt/homebrew/lib/libfmt.11.2.0.dylib /opt/homebrew/lib/libgtest.a || tests/libnx_core.a tests/libtest_common.a
   CONFIG = Debug
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -arch arm64
+  FLAGS = -g -arch arm64
   LINK_LIBRARIES = -Wl,-rpath,/opt/homebrew/Cellar/libgit2/1.9.1/lib -Wl,-rpath,/opt/homebrew/lib  tests/libnx_core.a  tests/libtest_common.a  /opt/homebrew/lib/libgtest.a  /opt/homebrew/lib/libgtest_main.a  /opt/homebrew/lib/libtomlplusplus.3.dylib  /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib  /opt/homebrew/lib/libspdlog.1.15.3.dylib  /opt/homebrew/lib/libfmt.11.2.0.dylib  -lsqlite3  -lgit2  /opt/homebrew/lib/libgtest.a
   LINK_PATH = -L/opt/homebrew/Cellar/libgit2/1.9.1/lib
   OBJECT_DIR = tests/CMakeFiles/unit_tests.dir
@@ -952,6 +1227,47 @@ build tests/unit_tests tests/unit_tests[1]_tests.cmake | ${cmake_ninja_workdir}t
   TARGET_COMPILE_PDB = tests/CMakeFiles/unit_tests.dir/
   TARGET_FILE = tests/unit_tests
   TARGET_PDB = tests/unit_tests.pdb
+
+# =============================================================================
+# Object build statements for EXECUTABLE target integration_tests
+
+
+#############################################
+# Order-only phony target for integration_tests
+
+build cmake_object_order_depends_target_integration_tests: phony || cmake_object_order_depends_target_nx_core cmake_object_order_depends_target_test_common
+
+build tests/CMakeFiles/integration_tests.dir/integration/test_notebook_cli.cpp.o: CXX_COMPILER__integration_tests_unscanned_Debug /Users/amitpeer/Documents/Code/nx/tests/integration/test_notebook_cli.cpp || cmake_object_order_depends_target_integration_tests
+  CONFIG = Debug
+  DEFINES = -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
+  DEP_FILE = tests/CMakeFiles/integration_tests.dir/integration/test_notebook_cli.cpp.o.d
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
+  OBJECT_DIR = tests/CMakeFiles/integration_tests.dir
+  OBJECT_FILE_DIR = tests/CMakeFiles/integration_tests.dir/integration
+  TARGET_COMPILE_PDB = tests/CMakeFiles/integration_tests.dir/
+  TARGET_PDB = tests/integration_tests.pdb
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target integration_tests
+
+
+#############################################
+# Link the executable tests/integration_tests
+
+build tests/integration_tests tests/integration_tests[1]_tests.cmake | ${cmake_ninja_workdir}tests/integration_tests[1]_tests.cmake: CXX_EXECUTABLE_LINKER__integration_tests_Debug tests/CMakeFiles/integration_tests.dir/integration/test_notebook_cli.cpp.o | tests/libnx_core.a tests/libtest_common.a /opt/homebrew/lib/libgtest.a /opt/homebrew/lib/libgtest_main.a /opt/homebrew/lib/libtomlplusplus.3.dylib /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib /opt/homebrew/lib/libspdlog.1.15.3.dylib /opt/homebrew/lib/libfmt.11.2.0.dylib /opt/homebrew/lib/libgtest.a || tests/libnx_core.a tests/libtest_common.a
+  CONFIG = Debug
+  FLAGS = -g -arch arm64
+  LINK_LIBRARIES = -Wl,-rpath,/opt/homebrew/Cellar/libgit2/1.9.1/lib -Wl,-rpath,/opt/homebrew/lib  tests/libnx_core.a  tests/libtest_common.a  /opt/homebrew/lib/libgtest.a  /opt/homebrew/lib/libgtest_main.a  /opt/homebrew/lib/libtomlplusplus.3.dylib  /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib  /opt/homebrew/lib/libspdlog.1.15.3.dylib  /opt/homebrew/lib/libfmt.11.2.0.dylib  -lsqlite3  -lgit2  /opt/homebrew/lib/libgtest.a
+  LINK_PATH = -L/opt/homebrew/Cellar/libgit2/1.9.1/lib
+  OBJECT_DIR = tests/CMakeFiles/integration_tests.dir
+  POST_BUILD = cd /Users/amitpeer/Documents/Code/nx/build-debug/tests && /opt/homebrew/bin/cmake -D TEST_TARGET=integration_tests -D TEST_EXECUTABLE=/Users/amitpeer/Documents/Code/nx/build-debug/tests/integration_tests -D TEST_EXECUTOR= -D TEST_WORKING_DIR=/Users/amitpeer/Documents/Code/nx/build-debug/tests -D TEST_EXTRA_ARGS= -D "TEST_PROPERTIES=LABELS;integration" -D TEST_PREFIX= -D TEST_SUFFIX= -D TEST_FILTER= -D NO_PRETTY_TYPES=FALSE -D NO_PRETTY_VALUES=FALSE -D TEST_LIST=integration_tests_TESTS -D CTEST_FILE=/Users/amitpeer/Documents/Code/nx/build-debug/tests/integration_tests[1]_tests.cmake -D TEST_DISCOVERY_TIMEOUT=5 -D TEST_DISCOVERY_EXTRA_ARGS= -D TEST_XML_OUTPUT_DIR= -P /opt/homebrew/share/cmake/Modules/GoogleTestAddTests.cmake
+  PRE_LINK = :
+  RESTAT = 1
+  TARGET_COMPILE_PDB = tests/CMakeFiles/integration_tests.dir/
+  TARGET_FILE = tests/integration_tests
+  TARGET_PDB = tests/integration_tests.pdb
 
 # =============================================================================
 # Object build statements for EXECUTABLE target nx_benchmark
@@ -966,7 +1282,7 @@ build tests/CMakeFiles/nx_benchmark.dir/benchmark/core_benchmarks.cpp.o: CXX_COM
   CONFIG = Debug
   DEFINES = -DBENCHMARK_STATIC_DEFINE -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_benchmark.dir/benchmark/core_benchmarks.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_benchmark.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_benchmark.dir/benchmark
@@ -977,7 +1293,7 @@ build tests/CMakeFiles/nx_benchmark.dir/benchmark/corpus_generator.cpp.o: CXX_CO
   CONFIG = Debug
   DEFINES = -DBENCHMARK_STATIC_DEFINE -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB
   DEP_FILE = tests/CMakeFiles/nx_benchmark.dir/benchmark/corpus_generator.cpp.o.d
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
+  FLAGS = -g -std=c++2b -arch arm64 -DTOML_HEADER_ONLY=0 -DTOML_SHARED_LIB=1
   INCLUDES = -I/Users/amitpeer/Documents/Code/nx/include -I/Users/amitpeer/Documents/Code/nx/tests/../include -I/Users/amitpeer/Documents/Code/nx/tests/common -isystem /opt/homebrew/include
   OBJECT_DIR = tests/CMakeFiles/nx_benchmark.dir
   OBJECT_FILE_DIR = tests/CMakeFiles/nx_benchmark.dir/benchmark
@@ -994,7 +1310,7 @@ build tests/CMakeFiles/nx_benchmark.dir/benchmark/corpus_generator.cpp.o: CXX_CO
 
 build tests/nx_benchmark: CXX_EXECUTABLE_LINKER__nx_benchmark_Debug tests/CMakeFiles/nx_benchmark.dir/benchmark/core_benchmarks.cpp.o tests/CMakeFiles/nx_benchmark.dir/benchmark/corpus_generator.cpp.o | tests/libnx_core.a tests/libtest_common.a /opt/homebrew/lib/libbenchmark.a /opt/homebrew/lib/libbenchmark_main.a /opt/homebrew/lib/libtomlplusplus.3.dylib /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib /opt/homebrew/lib/libspdlog.1.15.3.dylib /opt/homebrew/lib/libfmt.11.2.0.dylib /opt/homebrew/lib/libgtest_main.a /opt/homebrew/lib/libgtest.a /opt/homebrew/lib/libbenchmark.a || tests/libnx_core.a tests/libtest_common.a
   CONFIG = Debug
-  FLAGS = -fsanitize=address -fno-omit-frame-pointer -g -g -arch arm64
+  FLAGS = -g -arch arm64
   LINK_LIBRARIES = -Wl,-rpath,/opt/homebrew/Cellar/libgit2/1.9.1/lib -Wl,-rpath,/opt/homebrew/lib  tests/libnx_core.a  tests/libtest_common.a  /opt/homebrew/lib/libbenchmark.a  /opt/homebrew/lib/libbenchmark_main.a  /opt/homebrew/lib/libtomlplusplus.3.dylib  /opt/homebrew/lib/libyaml-cpp.0.8.0.dylib  /opt/homebrew/lib/libspdlog.1.15.3.dylib  /opt/homebrew/lib/libfmt.11.2.0.dylib  -lsqlite3  -lgit2  /opt/homebrew/lib/libgtest_main.a  /opt/homebrew/lib/libgtest.a  /opt/homebrew/lib/libbenchmark.a
   LINK_PATH = -L/opt/homebrew/Cellar/libgit2/1.9.1/lib
   OBJECT_DIR = tests/CMakeFiles/nx_benchmark.dir
@@ -1014,13 +1330,13 @@ build tests/test_unit: phony tests/CMakeFiles/test_unit tests/unit_tests
 #############################################
 # Utility command for test_integration
 
-build tests/test_integration: phony tests/CMakeFiles/test_integration
+build tests/test_integration: phony tests/CMakeFiles/test_integration tests/integration_tests
 
 
 #############################################
 # Utility command for test_all
 
-build tests/test_all: phony tests/CMakeFiles/test_all tests/unit_tests
+build tests/test_all: phony tests/CMakeFiles/test_all tests/integration_tests tests/unit_tests
 
 
 #############################################
@@ -1136,7 +1452,7 @@ build tests/CMakeFiles/test_unit | ${cmake_ninja_workdir}tests/CMakeFiles/test_u
 #############################################
 # Custom command for tests/CMakeFiles/test_integration
 
-build tests/CMakeFiles/test_integration | ${cmake_ninja_workdir}tests/CMakeFiles/test_integration: CUSTOM_COMMAND tests/integration_tests
+build tests/CMakeFiles/test_integration | ${cmake_ninja_workdir}tests/CMakeFiles/test_integration: CUSTOM_COMMAND tests/integration_tests || tests/integration_tests tests/libnx_core.a tests/libtest_common.a
   COMMAND = cd /Users/amitpeer/Documents/Code/nx/build-debug/tests && /opt/homebrew/bin/ctest -L integration --output-on-failure
   DESC = Running integration tests
 
@@ -1144,12 +1460,14 @@ build tests/CMakeFiles/test_integration | ${cmake_ninja_workdir}tests/CMakeFiles
 #############################################
 # Custom command for tests/CMakeFiles/test_all
 
-build tests/CMakeFiles/test_all | ${cmake_ninja_workdir}tests/CMakeFiles/test_all: CUSTOM_COMMAND tests/unit_tests tests/integration_tests || tests/libnx_core.a tests/libtest_common.a tests/unit_tests
+build tests/CMakeFiles/test_all | ${cmake_ninja_workdir}tests/CMakeFiles/test_all: CUSTOM_COMMAND tests/unit_tests tests/integration_tests || tests/integration_tests tests/libnx_core.a tests/libtest_common.a tests/unit_tests
   COMMAND = cd /Users/amitpeer/Documents/Code/nx/build-debug/tests && /opt/homebrew/bin/ctest --output-on-failure
   DESC = Running all tests
 
 # =============================================================================
 # Target aliases.
+
+build integration_tests: phony tests/integration_tests
 
 build libnx_core.a: phony tests/libnx_core.a
 
@@ -1184,7 +1502,7 @@ build all: phony nx tests/all
 #############################################
 # Folder: /Users/amitpeer/Documents/Code/nx/build-debug/tests
 
-build tests/all: phony tests/libtest_common.a tests/libnx_core.a tests/unit_tests tests/nx_benchmark
+build tests/all: phony tests/libtest_common.a tests/libnx_core.a tests/unit_tests tests/integration_tests tests/nx_benchmark
 
 # =============================================================================
 # Built-in targets

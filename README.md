@@ -80,6 +80,12 @@ Run `nx` or `nx ui` to launch the full-featured terminal interface:
 - `e` - Edit selected note
 - `a` - AI auto-tag selected note
 - `A` - AI auto-title selected note
+- `Ctrl+N` - Create new notebook
+- `Ctrl+R` - Rename notebook (navigation pane)
+- `Ctrl+D` - Delete notebook (navigation pane)
+- `N` - Toggle notebook filter
+- `Space` - Expand/collapse notebook
+- `C` - Clear all filters
 - `?` - Help
 
 ## 📚 Commands Reference
@@ -112,6 +118,15 @@ nx rewrite <id> [--tone crisp]                   # Content rewriting
 nx tasks <id>                                    # Extract action items
 nx suggest-links <id>                            # Find related notes
 nx outline "topic"                               # Generate outline
+```
+
+### **Notebook Management**
+```bash
+nx notebook list [--stats]                       # List all notebooks
+nx notebook create <name>                        # Create new notebook
+nx notebook rename <old> <new>                   # Rename notebook
+nx notebook delete <name> [--force]              # Delete notebook
+nx notebook info <name> [--stats]                # Show notebook details
 ```
 
 ### **Import/Export**

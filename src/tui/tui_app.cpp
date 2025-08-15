@@ -44,9 +44,11 @@ static void signalHandler(int signal) {
 
 TUIApp::TUIApp(nx::config::Config& config, 
                nx::store::NoteStore& note_store,
+               nx::store::NotebookManager& notebook_manager,
                nx::index::Index& search_index)
     : config_(config)
     , note_store_(note_store)
+    , notebook_manager_(notebook_manager)
     , search_index_(search_index)
     , screen_(ScreenInteractive::Fullscreen()) {
   
@@ -84,6 +86,8 @@ int TUIApp::run() {
   // Load initial data
   loadNotes();
   loadTags();
+  loadNotebooks();
+  buildNavigationItems();
   
   // Set initial status
   setStatusMessage("nx notes - Press ? for help, : for commands, q to quit");
@@ -132,7 +136,7 @@ Component TUIApp::createMainComponent() {
         
       case ViewMode::ThreePane:
         panes = {
-          renderTagsPanel() | size(WIDTH, EQUAL, sizing.tags_width),
+          renderNavigationPanel() | size(WIDTH, EQUAL, sizing.tags_width),
           separator(),
           renderNotesPanel() | size(WIDTH, EQUAL, sizing.notes_width),
           separator(), 
@@ -178,6 +182,20 @@ Component TUIApp::createMainComponent() {
       });
     }
     
+    if (state_.notebook_modal_open) {
+      main_view = dbox({
+        main_view,
+        renderNotebookModal() | center
+      });
+    }
+    
+    if (state_.move_note_modal_open) {
+      main_view = dbox({
+        main_view,
+        renderMoveNoteModal() | center
+      });
+    }
+    
     return main_view;
   }) | CatchEvent([this](Event event) {
     onKeyPress(event);
@@ -186,38 +204,6 @@ Component TUIApp::createMainComponent() {
 }
 
 
-Element TUIApp::renderTagList() const {
-  Elements tag_elements;
-  
-  if (state_.tags.empty()) {
-    tag_elements.push_back(text("No tags") | center | dim);
-    return vbox(tag_elements);
-  }
-  
-  int index = 0;
-  for (const auto& tag : state_.tags) {
-    auto count = state_.tag_counts.find(tag);
-    int tag_count = count != state_.tag_counts.end() ? count->second : 0;
-    
-    std::string tag_display = "📂 " + tag + " (" + std::to_string(tag_count) + ")";
-    auto tag_element = text(tag_display);
-    
-    // Highlight selected tag
-    if (state_.current_pane == ActivePane::Tags && index == state_.selected_tag_index) {
-      tag_element = tag_element | inverted;
-    }
-    
-    // Show active filters
-    if (state_.active_tag_filters.count(tag)) {
-      tag_element = tag_element | bgcolor(Color::Green);
-    }
-    
-    tag_elements.push_back(tag_element);
-    index++;
-  }
-  
-  return vbox(tag_elements);
-}
 
 ViewMode TUIApp::calculateViewMode(int terminal_width) const {
   if (terminal_width < 80) {
@@ -303,8 +289,117 @@ Result<void> TUIApp::loadTags() {
   }
 }
 
+Result<void> TUIApp::loadNotebooks() {
+  try {
+    // Load notebooks from the notebook manager
+    auto notebooks_result = notebook_manager_.listNotebooks(true);
+    if (!notebooks_result.has_value()) {
+      return std::unexpected(notebooks_result.error());
+    }
+    
+    // Convert to UI info format
+    state_.notebooks.clear();
+    for (const auto& notebook_info : notebooks_result.value()) {
+      NotebookUIInfo ui_info;
+      ui_info.name = notebook_info.name;
+      ui_info.note_count = notebook_info.note_count;
+      ui_info.tags = notebook_info.tags;
+      ui_info.tag_counts = notebook_info.tag_counts;
+      ui_info.expanded = false;  // Start collapsed
+      ui_info.selected = false;
+      
+      state_.notebooks.push_back(ui_info);
+    }
+    
+    // Sort notebooks alphabetically
+    std::sort(state_.notebooks.begin(), state_.notebooks.end(),
+      [](const NotebookUIInfo& a, const NotebookUIInfo& b) {
+        return a.name < b.name;
+      });
+    
+    return Result<void>();
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kFileError, "Failed to load notebooks: " + std::string(e.what())));
+  }
+}
+
+void TUIApp::buildNavigationItems() {
+  state_.nav_items.clear();
+  
+  // Add notebooks and their tags
+  for (auto& notebook : state_.notebooks) {
+    // Add notebook entry
+    NavItem notebook_item;
+    notebook_item.type = NavItemType::Notebook;
+    notebook_item.name = notebook.name;
+    notebook_item.count = notebook.note_count;
+    notebook_item.selected = notebook.selected;
+    notebook_item.expanded = notebook.expanded;
+    
+    state_.nav_items.push_back(notebook_item);
+    
+    // Add notebook tags if expanded
+    if (notebook.expanded) {
+      for (const auto& tag : notebook.tags) {
+        NavItem tag_item;
+        tag_item.type = NavItemType::NotebookTag;
+        tag_item.name = tag;
+        tag_item.parent_notebook = notebook.name;
+        
+        // Get count for this tag in this notebook
+        auto it = notebook.tag_counts.find(tag);
+        tag_item.count = (it != notebook.tag_counts.end()) ? it->second : 0;
+        
+        // Check if this notebook+tag combination is selected
+        auto nb_it = state_.active_notebook_tags.find(notebook.name);
+        tag_item.selected = (nb_it != state_.active_notebook_tags.end() && 
+                           nb_it->second.count(tag) > 0);
+        
+        state_.nav_items.push_back(tag_item);
+      }
+    }
+  }
+  
+  // Add separator and global tags if enabled
+  if (state_.show_all_tags_section && !state_.tags.empty()) {
+    // Add all global tags
+    for (const auto& tag : state_.tags) {
+      NavItem tag_item;
+      tag_item.type = NavItemType::GlobalTag;
+      tag_item.name = tag;
+      tag_item.parent_notebook = "";  // Global tag
+      
+      // Get global count for this tag
+      auto it = state_.tag_counts.find(tag);
+      tag_item.count = (it != state_.tag_counts.end()) ? it->second : 0;
+      
+      // Check if this global tag is selected
+      tag_item.selected = state_.active_global_tags.count(tag) > 0;
+      
+      state_.nav_items.push_back(tag_item);
+    }
+  }
+}
+
+void TUIApp::toggleNotebookExpansion(const std::string& notebook) {
+  // Find the notebook in the state and toggle its expansion
+  auto notebook_it = std::find_if(state_.notebooks.begin(), state_.notebooks.end(),
+    [&notebook](const NotebookUIInfo& nb) { return nb.name == notebook; });
+  
+  if (notebook_it != state_.notebooks.end()) {
+    notebook_it->expanded = !notebook_it->expanded;
+    
+    // Rebuild navigation items to reflect the change
+    buildNavigationItems();
+    
+    // Update status message
+    std::string action = notebook_it->expanded ? "Expanded" : "Collapsed";
+    setStatusMessage(action + " notebook: " + notebook);
+  }
+}
+
 void TUIApp::refreshData() {
-  // Reload notes and tags from storage
+  // Reload notes, tags, and notebooks from storage
   auto notes_result = loadNotes();
   if (!notes_result) {
     setStatusMessage("Error loading notes: " + notes_result.error().message());
@@ -316,6 +411,15 @@ void TUIApp::refreshData() {
     setStatusMessage("Error loading tags: " + tags_result.error().message());
     return;
   }
+  
+  auto notebooks_result = loadNotebooks();
+  if (!notebooks_result) {
+    setStatusMessage("Error loading notebooks: " + notebooks_result.error().message());
+    return;
+  }
+  
+  // Rebuild navigation items
+  buildNavigationItems();
   
   // Apply current filters and sorting
   applyFilters();
@@ -344,18 +448,78 @@ void TUIApp::applyFilters() {
       filtered_notes.end());
   }
   
-  // Apply tag filters (AND logic)
-  if (!state_.active_tag_filters.empty()) {
+  // Check if we have any smart filters active
+  bool has_notebook_filters = !state_.active_notebooks.empty();
+  bool has_notebook_tag_filters = !state_.active_notebook_tags.empty();
+  bool has_global_tag_filters = !state_.active_global_tags.empty();
+  bool has_legacy_tag_filters = !state_.active_tag_filters.empty();
+  
+  // Apply smart filtering logic
+  if (has_notebook_filters || has_notebook_tag_filters || has_global_tag_filters || has_legacy_tag_filters) {
     filtered_notes.erase(
       std::remove_if(filtered_notes.begin(), filtered_notes.end(),
-        [this](const nx::core::Metadata& metadata) {
+        [this, has_notebook_filters, has_notebook_tag_filters, has_global_tag_filters, has_legacy_tag_filters](const nx::core::Metadata& metadata) {
           const auto& note_tags = metadata.tags();
-          for (const auto& filter_tag : state_.active_tag_filters) {
-            if (std::find(note_tags.begin(), note_tags.end(), filter_tag) == note_tags.end()) {
-              return true; // Note doesn't have this required tag
+          const auto& note_notebook = metadata.notebook();
+          
+          // 1. Check notebook filters (OR logic)
+          bool passes_notebook_filter = true;
+          if (has_notebook_filters) {
+            passes_notebook_filter = false;
+            if (note_notebook.has_value()) {
+              passes_notebook_filter = state_.active_notebooks.count(note_notebook.value()) > 0;
             }
           }
-          return false; // Note has all required tags
+          
+          // 2. Check notebook-scoped tag filters (AND within notebook, OR between notebooks)
+          bool passes_notebook_tag_filter = true;
+          if (has_notebook_tag_filters) {
+            passes_notebook_tag_filter = false;
+            
+            // Check each notebook's tag requirements
+            for (const auto& [notebook_name, required_tags] : state_.active_notebook_tags) {
+              if (note_notebook.has_value() && note_notebook.value() == notebook_name) {
+                // Note is in this filtered notebook, check if it has all required tags
+                bool has_all_notebook_tags = true;
+                for (const auto& required_tag : required_tags) {
+                  if (std::find(note_tags.begin(), note_tags.end(), required_tag) == note_tags.end()) {
+                    has_all_notebook_tags = false;
+                    break;
+                  }
+                }
+                if (has_all_notebook_tags) {
+                  passes_notebook_tag_filter = true;
+                  break;
+                }
+              }
+            }
+          }
+          
+          // 3. Check global tag filters (AND logic)
+          bool passes_global_tag_filter = true;
+          if (has_global_tag_filters) {
+            for (const auto& required_tag : state_.active_global_tags) {
+              if (std::find(note_tags.begin(), note_tags.end(), required_tag) == note_tags.end()) {
+                passes_global_tag_filter = false;
+                break;
+              }
+            }
+          }
+          
+          // 4. Check legacy tag filters for backward compatibility (AND logic)
+          bool passes_legacy_tag_filter = true;
+          if (has_legacy_tag_filters) {
+            for (const auto& required_tag : state_.active_tag_filters) {
+              if (std::find(note_tags.begin(), note_tags.end(), required_tag) == note_tags.end()) {
+                passes_legacy_tag_filter = false;
+                break;
+              }
+            }
+          }
+          
+          // Note must pass ALL filter categories that are active
+          return !(passes_notebook_filter && passes_notebook_tag_filter && 
+                   passes_global_tag_filter && passes_legacy_tag_filter);
         }),
       filtered_notes.end());
   }
@@ -610,6 +774,137 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     return;
   }
   
+  if (state_.notebook_modal_open) {
+    if (event == ftxui::Event::Escape) {
+      state_.notebook_modal_open = false;
+      state_.notebook_modal_input.clear();
+      state_.notebook_modal_target.clear();
+      state_.notebook_modal_force = false;
+      return;
+    }
+    if (event == ftxui::Event::Return) {
+      // Execute the notebook operation
+      switch (state_.notebook_modal_mode) {
+        case AppState::NotebookModalMode::Create:
+          if (!state_.notebook_modal_input.empty()) {
+            auto result = createNotebook(state_.notebook_modal_input);
+            if (!result) {
+              setStatusMessage("Error creating notebook: " + result.error().message());
+            }
+          }
+          break;
+        case AppState::NotebookModalMode::Rename:
+          if (!state_.notebook_modal_input.empty() && !state_.notebook_modal_target.empty()) {
+            auto result = renameNotebook(state_.notebook_modal_target, state_.notebook_modal_input);
+            if (!result) {
+              setStatusMessage("Error renaming notebook: " + result.error().message());
+            }
+          }
+          break;
+        case AppState::NotebookModalMode::Delete:
+          if (!state_.notebook_modal_target.empty()) {
+            auto result = deleteNotebook(state_.notebook_modal_target, state_.notebook_modal_force);
+            if (!result) {
+              setStatusMessage("Error deleting notebook: " + result.error().message());
+            }
+          }
+          break;
+      }
+      
+      state_.notebook_modal_open = false;
+      state_.notebook_modal_input.clear();
+      state_.notebook_modal_target.clear();
+      state_.notebook_modal_force = false;
+      return;
+    }
+    if (event == ftxui::Event::Character('f') && state_.notebook_modal_mode == AppState::NotebookModalMode::Delete) {
+      // Toggle force delete flag
+      state_.notebook_modal_force = !state_.notebook_modal_force;
+      return;
+    }
+    if (event == ftxui::Event::Backspace) {
+      if (!state_.notebook_modal_input.empty()) {
+        state_.notebook_modal_input.pop_back();
+      }
+      return;
+    }
+    if (event.is_character() && event.character().size() == 1) {
+      char c = event.character()[0];
+      if (c >= 32 && c <= 126) { // Printable ASCII
+        state_.notebook_modal_input += c;
+      }
+      return;
+    }
+    return;
+  }
+  
+  if (state_.move_note_modal_open) {
+    if (event == ftxui::Event::Escape) {
+      state_.move_note_modal_open = false;
+      state_.move_note_notebooks.clear();
+      state_.move_note_selected_index = 0;
+      state_.move_note_target_id = nx::core::NoteId();
+      return;
+    }
+    if (event == ftxui::Event::ArrowUp || event == ftxui::Event::Character('k')) {
+      if (state_.move_note_selected_index > 0) {
+        state_.move_note_selected_index--;
+      }
+      return;
+    }
+    if (event == ftxui::Event::ArrowDown || event == ftxui::Event::Character('j')) {
+      if (state_.move_note_selected_index < static_cast<int>(state_.move_note_notebooks.size()) - 1) {
+        state_.move_note_selected_index++;
+      }
+      return;
+    }
+    if (event == ftxui::Event::Return) {
+      // Move the note to the selected notebook
+      if (state_.move_note_target_id.isValid() && 
+          state_.move_note_selected_index >= 0 && 
+          static_cast<size_t>(state_.move_note_selected_index) < state_.move_note_notebooks.size()) {
+        
+        auto note_result = note_store_.load(state_.move_note_target_id);
+        if (note_result.has_value()) {
+          auto note = *note_result;
+          
+          const auto& selected_notebook = state_.move_note_notebooks[static_cast<size_t>(state_.move_note_selected_index)];
+          
+          if (selected_notebook == "[Remove from notebook]") {
+            // Remove from notebook (empty string becomes nullopt)
+            note.setNotebook("");
+            auto store_result = note_store_.store(note);
+            if (store_result.has_value()) {
+              setStatusMessage("Removed note from notebook");
+              refreshData();
+            } else {
+              setStatusMessage("Error removing note from notebook: " + store_result.error().message());
+            }
+          } else {
+            // Move to selected notebook
+            note.setNotebook(selected_notebook);
+            auto store_result = note_store_.store(note);
+            if (store_result.has_value()) {
+              setStatusMessage("Moved note to notebook: " + selected_notebook);
+              refreshData();
+            } else {
+              setStatusMessage("Error moving note: " + store_result.error().message());
+            }
+          }
+        } else {
+          setStatusMessage("Error loading note for move");
+        }
+      }
+      
+      state_.move_note_modal_open = false;
+      state_.move_note_notebooks.clear();
+      state_.move_note_selected_index = 0;
+      state_.move_note_target_id = nx::core::NoteId();
+      return;
+    }
+    return;
+  }
+  
   if (state_.show_help) {
     if (event == ftxui::Event::Character('?') || event == ftxui::Event::Escape) {
       state_.show_help = false;
@@ -700,9 +995,17 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     return;
   }
   
-  // Multi-select toggle
+  // Multi-select toggle and notebook expansion
   if (event == ftxui::Event::Character(' ')) {
-    if (state_.current_pane == ActivePane::Notes && !state_.notes.empty() && 
+    if (state_.current_pane == ActivePane::Navigation && !state_.nav_items.empty() && 
+        state_.selected_nav_index >= 0 && 
+        static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
+      const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
+      if (nav_item.type == NavItemType::Notebook) {
+        // Toggle notebook expansion/collapse with Space key
+        toggleNotebookExpansion(nav_item.name);
+      }
+    } else if (state_.current_pane == ActivePane::Notes && !state_.notes.empty() && 
         state_.selected_note_index >= 0 && 
         static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
       auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
@@ -719,11 +1022,13 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   
   // Tag operations  
   if (event == ftxui::Event::Character('t')) {
-    if (state_.current_pane == ActivePane::Tags && !state_.tags.empty() &&
-        state_.selected_tag_index >= 0 && 
-        static_cast<size_t>(state_.selected_tag_index) < state_.tags.size()) {
-      const auto& tag = state_.tags[static_cast<size_t>(state_.selected_tag_index)];
-      onTagToggled(tag);
+    if (state_.current_pane == ActivePane::Navigation && !state_.nav_items.empty() &&
+        state_.selected_nav_index >= 0 && 
+        static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
+      const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
+      if (nav_item.type == NavItemType::NotebookTag || nav_item.type == NavItemType::GlobalTag) {
+        onTagToggled(nav_item.name);
+      }
     } else if (state_.current_pane == ActivePane::Notes && !state_.notes.empty() && 
                state_.selected_note_index >= 0 && 
                static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
@@ -731,6 +1036,66 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
       openTagEditModal(note_id);
     }
+    return;
+  }
+  
+  // Notebook operations with Ctrl+ modifiers
+  if (event.character() == "\x0E") { // Ctrl+N - Create new notebook
+    openNotebookModal(AppState::NotebookModalMode::Create);
+    return;
+  }
+  
+  if (event == ftxui::Event::Character('m')) { // m - Move note to notebook
+    if (state_.current_pane == ActivePane::Notes && !state_.notes.empty() && 
+        state_.selected_note_index >= 0 && 
+        static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
+      openMoveNoteModal();
+    }
+    return;
+  }
+  
+  if (event.character() == "\x12") { // Ctrl+R - Rename notebook (when in navigation pane)
+    if (state_.current_pane == ActivePane::Navigation && !state_.nav_items.empty() &&
+        state_.selected_nav_index >= 0 && 
+        static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
+      const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
+      if (nav_item.type == NavItemType::Notebook) {
+        openNotebookModal(AppState::NotebookModalMode::Rename, nav_item.name);
+        return;
+      }
+    }
+    return;
+  }
+  
+  if (event.character() == "\x04") { // Ctrl+D - Delete notebook (when in navigation pane)
+    if (state_.current_pane == ActivePane::Navigation && !state_.nav_items.empty() &&
+        state_.selected_nav_index >= 0 && 
+        static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
+      const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
+      if (nav_item.type == NavItemType::Notebook) {
+        openNotebookModal(AppState::NotebookModalMode::Delete, nav_item.name);
+        return;
+      }
+    }
+    return;
+  }
+  
+  // Notebook selection toggle with 'N' (uppercase)
+  if (event == ftxui::Event::Character('N')) {
+    if (state_.current_pane == ActivePane::Navigation && !state_.nav_items.empty() &&
+        state_.selected_nav_index >= 0 && 
+        static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
+      const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
+      if (nav_item.type == NavItemType::Notebook) {
+        onNotebookToggled(nav_item.name);
+      }
+    }
+    return;
+  }
+  
+  // Clear all filters
+  if (event == ftxui::Event::Character('C')) {
+    clearAllFilters();
     return;
   }
   
@@ -756,19 +1121,45 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     }
   }
   
+  // Notebook expand/collapse with arrow keys in Navigation pane
+  if (state_.current_pane == ActivePane::Navigation && !state_.nav_items.empty() && 
+      state_.selected_nav_index >= 0 && 
+      static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
+    const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
+    if (nav_item.type == NavItemType::Notebook) {
+      if (event == ftxui::Event::ArrowRight) {
+        // Expand notebook with right arrow
+        auto notebook_it = std::find_if(state_.notebooks.begin(), state_.notebooks.end(),
+          [&](const NotebookUIInfo& nb) { return nb.name == nav_item.name; });
+        if (notebook_it != state_.notebooks.end() && !notebook_it->expanded) {
+          toggleNotebookExpansion(nav_item.name);
+          return;
+        }
+      } else if (event == ftxui::Event::ArrowLeft) {
+        // Collapse notebook with left arrow
+        auto notebook_it = std::find_if(state_.notebooks.begin(), state_.notebooks.end(),
+          [&](const NotebookUIInfo& nb) { return nb.name == nav_item.name; });
+        if (notebook_it != state_.notebooks.end() && notebook_it->expanded) {
+          toggleNotebookExpansion(nav_item.name);
+          return;
+        }
+      }
+    }
+  }
+  
   // Navigation shortcuts - move between adjacent panes
   if (event == ftxui::Event::Character('h') || event == ftxui::Event::ArrowLeft) {
     switch (state_.current_pane) {
       case ActivePane::Notes:
       case ActivePane::SearchBox:
         if (state_.view_mode == ViewMode::ThreePane) {
-          focusPane(ActivePane::Tags);
+          focusPane(ActivePane::Navigation);
         }
         break;
       case ActivePane::Preview:
         focusPane(ActivePane::Notes);
         break;
-      case ActivePane::Tags:
+      case ActivePane::Navigation:
       case ActivePane::TagFilters:
         // Already at leftmost, no action
         break;
@@ -778,7 +1169,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   
   if (event == ftxui::Event::Character('l') || event == ftxui::Event::ArrowRight) {
     switch (state_.current_pane) {
-      case ActivePane::Tags:
+      case ActivePane::Navigation:
       case ActivePane::TagFilters:
         focusPane(ActivePane::Notes);
         break;
@@ -800,7 +1191,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   if (event == ftxui::Event::Tab) {
     // Cycle through main panes (skip sub-panes for simplicity)
     switch (state_.current_pane) {
-      case ActivePane::Tags:
+      case ActivePane::Navigation:
       case ActivePane::TagFilters:
         focusPane(ActivePane::Notes);
         break;
@@ -813,7 +1204,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
         focusPane(ActivePane::Preview);
         break;
       case ActivePane::Preview:
-        focusPane(ActivePane::Tags);
+        focusPane(ActivePane::Navigation);
         break;
     }
     return;
@@ -844,37 +1235,22 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   // Enter key - context dependent
   if (event == ftxui::Event::Return) {
     switch (state_.current_pane) {
-      case ActivePane::Tags:
-        if (!state_.tags.empty() && state_.selected_tag_index >= 0 && 
-            static_cast<size_t>(state_.selected_tag_index) < state_.tags.size()) {
-          const auto& tag = state_.tags[static_cast<size_t>(state_.selected_tag_index)];
-          onTagToggled(tag);
+      case ActivePane::Navigation:
+        if (!state_.nav_items.empty() && state_.selected_nav_index >= 0 && 
+            static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
+          const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
+          if (nav_item.type == NavItemType::Notebook) {
+            // Toggle notebook expansion/collapse
+            toggleNotebookExpansion(nav_item.name);
+          } else if (nav_item.type == NavItemType::NotebookTag || nav_item.type == NavItemType::GlobalTag) {
+            onTagToggled(nav_item.name);
+          }
         }
         break;
         
       case ActivePane::TagFilters:
-        // Remove the selected filter
-        if (!state_.active_tag_filters.empty() && state_.selected_filter_index >= 0) {
-          std::vector<std::string> filter_list(state_.active_tag_filters.begin(), state_.active_tag_filters.end());
-          if (static_cast<size_t>(state_.selected_filter_index) < filter_list.size()) {
-            const auto& filter_to_remove = filter_list[static_cast<size_t>(state_.selected_filter_index)];
-            state_.active_tag_filters.erase(filter_to_remove);
-            
-            // Adjust selection if we removed the last filter
-            if (state_.selected_filter_index >= static_cast<int>(state_.active_tag_filters.size())) {
-              state_.selected_filter_index = std::max(0, static_cast<int>(state_.active_tag_filters.size()) - 1);
-            }
-            
-            // If no filters left, go back to tags
-            if (state_.active_tag_filters.empty()) {
-              focusPane(ActivePane::Tags);
-            }
-            
-            // Reapply filters
-            applyFilters();
-            setStatusMessage("Removed tag filter: " + filter_to_remove);
-          }
-        }
+        // TagFilters handling is now integrated into Navigation panel
+        // This case should not be reached in the new design
         break;
         
       case ActivePane::SearchBox:
@@ -932,18 +1308,134 @@ void TUIApp::onNoteSelected(int index) {
 }
 
 void TUIApp::onTagToggled(const std::string& tag) {
-  if (state_.active_tag_filters.count(tag)) {
-    // Remove filter
-    state_.active_tag_filters.erase(tag);
-    setStatusMessage("Removed tag filter: " + tag);
+  // Determine the context based on current navigation selection
+  if (state_.selected_nav_index >= 0 && 
+      static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
+    
+    const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
+    
+    if (nav_item.type == NavItemType::NotebookTag) {
+      // Handle notebook-scoped tag filter
+      const std::string& notebook = nav_item.parent_notebook;
+      
+      auto& notebook_tags = state_.active_notebook_tags[notebook];
+      if (notebook_tags.count(tag)) {
+        // Remove notebook tag filter
+        notebook_tags.erase(tag);
+        if (notebook_tags.empty()) {
+          state_.active_notebook_tags.erase(notebook);
+        }
+        setStatusMessage("Removed tag filter '" + tag + "' from notebook '" + notebook + "'");
+      } else {
+        // Add notebook tag filter
+        notebook_tags.insert(tag);
+        setStatusMessage("Added tag filter '" + tag + "' to notebook '" + notebook + "'");
+      }
+    } else if (nav_item.type == NavItemType::GlobalTag) {
+      // Handle global tag filter
+      if (state_.active_global_tags.count(tag)) {
+        // Remove global tag filter
+        state_.active_global_tags.erase(tag);
+        setStatusMessage("Removed global tag filter: " + tag);
+      } else {
+        // Add global tag filter
+        state_.active_global_tags.insert(tag);
+        setStatusMessage("Added global tag filter: " + tag);
+      }
+    }
   } else {
-    // Add filter
-    state_.active_tag_filters.insert(tag);
-    setStatusMessage("Added tag filter: " + tag);
+    // Fallback to old behavior for backward compatibility
+    if (state_.active_tag_filters.count(tag)) {
+      state_.active_tag_filters.erase(tag);
+      setStatusMessage("Removed tag filter: " + tag);
+    } else {
+      state_.active_tag_filters.insert(tag);
+      setStatusMessage("Added tag filter: " + tag);
+    }
   }
+  
+  // Update navigation items to reflect selection changes
+  buildNavigationItems();
   
   // Reapply filters
   applyFilters();
+}
+
+void TUIApp::onNotebookToggled(const std::string& notebook) {
+  if (state_.active_notebooks.count(notebook)) {
+    // Remove notebook filter
+    state_.active_notebooks.erase(notebook);
+    // Also remove any notebook-scoped tag filters for this notebook
+    state_.active_notebook_tags.erase(notebook);
+    setStatusMessage("Removed notebook filter: " + notebook);
+  } else {
+    // Add notebook filter
+    state_.active_notebooks.insert(notebook);
+    setStatusMessage("Added notebook filter: " + notebook);
+  }
+  
+  // Update navigation items to reflect selection changes
+  buildNavigationItems();
+  
+  // Reapply filters
+  applyFilters();
+}
+
+void TUIApp::clearAllFilters() {
+  // Clear all filtering state
+  state_.active_notebooks.clear();
+  state_.active_notebook_tags.clear();
+  state_.active_global_tags.clear();
+  state_.active_tag_filters.clear();
+  state_.search_query.clear();
+  
+  // Update navigation items to reflect cleared selections
+  buildNavigationItems();
+  
+  // Reapply filters (which will show all notes)
+  applyFilters();
+  
+  setStatusMessage("Cleared all filters");
+}
+
+void TUIApp::toggleNavigationSelection(int index) {
+  if (index < 0 || static_cast<size_t>(index) >= state_.nav_items.size()) {
+    return;
+  }
+  
+  const auto& nav_item = state_.nav_items[static_cast<size_t>(index)];
+  
+  if (nav_item.type == NavItemType::Notebook) {
+    onNotebookToggled(nav_item.name);
+  } else if (nav_item.type == NavItemType::NotebookTag || nav_item.type == NavItemType::GlobalTag) {
+    onTagToggled(nav_item.name);
+  }
+}
+
+void TUIApp::navigateToNotebook(const std::string& notebook) {
+  // Find the notebook in navigation items
+  for (size_t i = 0; i < state_.nav_items.size(); ++i) {
+    const auto& nav_item = state_.nav_items[i];
+    if (nav_item.type == NavItemType::Notebook && nav_item.name == notebook) {
+      // Set navigation selection to this notebook
+      state_.selected_nav_index = static_cast<int>(i);
+      
+      // Ensure notebook is expanded
+      auto notebook_it = std::find_if(state_.notebooks.begin(), state_.notebooks.end(),
+        [&notebook](const NotebookUIInfo& nb) { return nb.name == notebook; });
+      if (notebook_it != state_.notebooks.end() && !notebook_it->expanded) {
+        toggleNotebookExpansion(notebook);
+      }
+      
+      // Switch to Navigation pane if not already there
+      focusPane(ActivePane::Navigation);
+      
+      setStatusMessage("Navigated to notebook: " + notebook);
+      return;
+    }
+  }
+  
+  setStatusMessage("Notebook not found: " + notebook);
 }
 
 void TUIApp::performSearch(const std::string& query) {
@@ -1353,6 +1845,123 @@ Result<void> TUIApp::renameNote(const nx::core::NoteId& note_id, const std::stri
   }
 }
 
+Result<void> TUIApp::createNotebook(const std::string& name) {
+  try {
+    auto result = notebook_manager_.createNotebook(name);
+    if (!result) {
+      return std::unexpected(result.error());
+    }
+    
+    // Refresh data to show the new notebook
+    refreshData();
+    
+    setStatusMessage("Created notebook: " + name);
+    return Result<void>();
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kFileError, "Failed to create notebook: " + std::string(e.what())));
+  }
+}
+
+Result<void> TUIApp::renameNotebook(const std::string& old_name, const std::string& new_name) {
+  try {
+    auto result = notebook_manager_.renameNotebook(old_name, new_name);
+    if (!result) {
+      return std::unexpected(result.error());
+    }
+    
+    // Update any active filters
+    if (state_.active_notebooks.count(old_name)) {
+      state_.active_notebooks.erase(old_name);
+      state_.active_notebooks.insert(new_name);
+    }
+    
+    // Update notebook-specific tag filters
+    auto notebook_tags_it = state_.active_notebook_tags.find(old_name);
+    if (notebook_tags_it != state_.active_notebook_tags.end()) {
+      auto tags = notebook_tags_it->second;
+      state_.active_notebook_tags.erase(notebook_tags_it);
+      state_.active_notebook_tags[new_name] = tags;
+    }
+    
+    // Refresh data
+    refreshData();
+    
+    setStatusMessage("Renamed notebook '" + old_name + "' to '" + new_name + "'");
+    return Result<void>();
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kFileError, "Failed to rename notebook: " + std::string(e.what())));
+  }
+}
+
+Result<void> TUIApp::deleteNotebook(const std::string& name, bool force) {
+  try {
+    auto result = notebook_manager_.deleteNotebook(name, force);
+    if (!result) {
+      return std::unexpected(result.error());
+    }
+    
+    // Clean up any filters for this notebook
+    state_.active_notebooks.erase(name);
+    state_.active_notebook_tags.erase(name);
+    
+    // Refresh data
+    refreshData();
+    
+    setStatusMessage("Deleted notebook: " + name);
+    return Result<void>();
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kFileError, "Failed to delete notebook: " + std::string(e.what())));
+  }
+}
+
+void TUIApp::openNotebookModal(AppState::NotebookModalMode mode, const std::string& target_notebook) {
+  state_.notebook_modal_open = true;
+  state_.notebook_modal_mode = mode;
+  state_.notebook_modal_target = target_notebook;
+  state_.notebook_modal_input.clear();
+  state_.notebook_modal_force = false;
+  
+  switch (mode) {
+    case AppState::NotebookModalMode::Create:
+      setStatusMessage("Enter notebook name (Enter to create, Esc to cancel)");
+      break;
+    case AppState::NotebookModalMode::Rename:
+      state_.notebook_modal_input = target_notebook; // Pre-fill with current name
+      setStatusMessage("Enter new name for '" + target_notebook + "' (Enter to rename, Esc to cancel)");
+      break;
+    case AppState::NotebookModalMode::Delete:
+      setStatusMessage("Delete notebook '" + target_notebook + "'? (f: toggle force, Enter to confirm, Esc to cancel)");
+      break;
+  }
+}
+
+void TUIApp::openMoveNoteModal() {
+  if (state_.notes.empty() || state_.selected_note_index >= static_cast<int>(state_.notes.size())) {
+    return;
+  }
+  
+  // Load available notebooks
+  auto notebooks_result = notebook_manager_.listNotebooks();
+  if (!notebooks_result.has_value()) {
+    setStatusMessage("Error loading notebooks: " + notebooks_result.error().message());
+    return;
+  }
+  
+  state_.move_note_modal_open = true;
+  state_.move_note_notebooks.clear();
+  state_.move_note_notebooks.push_back("[Remove from notebook]"); // Option to remove from notebook
+  
+  // Add existing notebooks
+  for (const auto& notebook : notebooks_result.value()) {
+    state_.move_note_notebooks.push_back(notebook.name);
+  }
+  
+  state_.move_note_selected_index = 0;
+  state_.move_note_target_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+  
+  setStatusMessage("Use ↑/↓ to select notebook, Enter to move, Esc to cancel");
+}
+
 void TUIApp::setStatusMessage(const std::string& message) {
   state_.status_message = message;
 }
@@ -1377,6 +1986,11 @@ void TUIApp::focusPane(ActivePane pane) {
     } else {
       setStatusMessage("Ctrl+S: Save | Esc: Cancel | ↓ on last line: new line | Enter on empty last line: new line");
     }
+  } else if (pane == ActivePane::Notes && !state_.notes.empty() && 
+             state_.selected_note_index >= 0 && 
+             static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
+    // Show notebook shortcuts when focusing on a note
+    setStatusMessage("e: edit | d: delete | r: rename | t: tag | Space: multi-select | m: move to notebook");
   }
 }
 
@@ -1435,69 +2049,40 @@ void TUIApp::moveSelection(int delta) {
       }
       break;
       
-    case ActivePane::Tags:
-      if (!state_.tags.empty()) {
-        int new_index = state_.selected_tag_index + delta;
+    case ActivePane::Navigation:
+      if (!state_.nav_items.empty()) {
+        int new_index = state_.selected_nav_index + delta;
         
-        // Handle navigation to filters when going up from first tag
-        if (delta < 0 && state_.selected_tag_index == 0 && !state_.active_tag_filters.empty()) {
-          focusPane(ActivePane::TagFilters);
-          state_.selected_filter_index = static_cast<int>(state_.active_tag_filters.size()) - 1;
-          return;
-        }
-        
-        state_.selected_tag_index = std::clamp(
+        state_.selected_nav_index = std::clamp(
           new_index,
           0,
-          static_cast<int>(state_.tags.size()) - 1
+          static_cast<int>(state_.nav_items.size()) - 1
         );
         
-        // Auto-scroll to keep selected tag visible
-        // Calculate dynamic visible tags based on terminal height
-        const int visible_tags = calculateVisibleTagsCount();
+        // Auto-scroll to keep selected item visible
+        const int visible_items = calculateVisibleNavigationItemsCount();
         
         // Scroll up if selection moved above visible area
-        if (state_.selected_tag_index < state_.tags_scroll_offset) {
-          state_.tags_scroll_offset = state_.selected_tag_index;
+        if (state_.selected_nav_index < state_.navigation_scroll_offset) {
+          state_.navigation_scroll_offset = state_.selected_nav_index;
         }
         // Scroll down if selection moved below visible area
-        else if (state_.selected_tag_index >= state_.tags_scroll_offset + visible_tags) {
-          state_.tags_scroll_offset = state_.selected_tag_index - visible_tags + 1;
+        else if (state_.selected_nav_index >= state_.navigation_scroll_offset + visible_items) {
+          state_.navigation_scroll_offset = state_.selected_nav_index - visible_items + 1;
         }
         
         // Ensure scroll offset is within bounds
-        state_.tags_scroll_offset = std::clamp(
-          state_.tags_scroll_offset,
+        state_.navigation_scroll_offset = std::clamp(
+          state_.navigation_scroll_offset,
           0,
-          std::max(0, static_cast<int>(state_.tags.size()) - visible_tags)
+          std::max(0, static_cast<int>(state_.nav_items.size()) - visible_items)
         );
-      } else if (delta < 0 && !state_.active_tag_filters.empty()) {
-        // No tags, but have filters - go to filters
-        focusPane(ActivePane::TagFilters);
-        state_.selected_filter_index = static_cast<int>(state_.active_tag_filters.size()) - 1;
       }
       break;
       
     case ActivePane::TagFilters:
-      if (!state_.active_tag_filters.empty()) {
-        int new_index = state_.selected_filter_index + delta;
-        
-        // Handle navigation back to tags when going down from last filter
-        if (delta > 0 && state_.selected_filter_index == static_cast<int>(state_.active_tag_filters.size()) - 1) {
-          focusPane(ActivePane::Tags);
-          state_.selected_tag_index = 0;
-          return;
-        }
-        
-        state_.selected_filter_index = std::clamp(
-          new_index,
-          0,
-          static_cast<int>(state_.active_tag_filters.size()) - 1
-        );
-      } else {
-        // No filters, go back to tags
-        focusPane(ActivePane::Tags);
-      }
+      // TagFilters are now integrated into Navigation panel
+      // This case should not be reached in the new design
       break;
       
     case ActivePane::Preview:
@@ -1567,83 +2152,83 @@ void TUIApp::followLinkInPreview() {
 }
 
 // Rendering methods
-Element TUIApp::renderTagsPanel() const {
-  Elements tags_content;
+Element TUIApp::renderNavigationPanel() const {
+  Elements nav_content;
   
   // Header
-  tags_content.push_back(
-    text("Tags") | bold |
-    (state_.current_pane == ActivePane::Tags ? bgcolor(Color::Blue) : nothing)
+  nav_content.push_back(
+    text("Navigation") | bold |
+    (state_.current_pane == ActivePane::Navigation ? bgcolor(Color::Blue) : nothing)
   );
-  tags_content.push_back(separator());
+  nav_content.push_back(separator());
   
-  // Tag search box
-  if (!state_.tag_search_query.empty()) {
-    tags_content.push_back(
-      text("🔍 " + state_.tag_search_query) | 
-      bgcolor(Color::DarkBlue) | color(Color::White)
-    );
-    tags_content.push_back(separator());
-  }
-  
-  // Active filters
-  if (!state_.active_tag_filters.empty()) {
-    tags_content.push_back(text("Active filters:") | dim);
+  // Render flattened navigation items with proper selection
+  if (state_.nav_items.empty()) {
+    nav_content.push_back(text("No navigation items") | center | dim);
+  } else {
+    // Add section headers and items
+    bool in_notebooks = false;
+    bool in_global_tags = false;
     
-    std::vector<std::string> filter_list(state_.active_tag_filters.begin(), state_.active_tag_filters.end());
-    for (size_t i = 0; i < filter_list.size(); ++i) {
-      const auto& filter = filter_list[i];
-      auto filter_element = text("× " + filter);
+    for (size_t i = 0; i < state_.nav_items.size(); ++i) {
+      const auto& item = state_.nav_items[i];
       
-      // Highlight selected filter when in TagFilters pane
-      if (state_.current_pane == ActivePane::TagFilters && 
-          static_cast<int>(i) == state_.selected_filter_index) {
-        filter_element = filter_element | bgcolor(Color::Red) | color(Color::White) | inverted;
-      } else {
-        filter_element = filter_element | bgcolor(Color::Green) | color(Color::White);
+      // Add section headers when needed
+      if (item.type == NavItemType::Notebook && !in_notebooks) {
+        nav_content.push_back(text("NOTEBOOKS") | bold);
+        in_notebooks = true;
+      } else if (item.type == NavItemType::GlobalTag && !in_global_tags) {
+        nav_content.push_back(separator());
+        nav_content.push_back(text("ALL TAGS") | bold);
+        in_global_tags = true;
       }
       
-      tags_content.push_back(filter_element);
+      // Create the element based on type
+      Element item_element;
+      if (item.type == NavItemType::Notebook) {
+        std::string expand_icon = item.expanded ? "▼" : "▶";
+        std::string folder_icon = item.expanded ? "📂" : "📁";
+        std::string selection_icon = item.selected ? " ✓" : "";
+        
+        std::string item_text = expand_icon + " " + folder_icon + " " + item.name + 
+                               " (" + std::to_string(item.count) + ")" + selection_icon;
+        item_element = text(item_text);
+        
+        // Highlight if this notebook is selected for filtering
+        if (item.selected) {
+          item_element = item_element | bgcolor(Color::Green);
+        }
+      } else if (item.type == NavItemType::NotebookTag) {
+        std::string item_text = "  #" + item.name + " (" + std::to_string(item.count) + ")";
+        item_element = text(item_text);
+        
+        // Highlight if this notebook+tag combination is selected
+        if (item.selected) {
+          item_element = item_element | bgcolor(Color::Green);
+        }
+      } else { // GlobalTag
+        std::string item_text = "#" + item.name + " (" + std::to_string(item.count) + ")";
+        item_element = text(item_text);
+        
+        // Highlight if this global tag is selected
+        if (item.selected) {
+          item_element = item_element | bgcolor(Color::Green);
+        }
+      }
+      
+      // Highlight currently selected navigation item
+      if (state_.current_pane == ActivePane::Navigation && 
+          static_cast<int>(i) == state_.selected_nav_index) {
+        item_element = item_element | inverted;
+      }
+      
+      nav_content.push_back(item_element);
     }
-    tags_content.push_back(separator());
   }
   
-  // Tag list - apply scrolling
-  const int visible_tags = calculateVisibleTagsCount();
-  int visible_start = state_.tags_scroll_offset;
-  int visible_end = std::min(visible_start + visible_tags, static_cast<int>(state_.tags.size()));
-  
-  for (int i = visible_start; i < visible_end; ++i) {
-    const auto& tag = state_.tags[static_cast<size_t>(i)];
-    auto count = state_.tag_counts.find(tag);
-    int tag_count = count != state_.tag_counts.end() ? count->second : 0;
-    
-    auto tag_text = text("📂 " + tag + " (" + std::to_string(tag_count) + ")");
-    
-    if (state_.current_pane == ActivePane::Tags && i == state_.selected_tag_index) {
-      tag_text = tag_text | inverted;
-    }
-    
-    if (state_.active_tag_filters.count(tag)) {
-      tag_text = tag_text | bgcolor(Color::Green);
-    }
-    
-    tags_content.push_back(tag_text);
-  }
-  
-  // Add scroll indicators if there are more tags above or below
-  if (state_.tags_scroll_offset > 0) {
-    // Insert at the beginning of the tag list (after headers/filters)
-    auto insert_pos = static_cast<size_t>(static_cast<int>(tags_content.size()) - (visible_end - visible_start));
-    tags_content.insert(tags_content.begin() + static_cast<ptrdiff_t>(insert_pos),
-                       text("▲ More tags above...") | dim);
-  }
-  if (visible_end < static_cast<int>(state_.tags.size())) {
-    tags_content.push_back(text("▼ More tags below...") | dim);
-  }
-  
-  return vbox(tags_content) | border;
+  return vbox(nav_content) | border;
 }
+
 
 Element TUIApp::renderNotesPanel() const {
   Elements notes_content;
@@ -1917,6 +2502,7 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  :       Open command palette"));
   help_content.push_back(text("  Space   Multi-select toggle"));
   help_content.push_back(text("  Enter   Activate/Remove filter/Edit note"));
+  help_content.push_back(text("  m       Move note to notebook"));
   help_content.push_back(text(""));
   
   help_content.push_back(text("Panel Resizing (Notes panel):") | bold);
@@ -1951,6 +2537,18 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  A       AI auto-title selected note"));
   help_content.push_back(text(""));
   
+  help_content.push_back(text("Notebook Management:") | bold);
+  help_content.push_back(text("  Ctrl+N  Create new notebook"));
+  help_content.push_back(text("  Ctrl+R  Rename notebook (navigation pane)"));
+  help_content.push_back(text("  Ctrl+D  Delete notebook (navigation pane)"));
+  help_content.push_back(text("  N       Toggle notebook filter"));
+  help_content.push_back(text("  Space   Expand/collapse notebook"));
+  help_content.push_back(text("  →       Expand notebook"));
+  help_content.push_back(text("  ←       Collapse notebook"));
+  help_content.push_back(text("  t       Toggle tag filter"));
+  help_content.push_back(text("  C       Clear all filters"));
+  help_content.push_back(text(""));
+  
   help_content.push_back(text("Other:") | bold);
   help_content.push_back(text("  ?       Toggle this help"));
   help_content.push_back(text("  q       Quit application"));
@@ -1962,8 +2560,8 @@ Element TUIApp::renderHelpModal() const {
          border |
          size(WIDTH, GREATER_THAN, 60) |
          size(WIDTH, LESS_THAN, 80) |
-         size(HEIGHT, GREATER_THAN, 25) |
-         size(HEIGHT, LESS_THAN, 35) |
+         size(HEIGHT, GREATER_THAN, 30) |
+         size(HEIGHT, LESS_THAN, 45) |
          bgcolor(Color::DarkBlue) |
          color(Color::White);
 }
@@ -2982,6 +3580,180 @@ Element TUIApp::renderTagEditModal() const {
          color(Color::White);
 }
 
+Element TUIApp::renderNotebookModal() const {
+  if (!state_.notebook_modal_open) {
+    return text("");
+  }
+  
+  Elements modal_content;
+  
+  std::string modal_title;
+  switch (state_.notebook_modal_mode) {
+    case AppState::NotebookModalMode::Create:
+      modal_title = "Create Notebook";
+      break;
+    case AppState::NotebookModalMode::Rename:
+      modal_title = "Rename Notebook";
+      break;
+    case AppState::NotebookModalMode::Delete:
+      modal_title = "Delete Notebook";
+      break;
+  }
+  
+  modal_content.push_back(text(modal_title) | bold | center);
+  modal_content.push_back(separator());
+  modal_content.push_back(text(""));
+  
+  // Show target notebook for rename/delete operations
+  if (!state_.notebook_modal_target.empty() && 
+      state_.notebook_modal_mode != AppState::NotebookModalMode::Create) {
+    modal_content.push_back(
+      hbox({
+        text("Notebook: "),
+        text(state_.notebook_modal_target) | bold
+      })
+    );
+    modal_content.push_back(text(""));
+  }
+  
+  // Input field for create/rename operations
+  if (state_.notebook_modal_mode == AppState::NotebookModalMode::Create ||
+      state_.notebook_modal_mode == AppState::NotebookModalMode::Rename) {
+    std::string prompt = state_.notebook_modal_mode == AppState::NotebookModalMode::Create ? 
+      "Name: " : "New name: ";
+    std::string input_display = state_.notebook_modal_input.empty() ? 
+      "[Enter notebook name]" : state_.notebook_modal_input;
+    
+    modal_content.push_back(
+      hbox({
+        text(prompt),
+        text(input_display) | 
+        (state_.notebook_modal_input.empty() ? dim : (bgcolor(Color::White) | color(Color::Black)))
+      })
+    );
+    modal_content.push_back(separator());
+    modal_content.push_back(text(""));
+  }
+  
+  // Action text
+  std::string action_text;
+  switch (state_.notebook_modal_mode) {
+    case AppState::NotebookModalMode::Create:
+      action_text = "Press Enter to create, Esc to cancel";
+      break;
+    case AppState::NotebookModalMode::Rename:
+      action_text = "Press Enter to rename, Esc to cancel";
+      break;
+    case AppState::NotebookModalMode::Delete:
+      action_text = "Press f to toggle force, Enter to confirm, Esc to cancel";
+      break;
+  }
+  modal_content.push_back(text(action_text) | center | dim);
+  
+  // Warning and force status for delete
+  if (state_.notebook_modal_mode == AppState::NotebookModalMode::Delete) {
+    modal_content.push_back(text(""));
+    
+    // Force status
+    std::string force_status = state_.notebook_modal_force ? 
+      "Force delete: ENABLED (will delete even if notebook contains notes)" : 
+      "Force delete: DISABLED (will fail if notebook contains notes)";
+    auto force_color = state_.notebook_modal_force ? Color::Yellow : Color::White;
+    modal_content.push_back(text(force_status) | center | color(force_color));
+    
+    modal_content.push_back(text(""));
+    modal_content.push_back(text("Warning: This will delete the notebook and all its notes!") | center | color(Color::Red));
+  }
+  
+  return vbox(modal_content) |
+         border |
+         size(WIDTH, GREATER_THAN, 40) |
+         size(WIDTH, LESS_THAN, 70) |
+         size(HEIGHT, GREATER_THAN, 8) |
+         size(HEIGHT, LESS_THAN, 15) |
+         bgcolor(Color::DarkBlue) |
+         color(Color::White);
+}
+
+Element TUIApp::renderMoveNoteModal() const {
+  if (!state_.move_note_modal_open) {
+    return text("");
+  }
+  
+  Elements modal_content;
+  
+  modal_content.push_back(text("Move Note to Notebook") | bold | center);
+  modal_content.push_back(separator());
+  modal_content.push_back(text(""));
+  
+  // Show current note info
+  if (!state_.notes.empty() && state_.selected_note_index >= 0 && 
+      static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
+    const auto& metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
+    modal_content.push_back(
+      hbox({
+        text("Note: "),
+        text(metadata.title()) | bold
+      })
+    );
+    
+    // Show current notebook if any
+    auto note_result = note_store_.load(metadata.id());
+    if (note_result.has_value() && note_result->notebook().has_value() && !note_result->notebook()->empty()) {
+      modal_content.push_back(
+        hbox({
+          text("Current notebook: "),
+          text(*note_result->notebook()) | bold
+        })
+      );
+    }
+    modal_content.push_back(text(""));
+  }
+  
+  // Notebook selection list
+  modal_content.push_back(text("Select target notebook:") | bold);
+  modal_content.push_back(text(""));
+  
+  for (int i = 0; i < static_cast<int>(state_.move_note_notebooks.size()); ++i) {
+    const auto& notebook_name = state_.move_note_notebooks[static_cast<size_t>(i)];
+    
+    auto notebook_element = text(notebook_name);
+    if (i == state_.move_note_selected_index) {
+      // Highlight selected notebook
+      notebook_element = notebook_element | inverted;
+    }
+    
+    // Add an icon for the special "remove" option
+    if (i == 0) {  // First item is "[Remove from notebook]"
+      notebook_element = hbox({
+        text("🗑️ "),
+        notebook_element
+      });
+    } else {
+      notebook_element = hbox({
+        text("📂 "),
+        notebook_element  
+      });
+    }
+    
+    modal_content.push_back(notebook_element);
+  }
+  
+  modal_content.push_back(separator());
+  modal_content.push_back(text(""));
+  
+  modal_content.push_back(text("Use ↑/↓ to navigate, Enter to select, Esc to cancel") | center | dim);
+  
+  return vbox(modal_content) |
+         border |
+         size(WIDTH, GREATER_THAN, 40) |
+         size(WIDTH, LESS_THAN, 70) |
+         size(HEIGHT, GREATER_THAN, 8) |
+         size(HEIGHT, LESS_THAN, 15) |
+         bgcolor(Color::DarkBlue) |
+         color(Color::White);
+}
+
 void TUIApp::resizeNotesPanel(int delta) {
   if (panel_sizing_.resizeNotes(delta)) {
     // Panel was successfully resized, provide user feedback
@@ -3014,6 +3786,24 @@ int TUIApp::calculateVisibleTagsCount() const {
   int max_tags = std::max(15, terminal_height - 8);
   
   return std::min(tag_count, max_tags);
+}
+
+int TUIApp::calculateVisibleNavigationItemsCount() const {
+  // Show all navigation items unless we have a huge number
+  // This lets FTXUI's layout engine handle the space naturally
+  
+  int nav_count = static_cast<int>(state_.nav_items.size());
+  
+  // Only limit if we have more than 30 items (to prevent performance issues)
+  if (nav_count <= 30) {
+    return nav_count; // Show all items
+  }
+  
+  // For many items, calculate based on terminal height
+  int terminal_height = screen_.dimy();
+  int max_items = std::max(15, terminal_height - 8);
+  
+  return std::min(nav_count, max_items);
 }
 
 } // namespace nx::tui

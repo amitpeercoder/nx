@@ -26,6 +26,10 @@ void Metadata::setTitle(const std::string& title) {
   touch();
 }
 
+void Metadata::setCreated(std::chrono::system_clock::time_point time) {
+  created_ = time;
+}
+
 void Metadata::setUpdated(std::chrono::system_clock::time_point time) {
   updated_ = time;
 }

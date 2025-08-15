@@ -170,6 +170,12 @@ target_link_libraries(nx PRIVATE
     ${FTXUI_LIBRARIES}
 )
 
+# Platform-specific libraries
+if(APPLE)
+    find_library(SECURITY_FRAMEWORK Security REQUIRED)
+    target_link_libraries(nx PRIVATE ${SECURITY_FRAMEWORK})
+endif()
+
 # Link git2 with library paths
 if(LIBGIT2_FOUND)
     target_link_libraries(nx PRIVATE ${LIBGIT2_LIBRARIES})

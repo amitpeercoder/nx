@@ -14,6 +14,7 @@ namespace nx::config {
 Config::Config() {
   // Initialize defaults directly
   root = nx::util::Xdg::dataHome();
+  data_dir = nx::util::Xdg::dataHome();
   notes_dir = nx::util::Xdg::notesDir();
   attachments_dir = nx::util::Xdg::attachmentsDir();
   trash_dir = nx::util::Xdg::trashDir();
@@ -40,6 +41,7 @@ Config::Config() {
 Config::Config(const std::filesystem::path& config_path) {
   // Initialize defaults directly instead of calling createDefault()
   root = nx::util::Xdg::dataHome();
+  data_dir = nx::util::Xdg::dataHome();
   notes_dir = nx::util::Xdg::notesDir();
   attachments_dir = nx::util::Xdg::attachmentsDir();
   trash_dir = nx::util::Xdg::trashDir();

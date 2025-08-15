@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
       }
       
       // Create TUI app with initialized services
-      nx::tui::TUIApp tui_app(cli_app.config(), cli_app.noteStore(), cli_app.searchIndex());
+      nx::tui::TUIApp tui_app(cli_app.config(), cli_app.noteStore(), cli_app.notebookManager(), cli_app.searchIndex());
       
       return tui_app.run();
     }

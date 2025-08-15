@@ -286,6 +286,11 @@ Result<void> RipgrepIndex::optimize() {
   return rebuild();
 }
 
+Result<void> RipgrepIndex::vacuum() {
+  // No-op for ripgrep index - no database to vacuum
+  return {};
+}
+
 Result<void> RipgrepIndex::beginTransaction() {
   // No-op for ripgrep index
   return {};
