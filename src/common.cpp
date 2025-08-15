@@ -2,6 +2,10 @@
 
 #include <sstream>
 
+#if __cpp_lib_format >= 201907L
+#include <format>
+#endif
+
 namespace nx {
 
 std::string_view errorCodeToString(ErrorCode code) {
@@ -42,6 +46,18 @@ std::string_view errorCodeToString(ErrorCode code) {
       return "Configuration error";
     case ErrorCode::kExternalToolError:
       return "External tool error";
+    case ErrorCode::kSecurityError:
+      return "Security error";
+    case ErrorCode::kSystemError:
+      return "System error";
+    case ErrorCode::kProcessError:
+      return "Process error";
+    case ErrorCode::kInvalidState:
+      return "Invalid state";
+    case ErrorCode::kNotImplemented:
+      return "Not implemented";
+    case ErrorCode::kNotFound:
+      return "Not found";
     case ErrorCode::kUnknownError:
       return "Unknown error";
   }
@@ -50,10 +66,16 @@ std::string_view errorCodeToString(ErrorCode code) {
 
 template <typename... Args>
 Error Error::create(ErrorCode code, const std::string& format, Args&&... args) {
-  // Simple string concatenation for C++20 compatibility
-  // Note: This template is defined but not used in the current implementation
-  // We use the simple constructor Error(code, message) instead
-  return Error(code, format);
+  // Use std::format when available (C++20), otherwise fallback to simple formatting
+  #if __cpp_lib_format >= 201907L
+    return Error(code, std::vformat(format, std::make_format_args(args...)));
+  #else
+    // Fallback implementation using stringstream
+    std::ostringstream oss;
+    oss << format;
+    ((oss << " " << args), ...); // C++17 fold expression
+    return Error(code, oss.str());
+  #endif
 }
 
 std::string Version::toString() const {

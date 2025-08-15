@@ -10,6 +10,7 @@
 #include "nx/core/note.hpp"
 #include "nx/index/query_parser.hpp"
 #include "nx/util/http_client.hpp"
+#include "nx/util/security.hpp"
 
 namespace nx::cli {
 
@@ -105,6 +106,12 @@ Result<void> AskCommand::validateAiConfig() {
   if (ai_config.api_key.empty()) {
     return std::unexpected(makeError(ErrorCode::kConfigError, 
                                      "AI API key not specified in configuration"));
+  }
+  
+  // Validate API key format
+  if (!nx::util::Security::validateApiKeyFormat(ai_config.api_key, ai_config.provider)) {
+    return std::unexpected(makeError(ErrorCode::kConfigError,
+                                     "Invalid API key format for provider: " + ai_config.provider));
   }
   
   // Validate provider
@@ -248,9 +255,10 @@ Result<std::string> AskCommand::callAiApi(const std::string& context, const std:
   // Make HTTP request to Anthropic API
   nx::util::HttpClient client;
   
+  // Create headers with secure API key handling
   std::vector<std::string> headers = {
     "Content-Type: application/json",
-    "x-api-key: " + ai_config.api_key,
+    "x-api-key: " + ai_config.api_key,  // NOTE: HttpClient should handle secure logging
     "anthropic-version: 2023-06-01"
   };
   

@@ -325,8 +325,7 @@ Result<std::vector<std::string>> TagSuggestCommand::suggestTags(const nx::core::
 
 Result<std::vector<std::string>> TagSuggestCommand::getExistingTags() {
   // Get all existing tags in the collection for better AI context
-  // In a real implementation, this would query the search index or note store
-  // for all unique tags to help the AI suggest consistent tags
+  // This helps the AI suggest consistent tags that fit with the existing taxonomy
   
   std::vector<std::string> existing_tags;
   

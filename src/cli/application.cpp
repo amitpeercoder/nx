@@ -18,6 +18,7 @@
 #include "nx/cli/commands/open_command.hpp"
 #include "nx/cli/commands/backlinks_command.hpp"
 #include "nx/cli/commands/tags_command.hpp"
+#include "nx/cli/commands/export_command.hpp"
 
 // AI Command includes
 #include "nx/cli/commands/ask_command.hpp"
@@ -87,6 +88,9 @@ void Application::setupCommands() {
   registerCommand(std::make_unique<OpenCommand>(*this));
   registerCommand(std::make_unique<BacklinksCommand>(*this));
   registerCommand(std::make_unique<TagsCommand>(*this));
+  
+  // Import/Export commands
+  registerCommand(std::make_unique<ExportCommand>(*this));
   
   // AI-powered commands
   registerCommand(std::make_unique<AskCommand>(*this));

@@ -9,6 +9,7 @@
 #include <set>
 
 #include "nx/util/time.hpp"
+#include "nx/util/safe_process.hpp"
 
 namespace nx::index {
 
@@ -359,35 +360,31 @@ Result<std::vector<std::filesystem::path>> RipgrepIndex::ripgrepSearch(const std
     return std::vector<std::filesystem::path>{};
   }
   
-  // Construct ripgrep command
+  // Safely execute ripgrep using SafeProcess
   std::string escaped_query = escapeRipgrepQuery(query_text);
-  std::string cmd = "rg --files-with-matches --type md --max-count 1 ";
-  cmd += "\"" + escaped_query + "\" ";
-  cmd += "\"" + notes_dir_.string() + "\"";
+  std::vector<std::string> args = {
+    "--files-with-matches",
+    "--type", "md",
+    "--max-count", "1",
+    escaped_query,
+    notes_dir_.string()
+  };
   
-  // Execute ripgrep
-  FILE* pipe = popen(cmd.c_str(), "r");
-  if (!pipe) {
+  auto process_result = nx::util::SafeProcess::executeForOutput("rg", args);
+  if (!process_result.has_value()) {
     return std::unexpected(makeError(ErrorCode::kExternalToolError,
-                                     "Failed to execute ripgrep"));
+                                     "Failed to execute ripgrep: " + process_result.error().message()));
   }
   
   std::vector<std::filesystem::path> results;
-  char buffer[1024];
+  std::istringstream output_stream(process_result.value());
+  std::string line;
   
-  while (fgets(buffer, sizeof(buffer), pipe) != nullptr && results.size() < limit) {
-    std::string line(buffer);
-    // Remove trailing newline
-    if (!line.empty() && line.back() == '\n') {
-      line.pop_back();
-    }
-    
+  while (std::getline(output_stream, line) && results.size() < limit) {
     if (!line.empty()) {
       results.emplace_back(line);
     }
   }
-  
-  pclose(pipe);
   
   return results;
 }
@@ -622,8 +619,7 @@ Result<std::string> RipgrepIndex::extractSnippet(const std::filesystem::path& fi
 }
 
 bool RipgrepIndex::isRipgrepAvailable() const {
-  int result = system("which rg > /dev/null 2>&1");
-  return result == 0;
+  return nx::util::SafeProcess::commandExists("rg");
 }
 
 std::string RipgrepIndex::escapeRipgrepQuery(const std::string& query) const {

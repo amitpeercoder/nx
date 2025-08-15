@@ -5,6 +5,7 @@
 
 #include "nx/core/note_id.hpp"
 #include "nx/util/http_client.hpp"
+#include "nx/util/security.hpp"
 
 namespace nx::cli {
 
@@ -123,6 +124,12 @@ Result<void> RewriteCommand::validateAiConfig() {
   if (ai_config.provider.empty() || ai_config.model.empty() || ai_config.api_key.empty()) {
     return std::unexpected(makeError(ErrorCode::kConfigError, 
                                      "AI configuration is incomplete. Please check provider, model, and API key."));
+  }
+  
+  // Validate API key format
+  if (!nx::util::Security::validateApiKeyFormat(ai_config.api_key, ai_config.provider)) {
+    return std::unexpected(makeError(ErrorCode::kConfigError,
+                                     "Invalid API key format for provider: " + ai_config.provider));
   }
   
   return {};

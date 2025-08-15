@@ -76,6 +76,9 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
     if (auto value = config_data["root"].value<std::string>()) {
       root = *value;
     }
+    if (auto value = config_data["data_dir"].value<std::string>()) {
+      data_dir = *value;
+    }
     if (auto value = config_data["notes_dir"].value<std::string>()) {
       notes_dir = *value;
     }
@@ -113,6 +116,12 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
     }
     if (auto value = config_data["git_remote"].value<std::string>()) {
       git_remote = *value;
+    }
+    if (auto value = config_data["git_user_name"].value<std::string>()) {
+      git_user_name = *value;
+    }
+    if (auto value = config_data["git_user_email"].value<std::string>()) {
+      git_user_email = *value;
     }
     
     // Defaults
@@ -239,6 +248,8 @@ Result<void> Config::save(const std::filesystem::path& config_path) const {
     // Sync
     config_data.insert_or_assign("sync", syncTypeToString(sync));
     if (!git_remote.empty()) config_data.insert_or_assign("git_remote", git_remote);
+    if (!git_user_name.empty()) config_data.insert_or_assign("git_user_name", git_user_name);
+    if (!git_user_email.empty()) config_data.insert_or_assign("git_user_email", git_user_email);
     
     // Defaults
     auto defaults_table = toml::table{};
@@ -441,6 +452,8 @@ Result<std::string> Config::getValueByPath(const std::vector<std::string>& path)
     if (key == "age_recipient") return age_recipient;
     if (key == "sync") return syncTypeToString(sync);
     if (key == "git_remote") return git_remote;
+    if (key == "git_user_name") return git_user_name;
+    if (key == "git_user_email") return git_user_email;
   } else if (path.size() == 2) {
     if (path[0] == "defaults") {
       if (path[1] == "notebook") return default_notebook;
@@ -471,6 +484,8 @@ Result<void> Config::setValueByPath(const std::vector<std::string>& path, const 
     if (key == "age_recipient") { age_recipient = value; return {}; }
     if (key == "sync") { sync = stringToSyncType(value); return {}; }
     if (key == "git_remote") { git_remote = value; return {}; }
+    if (key == "git_user_name") { git_user_name = value; return {}; }
+    if (key == "git_user_email") { git_user_email = value; return {}; }
   } else if (path.size() == 2) {
     if (path[0] == "defaults") {
       if (path[1] == "notebook") { default_notebook = value; return {}; }

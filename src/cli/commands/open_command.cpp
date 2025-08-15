@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 #include "nx/store/filesystem_store.hpp"
+#include "nx/util/safe_process.hpp"
 
 namespace nx::cli {
 
@@ -59,15 +60,32 @@ Result<int> OpenCommand::execute(const GlobalOptions& options) {
 
       auto note_path = filesystem_store->getNotePath(match.id);
       
-      // Ensure terminal is in a good state before launching editor
-      std::system("stty sane 2>/dev/null");
+      // Save current terminal state
+      auto save_result = nx::util::TerminalControl::saveSettings();
+      if (!save_result.has_value() && !options.quiet) {
+        std::cerr << "Warning: Failed to save terminal settings: " << save_result.error().message() << std::endl;
+      }
       
-      // Launch editor
-      std::string command = editor + " \"" + note_path.string() + "\"";
-      int result = std::system(command.c_str());
+      // Launch editor safely
+      auto process_result = nx::util::SafeProcess::execute(editor, {note_path.string()});
       
-      // Restore terminal state after editor exits
-      std::system("stty sane 2>/dev/null");
+      // Restore terminal state
+      auto restore_result = nx::util::TerminalControl::restoreSaneState();
+      if (!restore_result.has_value() && !options.quiet) {
+        std::cerr << "Warning: Failed to restore terminal state: " << restore_result.error().message() << std::endl;
+      }
+      
+      int result = 0;
+      if (!process_result.has_value()) {
+        if (options.json) {
+          std::cout << R"({"error": "Failed to launch editor: )" << process_result.error().message() << R"(", "editor": ")" << editor << R"(", "note_id": ")" << match.id.toString() << R"("})" << std::endl;
+        } else {
+          std::cout << "Error: Failed to launch editor: " << process_result.error().message() << std::endl;
+        }
+        return 1;
+      } else {
+        result = process_result->exit_code;
+      }
       
       if (result != 0) {
         if (options.json) {

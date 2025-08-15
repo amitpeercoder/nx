@@ -13,6 +13,9 @@
 #include <atomic>
 #include <thread>
 #include <unistd.h>
+
+#include <nlohmann/json.hpp>
+#include "nx/util/http_client.hpp"
 #include <sys/wait.h>
 #include <fcntl.h>
 
@@ -168,6 +171,13 @@ Component TUIApp::createMainComponent() {
       });
     }
     
+    if (state_.tag_edit_modal_open) {
+      main_view = dbox({
+        main_view,
+        renderTagEditModal() | center
+      });
+    }
+    
     return main_view;
   }) | CatchEvent([this](Event event) {
     onKeyPress(event);
@@ -220,14 +230,9 @@ ViewMode TUIApp::calculateViewMode(int terminal_width) const {
 }
 
 PanelSizing TUIApp::calculatePanelSizing(int terminal_width) const {
-  PanelSizing sizing;
-  
-  // Simple fixed sizing: left and middle panels fixed, right takes remaining space
-  sizing.tags_width = 25;    // Fixed tags panel width
-  sizing.notes_width = 40;   // Fixed notes panel width  
-  sizing.preview_width = 35; // Preview takes remaining space (will be flexible)
-  
-  return sizing;
+  // Return the current panel sizing configuration
+  // Panel sizes can be dynamically adjusted via keyboard shortcuts
+  return panel_sizing_;
 }
 
 void TUIApp::updateLayout() {
@@ -255,12 +260,13 @@ Result<void> TUIApp::loadNotes() {
     }
     
     // Convert notes to metadata and store in state
-    state_.notes.clear();
+    state_.all_notes.clear();
     for (const auto& note : *notes_result) {
-      state_.notes.push_back(note.metadata());
+      state_.all_notes.push_back(note.metadata());
     }
     
-    // Apply current sorting
+    // Copy to filtered list and apply current sorting
+    state_.notes = state_.all_notes;
     sortNotes();
     
     return Result<void>();
@@ -274,7 +280,7 @@ Result<void> TUIApp::loadTags() {
     // Extract tags from all loaded notes
     std::map<std::string, int> tag_counts;
     
-    for (const auto& metadata : state_.notes) {
+    for (const auto& metadata : state_.all_notes) {
       for (const auto& tag : metadata.tags()) {
         tag_counts[tag]++;
       }
@@ -318,8 +324,8 @@ void TUIApp::refreshData() {
 }
 
 void TUIApp::applyFilters() {
-  // Start with all notes
-  std::vector<nx::core::Metadata> filtered_notes = state_.notes;
+  // Start with all notes (unfiltered)
+  std::vector<nx::core::Metadata> filtered_notes = state_.all_notes;
   
   // Apply search query filter
   if (!state_.search_query.empty()) {
@@ -522,6 +528,56 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     return;
   }
   
+  if (state_.tag_edit_modal_open) {
+    if (event == ftxui::Event::Escape) {
+      state_.tag_edit_modal_open = false;
+      state_.tag_edit_input.clear();
+      state_.tag_edit_note_id = nx::core::NoteId();
+      return;
+    }
+    if (event == ftxui::Event::Return) {
+      // Parse tags and apply them
+      std::vector<std::string> tags;
+      std::stringstream ss(state_.tag_edit_input);
+      std::string tag;
+      while (std::getline(ss, tag, ',')) {
+        // Trim whitespace
+        tag.erase(0, tag.find_first_not_of(" \t"));
+        tag.erase(tag.find_last_not_of(" \t") + 1);
+        if (!tag.empty()) {
+          tags.push_back(tag);
+        }
+      }
+      
+      auto result = setTagsForNote(state_.tag_edit_note_id, tags);
+      if (!result) {
+        setStatusMessage("Error setting tags: " + result.error().message());
+      } else {
+        setStatusMessage("Tags updated successfully");
+        refreshData(); // Refresh to show updated tags
+      }
+      
+      state_.tag_edit_modal_open = false;
+      state_.tag_edit_input.clear();
+      state_.tag_edit_note_id = nx::core::NoteId();
+      return;
+    }
+    if (event == ftxui::Event::Backspace) {
+      if (!state_.tag_edit_input.empty()) {
+        state_.tag_edit_input.pop_back();
+      }
+      return;
+    }
+    if (event.is_character() && event.character().size() == 1) {
+      char c = event.character()[0];
+      if (c >= 32 && c <= 126) { // Printable ASCII
+        state_.tag_edit_input += c;
+      }
+      return;
+    }
+    return;
+  }
+  
   if (state_.command_palette_open) {
     if (event == ftxui::Event::Escape || event == ftxui::Event::Character(':')) {
       state_.command_palette_open = false;
@@ -575,6 +631,24 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   
   if (event == ftxui::Event::Character(':')) {
     state_.command_palette_open = !state_.command_palette_open;
+    return;
+  }
+  
+  // AI tag all notes with Ctrl+T
+  if (event.character() == "\x14") { // Ctrl+T (ASCII 20)
+    suggestTagsForAllNotes();
+    return;
+  }
+  
+  // AI auto-tag selected note with 'a'
+  if (event == ftxui::Event::Character('a')) {
+    aiAutoTagSelectedNote();
+    return;
+  }
+  
+  // AI auto-title selected note with 'A' (Shift+A)
+  if (event == ftxui::Event::Character('A')) {
+    aiAutoTitleSelectedNote();
     return;
   }
   
@@ -650,6 +724,12 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
         static_cast<size_t>(state_.selected_tag_index) < state_.tags.size()) {
       const auto& tag = state_.tags[static_cast<size_t>(state_.selected_tag_index)];
       onTagToggled(tag);
+    } else if (state_.current_pane == ActivePane::Notes && !state_.notes.empty() && 
+               state_.selected_note_index >= 0 && 
+               static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
+      // Edit tags for selected note
+      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+      openTagEditModal(note_id);
     }
     return;
   }
@@ -660,6 +740,20 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     state_.search_query.clear();
     setStatusMessage("Real-time search - type to filter, Enter to finish, Esc to cancel");
     return;
+  }
+  
+  // Panel resizing when focused on Notes panel
+  if (state_.current_pane == ActivePane::Notes && state_.view_mode == ViewMode::ThreePane) {
+    if (event == ftxui::Event::Character('+') || event == ftxui::Event::Character('=')) {
+      // + or =: Expand notes panel (shrink preview panel)
+      resizeNotesPanel(PanelSizing::RESIZE_STEP);
+      return;
+    }
+    if (event == ftxui::Event::Character('-') || event == ftxui::Event::Character('_')) {
+      // - or _: Shrink notes panel (expand preview panel)
+      resizeNotesPanel(-PanelSizing::RESIZE_STEP);
+      return;
+    }
   }
   
   // Navigation shortcuts - move between adjacent panes
@@ -1357,6 +1451,26 @@ void TUIApp::moveSelection(int delta) {
           0,
           static_cast<int>(state_.tags.size()) - 1
         );
+        
+        // Auto-scroll to keep selected tag visible
+        // Calculate dynamic visible tags based on terminal height
+        const int visible_tags = calculateVisibleTagsCount();
+        
+        // Scroll up if selection moved above visible area
+        if (state_.selected_tag_index < state_.tags_scroll_offset) {
+          state_.tags_scroll_offset = state_.selected_tag_index;
+        }
+        // Scroll down if selection moved below visible area
+        else if (state_.selected_tag_index >= state_.tags_scroll_offset + visible_tags) {
+          state_.tags_scroll_offset = state_.selected_tag_index - visible_tags + 1;
+        }
+        
+        // Ensure scroll offset is within bounds
+        state_.tags_scroll_offset = std::clamp(
+          state_.tags_scroll_offset,
+          0,
+          std::max(0, static_cast<int>(state_.tags.size()) - visible_tags)
+        );
       } else if (delta < 0 && !state_.active_tag_filters.empty()) {
         // No tags, but have filters - go to filters
         focusPane(ActivePane::TagFilters);
@@ -1494,15 +1608,19 @@ Element TUIApp::renderTagsPanel() const {
     tags_content.push_back(separator());
   }
   
-  // Tag list
-  int index = 0;
-  for (const auto& tag : state_.tags) {
+  // Tag list - apply scrolling
+  const int visible_tags = calculateVisibleTagsCount();
+  int visible_start = state_.tags_scroll_offset;
+  int visible_end = std::min(visible_start + visible_tags, static_cast<int>(state_.tags.size()));
+  
+  for (int i = visible_start; i < visible_end; ++i) {
+    const auto& tag = state_.tags[static_cast<size_t>(i)];
     auto count = state_.tag_counts.find(tag);
     int tag_count = count != state_.tag_counts.end() ? count->second : 0;
     
     auto tag_text = text("📂 " + tag + " (" + std::to_string(tag_count) + ")");
     
-    if (state_.current_pane == ActivePane::Tags && index == state_.selected_tag_index) {
+    if (state_.current_pane == ActivePane::Tags && i == state_.selected_tag_index) {
       tag_text = tag_text | inverted;
     }
     
@@ -1511,7 +1629,17 @@ Element TUIApp::renderTagsPanel() const {
     }
     
     tags_content.push_back(tag_text);
-    index++;
+  }
+  
+  // Add scroll indicators if there are more tags above or below
+  if (state_.tags_scroll_offset > 0) {
+    // Insert at the beginning of the tag list (after headers/filters)
+    auto insert_pos = static_cast<size_t>(static_cast<int>(tags_content.size()) - (visible_end - visible_start));
+    tags_content.insert(tags_content.begin() + static_cast<ptrdiff_t>(insert_pos),
+                       text("▲ More tags above...") | dim);
+  }
+  if (visible_end < static_cast<int>(state_.tags.size())) {
+    tags_content.push_back(text("▼ More tags below...") | dim);
   }
   
   return vbox(tags_content) | border;
@@ -1721,7 +1849,7 @@ Element TUIApp::renderCommandPalette() const {
   
   // Show search input
   std::string query_display = "> " + state_.command_palette_query + "_";
-  palette_content.push_back(text(query_display) | bgcolor(Color::DarkBlue) | color(Color::White));
+  palette_content.push_back(text(query_display) | bgcolor(Color::White) | color(Color::Black));
   palette_content.push_back(separator());
   
   // Show filtered commands
@@ -1751,8 +1879,11 @@ Element TUIApp::renderCommandPalette() const {
   return vbox(palette_content) | 
          border | 
          size(WIDTH, GREATER_THAN, 50) |
-         size(HEIGHT, LESS_THAN, 12) |
-         bgcolor(Color::Black);
+         size(WIDTH, LESS_THAN, 70) |
+         size(HEIGHT, GREATER_THAN, 8) |
+         size(HEIGHT, LESS_THAN, 15) |
+         bgcolor(Color::DarkBlue) |
+         color(Color::White);
 }
 
 Element TUIApp::renderHelpModal() const {
@@ -1788,6 +1919,11 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  Enter   Activate/Remove filter/Edit note"));
   help_content.push_back(text(""));
   
+  help_content.push_back(text("Panel Resizing (Notes panel):") | bold);
+  help_content.push_back(text("  +/=     Expand notes panel (shrink preview)"));
+  help_content.push_back(text("  -/_     Shrink notes panel (expand preview)"));
+  help_content.push_back(text(""));
+  
   help_content.push_back(text("Auto-Edit:") | bold);
   help_content.push_back(text("  Focusing preview panel → auto-edit mode"));
   help_content.push_back(text("  Use → key or Tab to auto-start editing"));
@@ -1809,6 +1945,12 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  Bksp    Delete character"));
   help_content.push_back(text(""));
   
+  help_content.push_back(text("AI Features:") | bold);
+  help_content.push_back(text("  Ctrl+T  Suggest tags for all notes (AI)"));
+  help_content.push_back(text("  a       AI auto-tag selected note"));
+  help_content.push_back(text("  A       AI auto-title selected note"));
+  help_content.push_back(text(""));
+  
   help_content.push_back(text("Other:") | bold);
   help_content.push_back(text("  ?       Toggle this help"));
   help_content.push_back(text("  q       Quit application"));
@@ -1819,9 +1961,11 @@ Element TUIApp::renderHelpModal() const {
   return vbox(help_content) |
          border |
          size(WIDTH, GREATER_THAN, 60) |
+         size(WIDTH, LESS_THAN, 80) |
          size(HEIGHT, GREATER_THAN, 25) |
-         bgcolor(Color::White) |
-         color(Color::Black);
+         size(HEIGHT, LESS_THAN, 35) |
+         bgcolor(Color::DarkBlue) |
+         color(Color::White);
 }
 
 std::vector<TUICommand> TUIApp::getFilteredCommands(const std::string& query) const {
@@ -2147,7 +2291,7 @@ Element TUIApp::renderNewNoteModal() const {
     hbox({
       text("Title: "),
       text(title_display) | 
-      (state_.new_note_title.empty() ? dim : (bgcolor(Color::DarkBlue) | color(Color::White)))
+      (state_.new_note_title.empty() ? dim : (bgcolor(Color::White) | color(Color::Black)))
     })
   );
   modal_content.push_back(separator());
@@ -2167,7 +2311,709 @@ Element TUIApp::renderNewNoteModal() const {
          border |
          size(WIDTH, GREATER_THAN, 40) |
          size(WIDTH, LESS_THAN, 60) |
-         bgcolor(Color::Black);
+         size(HEIGHT, GREATER_THAN, 8) |
+         size(HEIGHT, LESS_THAN, 15) |
+         bgcolor(Color::DarkBlue) |
+         color(Color::White);
+}
+
+void TUIApp::suggestTagsForAllNotes() {
+  // Check if AI is configured
+  if (!config_.ai.has_value()) {
+    setStatusMessage("AI not configured - check config file");
+    return;
+  }
+  
+  const auto& ai_config = config_.ai.value();
+  if (ai_config.provider != "anthropic") {
+    setStatusMessage("Only Anthropic provider is currently supported");
+    return;
+  }
+  
+  if (ai_config.api_key.empty()) {
+    setStatusMessage("AI API key not configured");
+    return;
+  }
+  
+  setStatusMessage("Starting AI tag suggestion for all notes...");
+  
+  int processed = 0;
+  int updated = 0;
+  int errors = 0;
+  
+  // Process all notes in all_notes (unfiltered list)
+  for (const auto& metadata : state_.all_notes) {
+    auto note_result = note_store_.load(metadata.id());
+    if (!note_result.has_value()) {
+      errors++;
+      continue;
+    }
+    
+    auto note = note_result.value();
+    
+    // Skip notes that already have tags to avoid overwriting manual tags
+    if (!note.metadata().tags().empty()) {
+      processed++;
+      continue;
+    }
+    
+    // Suggest tags using AI
+    auto tags_result = suggestTagsForNote(note, ai_config);
+    if (tags_result.has_value() && !tags_result.value().empty()) {
+      // Apply the suggested tags to the note
+      auto updated_metadata = note.metadata();
+      for (const auto& tag : tags_result.value()) {
+        updated_metadata.addTag(tag);
+      }
+      
+      // Create updated note and save
+      nx::core::Note updated_note(std::move(updated_metadata), note.content());
+      auto store_result = note_store_.store(updated_note);
+      
+      if (store_result.has_value()) {
+        // Update search index
+        auto index_result = search_index_.addNote(updated_note);
+        if (index_result.has_value()) {
+          updated++;
+        } else {
+          errors++;
+        }
+      } else {
+        errors++;
+      }
+    } else {
+      errors++;
+    }
+    
+    processed++;
+    
+    // Update status every 5 notes
+    if (processed % 5 == 0) {
+      setStatusMessage("AI tagging progress: " + std::to_string(processed) + "/" + 
+                       std::to_string(state_.all_notes.size()) + " processed");
+    }
+  }
+  
+  // Reload data to reflect changes
+  loadNotes();
+  loadTags();
+  applyFilters();
+  
+  std::string final_message = "AI tagging complete: " + std::to_string(updated) + 
+                             " notes updated, " + std::to_string(errors) + " errors";
+  setStatusMessage(final_message);
+}
+
+void TUIApp::aiAutoTagSelectedNote() {
+  // Check if AI is configured
+  if (!config_.ai.has_value()) {
+    setStatusMessage("AI not configured - check config file");
+    return;
+  }
+  
+  const auto& ai_config = config_.ai.value();
+  if (ai_config.provider != "anthropic") {
+    setStatusMessage("Only Anthropic provider is currently supported");
+    return;
+  }
+  
+  if (ai_config.api_key.empty()) {
+    setStatusMessage("AI API key not configured");
+    return;
+  }
+  
+  // Check if a note is selected and we're in the notes panel
+  if (state_.current_pane != ActivePane::Notes || state_.notes.empty() || 
+      state_.selected_note_index < 0 || 
+      static_cast<size_t>(state_.selected_note_index) >= state_.notes.size()) {
+    setStatusMessage("Select a note in the notes panel to auto-tag");
+    return;
+  }
+  
+  const auto& selected_metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
+  
+  // Load the full note
+  auto note_result = note_store_.load(selected_metadata.id());
+  if (!note_result.has_value()) {
+    setStatusMessage("Error loading selected note: " + note_result.error().message());
+    return;
+  }
+  
+  auto note = note_result.value();
+  
+  setStatusMessage("Generating AI tags for selected note...");
+  
+  // Suggest tags using AI
+  auto tags_result = suggestTagsForNote(note, ai_config);
+  if (!tags_result.has_value()) {
+    setStatusMessage("Error generating AI tags: " + tags_result.error().message());
+    return;
+  }
+  
+  auto suggested_tags = tags_result.value();
+  
+  if (suggested_tags.empty()) {
+    setStatusMessage("No AI tag suggestions generated for this note");
+    return;
+  }
+  
+  // Add suggested tags to existing tags (don't replace them)
+  auto updated_metadata = note.metadata();
+  std::set<std::string> existing_tags_set(note.metadata().tags().begin(), note.metadata().tags().end());
+  
+  int new_tags_added = 0;
+  for (const auto& tag : suggested_tags) {
+    if (existing_tags_set.find(tag) == existing_tags_set.end()) {
+      updated_metadata.addTag(tag);
+      new_tags_added++;
+    }
+  }
+  
+  if (new_tags_added == 0) {
+    setStatusMessage("No new AI tags to add - note already has suggested tags");
+    return;
+  }
+  
+  updated_metadata.touch(); // Update modified time
+  
+  // Create updated note and save
+  nx::core::Note updated_note(std::move(updated_metadata), note.content());
+  auto store_result = note_store_.store(updated_note);
+  if (!store_result.has_value()) {
+    setStatusMessage("Error saving AI tags: " + store_result.error().message());
+    return;
+  }
+  
+  // Update search index
+  auto index_result = search_index_.updateNote(updated_note);
+  if (!index_result.has_value()) {
+    // Non-fatal - warn but continue
+    setStatusMessage("Warning: Failed to update search index: " + index_result.error().message());
+  }
+  
+  // Reload data to reflect changes
+  loadNotes();
+  loadTags();
+  applyFilters();
+  
+  // Show success message with tags added
+  std::string tag_list;
+  for (size_t i = 0; i < suggested_tags.size() && i < 3; ++i) {
+    if (i > 0) tag_list += ", ";
+    tag_list += suggested_tags[i];
+  }
+  if (suggested_tags.size() > 3) {
+    tag_list += "...";
+  }
+  
+  setStatusMessage("Added " + std::to_string(new_tags_added) + " AI tags: " + tag_list);
+}
+
+void TUIApp::aiAutoTitleSelectedNote() {
+  // Check if AI is configured
+  if (!config_.ai.has_value()) {
+    setStatusMessage("AI not configured - check config file");
+    return;
+  }
+  
+  const auto& ai_config = config_.ai.value();
+  if (ai_config.provider != "anthropic") {
+    setStatusMessage("Only Anthropic provider is currently supported");
+    return;
+  }
+  
+  if (ai_config.api_key.empty()) {
+    setStatusMessage("AI API key not configured");
+    return;
+  }
+  
+  // Check if a note is selected and we're in the notes panel
+  if (state_.current_pane != ActivePane::Notes || state_.notes.empty() || 
+      state_.selected_note_index < 0 || 
+      static_cast<size_t>(state_.selected_note_index) >= state_.notes.size()) {
+    setStatusMessage("Select a note in the notes panel to auto-title");
+    return;
+  }
+  
+  const auto& selected_metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
+  
+  // Load the full note
+  auto note_result = note_store_.load(selected_metadata.id());
+  if (!note_result.has_value()) {
+    setStatusMessage("Error loading selected note: " + note_result.error().message());
+    return;
+  }
+  
+  auto note = note_result.value();
+  
+  setStatusMessage("Generating AI title for selected note...");
+  
+  // Suggest title using AI
+  auto title_result = suggestTitleForNote(note, ai_config);
+  if (!title_result.has_value()) {
+    setStatusMessage("Error generating AI title: " + title_result.error().message());
+    return;
+  }
+  
+  auto suggested_title = title_result.value();
+  
+  if (suggested_title.empty() || suggested_title == note.title()) {
+    setStatusMessage("No new AI title suggestion generated");
+    return;
+  }
+  
+  // Update note with new title
+  auto updated_metadata = note.metadata();
+  std::string old_title = updated_metadata.title();
+  updated_metadata.setTitle(suggested_title);
+  updated_metadata.touch(); // Update modified time
+  
+  // Update content if it starts with a title heading
+  std::string updated_content = note.content();
+  if (updated_content.starts_with("# ")) {
+    // Replace the first line (title heading)
+    size_t first_newline = updated_content.find('\n');
+    if (first_newline != std::string::npos) {
+      updated_content = "# " + suggested_title + updated_content.substr(first_newline);
+    } else {
+      updated_content = "# " + suggested_title;
+    }
+  }
+  
+  // Create updated note and save
+  nx::core::Note updated_note(std::move(updated_metadata), updated_content);
+  auto store_result = note_store_.store(updated_note);
+  if (!store_result.has_value()) {
+    setStatusMessage("Error saving AI title: " + store_result.error().message());
+    return;
+  }
+  
+  // Update search index
+  auto index_result = search_index_.updateNote(updated_note);
+  if (!index_result.has_value()) {
+    // Non-fatal - warn but continue
+    setStatusMessage("Warning: Failed to update search index: " + index_result.error().message());
+  }
+  
+  // Reload data to reflect changes
+  loadNotes();
+  loadTags();
+  applyFilters();
+  
+  // Show success message with new title
+  std::string display_title = suggested_title;
+  if (display_title.length() > 50) {
+    display_title = display_title.substr(0, 47) + "...";
+  }
+  
+  setStatusMessage("AI title updated: \"" + display_title + "\"");
+}
+
+Result<std::vector<std::string>> TUIApp::suggestTagsForNote(const nx::core::Note& note, 
+                                                           const nx::config::Config::AiConfig& ai_config) {
+  // Get existing tags from all notes for consistency
+  std::set<std::string> existing_tags_set;
+  for (const auto& metadata : state_.all_notes) {
+    for (const auto& tag : metadata.tags()) {
+      existing_tags_set.insert(tag);
+    }
+  }
+  
+  std::vector<std::string> existing_tags(existing_tags_set.begin(), existing_tags_set.end());
+  
+  // Prepare the request payload for Anthropic API
+  nlohmann::json request_body;
+  request_body["model"] = ai_config.model;
+  request_body["max_tokens"] = 512;
+  
+  std::string system_prompt = "You are a helpful assistant that suggests relevant tags for notes. "
+                             "Analyze the note content and suggest 3-5 concise, relevant tags. "
+                             "Tags should be lowercase, single words or short phrases with hyphens. "
+                             "Return only a JSON array of tag strings, no other text.";
+  
+  request_body["system"] = system_prompt;
+  
+  nlohmann::json messages = nlohmann::json::array();
+  nlohmann::json user_message;
+  user_message["role"] = "user";
+  
+  std::string context = "Note title: " + note.title() + "\n\nNote content:\n" + note.content();
+  
+  if (!existing_tags.empty()) {
+    context += "\n\nExisting tags in the collection (for consistency): ";
+    for (size_t i = 0; i < existing_tags.size() && i < 20; ++i) {
+      if (i > 0) context += ", ";
+      context += existing_tags[i];
+    }
+  }
+  
+  context += "\n\nSuggest 3-5 relevant tags for this note:";
+  user_message["content"] = context;
+  messages.push_back(user_message);
+  
+  request_body["messages"] = messages;
+  
+  // Make HTTP request to Anthropic API
+  nx::util::HttpClient client;
+  
+  std::vector<std::string> headers = {
+    "Content-Type: application/json",
+    "x-api-key: " + ai_config.api_key,
+    "anthropic-version: 2023-06-01"
+  };
+  
+  auto response = client.post("https://api.anthropic.com/v1/messages", 
+                             request_body.dump(), headers);
+  
+  if (!response.has_value()) {
+    return std::unexpected(makeError(ErrorCode::kNetworkError, 
+                                   "Failed to call Anthropic API"));
+  }
+  
+  if (response->status_code != 200) {
+    return std::unexpected(makeError(ErrorCode::kNetworkError, 
+                                   "Anthropic API returned error " + std::to_string(response->status_code)));
+  }
+  
+  // Parse response
+  try {
+    auto response_json = nlohmann::json::parse(response->body);
+    
+    if (!response_json.contains("content") || !response_json["content"].is_array() || 
+        response_json["content"].empty()) {
+      return std::unexpected(makeError(ErrorCode::kParseError, 
+                                     "Invalid response format from Anthropic API"));
+    }
+    
+    auto& content_obj = response_json["content"][0];
+    if (!content_obj.contains("text") || !content_obj["text"].is_string()) {
+      return std::unexpected(makeError(ErrorCode::kParseError, 
+                                     "Missing text content in Anthropic API response"));
+    }
+    
+    std::string ai_response = content_obj["text"].get<std::string>();
+    
+    // Try to parse the AI response as JSON array
+    try {
+      auto tags_json = nlohmann::json::parse(ai_response);
+      if (!tags_json.is_array()) {
+        return std::unexpected(makeError(ErrorCode::kParseError, 
+                                       "AI response is not a JSON array"));
+      }
+      
+      std::vector<std::string> suggestions;
+      for (const auto& tag_json : tags_json) {
+        if (tag_json.is_string()) {
+          suggestions.push_back(tag_json.get<std::string>());
+        }
+      }
+      
+      return suggestions;
+      
+    } catch (const nlohmann::json::parse_error&) {
+      return std::unexpected(makeError(ErrorCode::kParseError, 
+                                     "Failed to parse AI response as JSON"));
+    }
+    
+  } catch (const nlohmann::json::parse_error&) {
+    return std::unexpected(makeError(ErrorCode::kParseError, 
+                                   "Failed to parse API response"));
+  }
+}
+
+Result<std::string> TUIApp::suggestTitleForNote(const nx::core::Note& note, 
+                                               const nx::config::Config::AiConfig& ai_config) {
+  // Prepare the request payload for Anthropic API
+  nlohmann::json request_body;
+  request_body["model"] = ai_config.model;
+  request_body["max_tokens"] = 128;
+  
+  std::string system_prompt = "You are a helpful assistant that generates concise, descriptive titles for notes based on their content. "
+                             "Analyze the provided content and suggest a single, clear title that captures the main topic or purpose. "
+                             "The title should be specific and informative. Return only the title text, no quotes or extra formatting.";
+  
+  request_body["system"] = system_prompt;
+  
+  nlohmann::json messages = nlohmann::json::array();
+  nlohmann::json user_message;
+  user_message["role"] = "user";
+  
+  // Limit content length to avoid token limits
+  std::string limited_content = note.content();
+  if (limited_content.length() > 2000) {
+    limited_content = limited_content.substr(0, 2000) + "...";
+  }
+  
+  std::string context = "Current title: " + note.title() + "\n\nNote content:\n" + limited_content + 
+                       "\n\nGenerate a better, more descriptive title for this note:";
+  user_message["content"] = context;
+  messages.push_back(user_message);
+  
+  request_body["messages"] = messages;
+  
+  // Make HTTP request to Anthropic API
+  nx::util::HttpClient client;
+  
+  std::vector<std::string> headers = {
+    "Content-Type: application/json",
+    "x-api-key: " + ai_config.api_key,
+    "anthropic-version: 2023-06-01"
+  };
+  
+  auto response = client.post("https://api.anthropic.com/v1/messages", 
+                             request_body.dump(), headers);
+  
+  if (!response.has_value()) {
+    return std::unexpected(makeError(ErrorCode::kNetworkError, 
+                                   "Failed to call Anthropic API: " + response.error().message()));
+  }
+  
+  if (response->status_code != 200) {
+    return std::unexpected(makeError(ErrorCode::kNetworkError, 
+                                   "Anthropic API returned error " + std::to_string(response->status_code) + 
+                                   ": " + response->body));
+  }
+  
+  try {
+    nlohmann::json response_json = nlohmann::json::parse(response->body);
+    
+    if (response_json.contains("error")) {
+      std::string error_message = "Anthropic API error";
+      if (response_json["error"].contains("message")) {
+        error_message = response_json["error"]["message"];
+      }
+      return std::unexpected(makeError(ErrorCode::kNetworkError, error_message));
+    }
+    
+    if (!response_json.contains("content") || !response_json["content"].is_array() || 
+        response_json["content"].empty()) {
+      return std::unexpected(makeError(ErrorCode::kParseError, 
+                                     "Invalid response format from Anthropic API"));
+    }
+    
+    auto content_item = response_json["content"][0];
+    if (!content_item.contains("text")) {
+      return std::unexpected(makeError(ErrorCode::kParseError, 
+                                     "No text content in Anthropic API response"));
+    }
+    
+    std::string generated_title = content_item["text"];
+    
+    // Clean up the title - remove quotes and trim whitespace
+    if (generated_title.front() == '"' && generated_title.back() == '"') {
+      generated_title = generated_title.substr(1, generated_title.length() - 2);
+    }
+    
+    // Trim whitespace
+    generated_title.erase(0, generated_title.find_first_not_of(" \t\n\r"));
+    generated_title.erase(generated_title.find_last_not_of(" \t\n\r") + 1);
+    
+    // Limit title length
+    if (generated_title.length() > 100) {
+      generated_title = generated_title.substr(0, 100);
+    }
+    
+    return generated_title;
+    
+  } catch (const nlohmann::json::parse_error& e) {
+    return std::unexpected(makeError(ErrorCode::kParseError, 
+                                   "Failed to parse Anthropic API response: " + std::string(e.what())));
+  }
+}
+
+// Tag management operations
+Result<void> TUIApp::addTagsToNote(const nx::core::NoteId& note_id, const std::vector<std::string>& tags) {
+  auto note_result = note_store_.load(note_id);
+  if (!note_result.has_value()) {
+    return std::unexpected(note_result.error());
+  }
+
+  auto note = *note_result;
+  auto metadata = note.metadata();
+  
+  for (const auto& tag : tags) {
+    if (!metadata.hasTag(tag)) {
+      metadata.addTag(tag);
+    }
+  }
+
+  nx::core::Note updated_note(std::move(metadata), note.content());
+  auto store_result = note_store_.store(updated_note);
+  if (!store_result.has_value()) {
+    return std::unexpected(store_result.error());
+  }
+
+  // Update search index
+  auto index_result = search_index_.updateNote(updated_note);
+  if (!index_result.has_value()) {
+    // Non-fatal, just log warning
+  }
+
+  return {};
+}
+
+Result<void> TUIApp::removeTagsFromNote(const nx::core::NoteId& note_id, const std::vector<std::string>& tags) {
+  auto note_result = note_store_.load(note_id);
+  if (!note_result.has_value()) {
+    return std::unexpected(note_result.error());
+  }
+
+  auto note = *note_result;
+  auto metadata = note.metadata();
+  
+  for (const auto& tag : tags) {
+    if (metadata.hasTag(tag)) {
+      metadata.removeTag(tag);
+    }
+  }
+
+  nx::core::Note updated_note(std::move(metadata), note.content());
+  auto store_result = note_store_.store(updated_note);
+  if (!store_result.has_value()) {
+    return std::unexpected(store_result.error());
+  }
+
+  // Update search index
+  auto index_result = search_index_.updateNote(updated_note);
+  if (!index_result.has_value()) {
+    // Non-fatal, just log warning
+  }
+
+  return {};
+}
+
+Result<void> TUIApp::setTagsForNote(const nx::core::NoteId& note_id, const std::vector<std::string>& tags) {
+  auto note_result = note_store_.load(note_id);
+  if (!note_result.has_value()) {
+    return std::unexpected(note_result.error());
+  }
+
+  auto note = *note_result;
+  auto metadata = note.metadata();
+  
+  // Replace all tags
+  metadata.setTags(tags);
+
+  nx::core::Note updated_note(std::move(metadata), note.content());
+  auto store_result = note_store_.store(updated_note);
+  if (!store_result.has_value()) {
+    return std::unexpected(store_result.error());
+  }
+
+  // Update search index
+  auto index_result = search_index_.updateNote(updated_note);
+  if (!index_result.has_value()) {
+    // Non-fatal, just log warning
+  }
+
+  return {};
+}
+
+void TUIApp::openTagEditModal(const nx::core::NoteId& note_id) {
+  // Load current tags for the note
+  auto note_result = note_store_.load(note_id);
+  if (!note_result.has_value()) {
+    setStatusMessage("Error loading note for tag editing");
+    return;
+  }
+
+  auto note = *note_result;
+  const auto& current_tags = note.metadata().tags();
+  
+  // Build comma-separated string of current tags
+  std::string tag_string;
+  for (size_t i = 0; i < current_tags.size(); ++i) {
+    if (i > 0) tag_string += ", ";
+    tag_string += current_tags[i];
+  }
+  
+  state_.tag_edit_modal_open = true;
+  state_.tag_edit_note_id = note_id;
+  state_.tag_edit_input = tag_string;
+  setStatusMessage("Edit tags (comma-separated). Enter to save, Esc to cancel");
+}
+
+Element TUIApp::renderTagEditModal() const {
+  if (!state_.tag_edit_modal_open) {
+    return text("");
+  }
+  
+  Elements modal_content;
+  
+  modal_content.push_back(text("Edit Tags") | bold | center);
+  modal_content.push_back(separator());
+  modal_content.push_back(text(""));
+  
+  // Current note info
+  if (state_.tag_edit_note_id.isValid()) {
+    auto note_result = note_store_.load(state_.tag_edit_note_id);
+    if (note_result.has_value()) {
+      modal_content.push_back(
+        hbox({
+          text("Note: "),
+          text(note_result->title()) | bold
+        })
+      );
+      modal_content.push_back(text(""));
+    }
+  }
+  
+  // Tag input
+  std::string input_display = state_.tag_edit_input.empty() ? 
+    "[Enter tags, comma-separated]" : state_.tag_edit_input;
+  modal_content.push_back(
+    hbox({
+      text("Tags: "),
+      text(input_display) | 
+      (state_.tag_edit_input.empty() ? dim : (bgcolor(Color::White) | color(Color::Black)))
+    })
+  );
+  modal_content.push_back(separator());
+  modal_content.push_back(text(""));
+  
+  modal_content.push_back(text("Press Enter to save, Esc to cancel") | center | dim);
+  modal_content.push_back(text("Example: work, urgent, project-alpha") | center | dim);
+  
+  return vbox(modal_content) |
+         border |
+         size(WIDTH, GREATER_THAN, 50) |
+         size(WIDTH, LESS_THAN, 80) |
+         bgcolor(Color::DarkBlue) |
+         color(Color::White);
+}
+
+void TUIApp::resizeNotesPanel(int delta) {
+  if (panel_sizing_.resizeNotes(delta)) {
+    // Panel was successfully resized, provide user feedback
+    std::string direction = delta > 0 ? "expanded" : "narrowed";
+    setStatusMessage("Notes panel " + direction + " (Notes: " + 
+                    std::to_string(panel_sizing_.notes_width) + "%, Preview: " + 
+                    std::to_string(panel_sizing_.preview_width) + "%)");
+  } else {
+    // Cannot resize further due to minimum constraints
+    std::string reason = delta > 0 ? 
+      "Cannot expand further (preview panel at minimum width)" :
+      "Cannot narrow further (notes panel at minimum width)";
+    setStatusMessage(reason);
+  }
+}
+
+int TUIApp::calculateVisibleTagsCount() const {
+  // Show all tags unless we have a huge number
+  // This lets FTXUI's layout engine handle the space naturally
+  
+  int tag_count = static_cast<int>(state_.tags.size());
+  
+  // Only limit if we have more than 30 tags (to prevent performance issues)
+  if (tag_count <= 30) {
+    return tag_count; // Show all tags
+  }
+  
+  // For many tags, calculate based on terminal height
+  int terminal_height = screen_.dimy();
+  int max_tags = std::max(15, terminal_height - 8);
+  
+  return std::min(tag_count, max_tags);
 }
 
 } // namespace nx::tui
