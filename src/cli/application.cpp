@@ -58,6 +58,9 @@
 // Configuration management
 #include "nx/cli/commands/config_command.hpp"
 
+// Sync management
+#include "nx/cli/commands/sync_command.hpp"
+
 namespace nx::cli {
 
 Application::Application() 
@@ -154,6 +157,9 @@ void Application::setupCommands() {
   
   // Configuration management commands
   registerCommand(std::make_unique<ConfigCommand>(*this));
+  
+  // Synchronization commands
+  registerCommand(std::make_unique<SyncCommand>(*this));
 }
 
 void Application::setupHelp() {

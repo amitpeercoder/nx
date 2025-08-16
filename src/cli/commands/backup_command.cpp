@@ -563,12 +563,11 @@ Result<void> BackupCommand::writeBackupMetadata(const fs::path& metadata_path, c
     metadata["compression"] = info.compression;
     metadata["size_bytes"] = info.size_bytes;
     
-    std::ofstream file(metadata_path);
-    if (!file) {
-        return std::unexpected(makeError(ErrorCode::kFileWriteError, "Failed to write backup metadata"));
+    // Write backup metadata atomically
+    auto write_result = nx::util::FileSystem::writeFileAtomic(metadata_path, metadata.dump(2));
+    if (!write_result.has_value()) {
+        return std::unexpected(makeError(ErrorCode::kFileWriteError, "Failed to write backup metadata: " + write_result.error().message()));
     }
-    
-    file << metadata.dump(2);
     return {};
 }
 

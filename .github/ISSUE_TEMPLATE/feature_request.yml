@@ -1,0 +1,98 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for nx
+title: "[FEATURE] "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in improving nx! 
+        Please provide details about the feature you'd like to see.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary
+      description: A brief description of the feature you're requesting
+      placeholder: "Add support for..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: |
+        Why would this feature be useful? What problem does it solve?
+        What use cases does it enable?
+    validations:
+      required: true
+
+  - type: textarea
+    id: detailed-description
+    attributes:
+      label: Detailed Description
+      description: |
+        Provide a detailed description of the feature.
+        Include specifics about how you envision it working.
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Usage Examples
+      description: |
+        Show how the feature would be used. Include command examples, configuration snippets, etc.
+      render: shell
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve workflow
+        - High - Blocking current work
+        - Critical - Can't use nx without this
+    validations:
+      required: true
+
+  - type: dropdown
+    id: implementation
+    attributes:
+      label: Implementation Willingness
+      description: Are you willing to help implement this feature?
+      options:
+        - "Yes, I can implement this"
+        - "Yes, with guidance"
+        - "Maybe, if it's straightforward"
+        - "No, I cannot contribute code"
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: |
+        What alternatives have you considered? 
+        Are there workarounds available?
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: |
+        Add any other context, screenshots, or examples that might help.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues and this feature hasn't been requested
+          required: true
+        - label: I have read the project roadmap and this fits the project goals
+          required: true
+        - label: I understand this is a volunteer project and features take time
+          required: true

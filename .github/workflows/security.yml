@@ -1,0 +1,181 @@
+name: Security Scanning
+
+on:
+  schedule:
+    # Run security scans daily at 02:00 UTC
+    - cron: '0 2 * * *'
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg
+          ${{ github.workspace }}/build/vcpkg_installed
+        key: security-scan-vcpkg-${{ hashFiles('vcpkg.json') }}
+        
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev
+          
+    - name: Generate Dependency List
+      run: |
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        # Extract dependency information
+        find build -name "*.cmake" -exec grep -l "find_package\|pkg_check_modules" {} \; > dependencies.txt || true
+        cat dependencies.txt
+        
+    - name: Run Trivy Vulnerability Scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  secret-scanning:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for comprehensive scanning
+        
+    - name: TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  license-scan:
+    name: License Compliance Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: License Scan with FOSSA
+      if: github.repository == 'nx/nx'  # Only run on main repository
+      uses: fossas/fossa-action@main
+      with:
+        api-key: ${{ secrets.FOSSA_API_KEY }}
+        container: 'ubuntu:latest'
+        
+    - name: Basic License Check
+      if: github.repository != 'nx/nx'  # Fallback for forks
+      run: |
+        echo "Checking for common license files..."
+        find . -name "LICENSE*" -o -name "COPYING*" -o -name "COPYRIGHT*" | head -10
+        
+        echo "Scanning for license headers in source files..."
+        find src include -name "*.cpp" -o -name "*.hpp" | head -5 | while read file; do
+          echo "=== $file ==="
+          head -10 "$file" | grep -i "license\|copyright" || echo "No license header found"
+        done
+
+  sbom-generation:
+    name: Software Bill of Materials
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev
+          
+    - name: Generate SBOM with Syft
+      uses: anchore/sbom-action@v0
+      with:
+        path: .
+        format: spdx-json
+        output-file: sbom.spdx.json
+        
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom
+        path: sbom.spdx.json
+        retention-days: 90
+
+  supply-chain-scan:
+    name: Supply Chain Security
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: SLSA Provenance Generation
+      uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
+      if: github.ref == 'refs/heads/main'
+      with:
+        base64-subjects: ${{ needs.build.outputs.hashes }}
+        
+    - name: Scorecard Analysis
+      uses: ossf/scorecard-action@v2.3.1
+      with:
+        results_file: results.sarif
+        results_format: sarif
+        publish_results: true
+        
+    - name: Upload Scorecard results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results.sarif

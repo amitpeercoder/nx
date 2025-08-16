@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <sstream>
+#include <chrono>
 #include <nlohmann/json.hpp>
 
 #include "nx/cli/application.hpp"
@@ -22,6 +23,10 @@ protected:
         
         // Override notes directory
         setenv("NX_NOTES_DIR", notes_dir_.string().c_str(), 1);
+        
+        // Generate unique test suffix for this test run
+        test_suffix_ = std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count());
     }
 
     void TearDown() override {
@@ -39,21 +44,28 @@ protected:
             argv.push_back(const_cast<char*>(arg.c_str()));
         }
         
-        // Capture stdout
-        std::ostringstream output;
+        // Capture stdout and stderr
+        std::ostringstream cout_output, cerr_output;
         std::streambuf* orig_cout = std::cout.rdbuf();
-        std::cout.rdbuf(output.rdbuf());
+        std::streambuf* orig_cerr = std::cerr.rdbuf();
+        std::cout.rdbuf(cout_output.rdbuf());
+        std::cerr.rdbuf(cerr_output.rdbuf());
         
         int result = 0;
         try {
             result = app_->run(static_cast<int>(argv.size()), argv.data());
         } catch (const std::exception& e) {
             std::cout.rdbuf(orig_cout);
+            std::cerr.rdbuf(orig_cerr);
             throw;
         }
         
         std::cout.rdbuf(orig_cout);
-        return {result, output.str()};
+        std::cerr.rdbuf(orig_cerr);
+        
+        // Combine stdout and stderr for unified output
+        std::string combined_output = cout_output.str() + cerr_output.str();
+        return {result, combined_output};
     }
     
     // Helper to create a test note file
@@ -81,6 +93,7 @@ protected:
     std::unique_ptr<nx::test::TempDirectory> temp_dir_;
     std::filesystem::path notes_dir_;
     std::unique_ptr<Application> app_;
+    std::string test_suffix_;
 };
 
 // Test notebook list command
@@ -107,45 +120,50 @@ TEST_F(NotebookCLITest, ListNotebooks) {
 
 // Test notebook creation
 TEST_F(NotebookCLITest, CreateNotebook) {
-    auto [result, output] = runCommand({"notebook", "create", "test-notebook"});
+    std::string notebook_name = "test-notebook-" + test_suffix_;
+    auto [result, output] = runCommand({"notebook", "create", notebook_name});
     EXPECT_EQ(result, 0);
-    EXPECT_TRUE(output.find("Created notebook: test-notebook") != std::string::npos);
+    EXPECT_TRUE(output.find("Created notebook: " + notebook_name) != std::string::npos);
     
     // Verify notebook exists
     auto [result2, output2] = runCommand({"notebook", "list"});
     EXPECT_EQ(result2, 0);
-    EXPECT_TRUE(output2.find("test-notebook") != std::string::npos);
+    EXPECT_TRUE(output2.find(notebook_name) != std::string::npos);
 }
 
 // Test duplicate notebook creation
 TEST_F(NotebookCLITest, CreateDuplicateNotebook) {
+    std::string notebook_name = "work-" + test_suffix_;
     // Create first notebook
-    auto [result1, output1] = runCommand({"notebook", "create", "work"});
+    auto [result1, output1] = runCommand({"notebook", "create", notebook_name});
     EXPECT_EQ(result1, 0);
     
     // Try to create duplicate
-    auto [result2, output2] = runCommand({"notebook", "create", "work"});
+    auto [result2, output2] = runCommand({"notebook", "create", notebook_name});
     EXPECT_NE(result2, 0);
     EXPECT_TRUE(output2.find("Error") != std::string::npos);
 }
 
 // Test notebook renaming
 TEST_F(NotebookCLITest, RenameNotebook) {
+    std::string old_name = "old-name-" + test_suffix_;
+    std::string new_name = "new-name-" + test_suffix_;
+    
     // Create notebook
-    auto [result1, output1] = runCommand({"notebook", "create", "old-name"});
+    auto [result1, output1] = runCommand({"notebook", "create", old_name});
     EXPECT_EQ(result1, 0);
     
     // Rename notebook
-    auto [result2, output2] = runCommand({"notebook", "rename", "old-name", "new-name"});
+    auto [result2, output2] = runCommand({"notebook", "rename", old_name, new_name});
     EXPECT_EQ(result2, 0);
-    EXPECT_TRUE(output2.find("Renamed notebook 'old-name' to 'new-name'") != std::string::npos);
+    EXPECT_TRUE(output2.find("Renamed notebook '" + old_name + "' to '" + new_name + "'") != std::string::npos);
     
     // Verify old name doesn't exist
-    auto [result3, output3] = runCommand({"notebook", "info", "old-name"});
+    auto [result3, output3] = runCommand({"notebook", "info", old_name});
     EXPECT_NE(result3, 0);
     
     // Verify new name exists
-    auto [result4, output4] = runCommand({"notebook", "info", "new-name"});
+    auto [result4, output4] = runCommand({"notebook", "info", new_name});
     EXPECT_EQ(result4, 0);
 }
 
@@ -205,8 +223,10 @@ TEST_F(NotebookCLITest, NotebookInfo) {
 
 // Test JSON output
 TEST_F(NotebookCLITest, JSONOutput) {
+    std::string notebook_name = "test-" + test_suffix_;
+    
     // Create notebook
-    auto [result1, output1] = runCommand({"notebook", "create", "test"});
+    auto [result1, output1] = runCommand({"notebook", "create", notebook_name});
     EXPECT_EQ(result1, 0);
     
     // Get JSON list
@@ -221,7 +241,7 @@ TEST_F(NotebookCLITest, JSONOutput) {
         
         bool found = false;
         for (const auto& notebook : json) {
-            if (notebook["name"] == "test") {
+            if (notebook["name"] == notebook_name) {
                 found = true;
                 EXPECT_TRUE(notebook.contains("note_count"));
                 break;
@@ -231,12 +251,12 @@ TEST_F(NotebookCLITest, JSONOutput) {
     });
     
     // Get JSON info
-    auto [result3, output3] = runCommand({"notebook", "info", "test", "--json"});
+    auto [result3, output3] = runCommand({"notebook", "info", notebook_name, "--json"});
     EXPECT_EQ(result3, 0);
     
     EXPECT_NO_THROW({
         auto json = nlohmann::json::parse(output3);
-        EXPECT_EQ(json["name"], "test");
+        EXPECT_EQ(json["name"], notebook_name);
         EXPECT_TRUE(json.contains("note_count"));
     });
 }

@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 #include "nx/store/notebook_manager.hpp"
+#include "nx/util/error_handler.hpp"
 
 namespace nx::cli {
 
@@ -70,7 +71,7 @@ Result<int> NotebookCommand::executeList(const GlobalOptions& options) {
   
   auto notebooks_result = notebook_manager.listNotebooks(with_stats_);
   if (!notebooks_result.has_value()) {
-    std::cerr << "Error listing notebooks: " << notebooks_result.error().message() << std::endl;
+    displayError(notebooks_result.error(), "listing notebooks", options);
     return 1;
   }
 
@@ -95,7 +96,7 @@ Result<int> NotebookCommand::executeCreate(const GlobalOptions& options) {
   
   auto result = notebook_manager.createNotebook(notebook_name_);
   if (!result.has_value()) {
-    std::cerr << "Error creating notebook: " << result.error().message() << std::endl;
+    displayError(result.error(), "creating notebook '" + notebook_name_ + "'", options);
     return 1;
   }
 
@@ -118,7 +119,7 @@ Result<int> NotebookCommand::executeRename(const GlobalOptions& options) {
   
   auto result = notebook_manager.renameNotebook(notebook_name_, new_name_);
   if (!result.has_value()) {
-    std::cerr << "Error renaming notebook: " << result.error().message() << std::endl;
+    displayError(result.error(), "renaming notebook '" + notebook_name_ + "' to '" + new_name_ + "'", options);
     return 1;
   }
 
@@ -142,7 +143,7 @@ Result<int> NotebookCommand::executeDelete(const GlobalOptions& options) {
   
   auto result = notebook_manager.deleteNotebook(notebook_name_, force_);
   if (!result.has_value()) {
-    std::cerr << "Error deleting notebook: " << result.error().message() << std::endl;
+    displayError(result.error(), "deleting notebook '" + notebook_name_ + "'", options);
     return 1;
   }
 
@@ -166,7 +167,7 @@ Result<int> NotebookCommand::executeInfo(const GlobalOptions& options) {
   
   auto info_result = notebook_manager.getNotebookInfo(notebook_name_, with_stats_);
   if (!info_result.has_value()) {
-    std::cerr << "Error getting notebook info: " << info_result.error().message() << std::endl;
+    displayError(info_result.error(), "getting info for notebook '" + notebook_name_ + "'", options);
     return 1;
   }
 
@@ -307,6 +308,26 @@ void NotebookCommand::printNotebookList(const std::vector<nx::store::NotebookInf
     }
     
     std::cout << "\nTotal: " << notebooks.size() << " notebook" << (notebooks.size() != 1 ? "s" : "") << std::endl;
+  }
+}
+
+void NotebookCommand::displayError(const Error& error, const std::string& operation, const GlobalOptions& options) const {
+  // Create contextual error with operation context
+  auto context = nx::util::ErrorContext{}
+    .withOperation(operation);
+  
+  auto contextual_error = nx::util::makeContextualError(
+    error.code(), error.message(), context, nx::util::ErrorSeverity::kError);
+  
+  // Use ErrorHandler to format the error message appropriately
+  auto& error_handler = nx::util::ErrorHandler::instance();
+  
+  if (options.json || json_output_) {
+    // Output JSON error format
+    std::cerr << error_handler.formatUserError(contextual_error, true) << std::endl;
+  } else {
+    // Output user-friendly error with colors and suggestions
+    std::cerr << error_handler.formatUserError(contextual_error, false) << std::endl;
   }
 }
 

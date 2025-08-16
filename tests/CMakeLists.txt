@@ -22,6 +22,8 @@ target_link_libraries(test_common PUBLIC
 )
 
 # Core library for tests
+file(GLOB_RECURSE CLI_COMMAND_SOURCES "../src/cli/commands/*.cpp")
+file(GLOB_RECURSE IMPORT_EXPORT_SOURCES "../src/import_export/*.cpp")
 add_library(nx_core STATIC
     ../src/common.cpp
     ../src/core/note_id.cpp
@@ -31,6 +33,10 @@ add_library(nx_core STATIC
     ../src/util/xdg.cpp
     ../src/util/filesystem.cpp
     ../src/util/safe_process.cpp
+    ../src/util/error_handler.cpp
+    ../src/util/error_logger.cpp
+    ../src/util/http_client.cpp
+    ../src/util/security.cpp
     ../src/store/filesystem_store.cpp
     ../src/store/attachment_store.cpp
     ../src/store/filesystem_attachment_store.cpp
@@ -40,9 +46,14 @@ add_library(nx_core STATIC
     ../src/index/sqlite_index.cpp
     ../src/index/query_parser.cpp
     ../src/index/ripgrep_index.cpp
+    ../src/template/template_manager.cpp
+    ../src/tui/tui_app.cpp
+    ../src/sync/git_sync.cpp
+    ../src/crypto/age_crypto.cpp
     ../src/cli/application.cpp
-    ../src/cli/commands/new_command.cpp
-    ../src/cli/commands/notebook_command.cpp
+    ../src/cli/command_error_handler.cpp
+    ${CLI_COMMAND_SOURCES}
+    ${IMPORT_EXPORT_SOURCES}
 )
 
 target_include_directories(nx_core PUBLIC
@@ -56,7 +67,14 @@ target_link_libraries(nx_core PUBLIC
     spdlog::spdlog
     nlohmann_json::nlohmann_json
     ${SQLITE3_LIBRARIES}
+    CURL::libcurl
+    ${FTXUI_LIBRARIES}
 )
+
+# Platform-specific libraries
+if(APPLE)
+    target_link_libraries(nx_core PUBLIC "-framework Security")
+endif()
 
 # Link git2 with library paths
 if(LIBGIT2_FOUND)

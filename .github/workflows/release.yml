@@ -1,0 +1,344 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_id: ${{ steps.create_release.outputs.id }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          TAG="${{ github.event.inputs.version }}"
+        else
+          TAG=${GITHUB_REF#refs/tags/}
+        fi
+        
+        echo "Generating release notes for $TAG"
+        
+        # Get previous tag for changelog
+        PREV_TAG=$(git describe --tags --abbrev=0 $TAG^ 2>/dev/null || echo "")
+        
+        if [[ -n "$PREV_TAG" ]]; then
+          echo "## Changes since $PREV_TAG" > release_notes.md
+          echo "" >> release_notes.md
+          
+          # Generate changelog from commits
+          git log --pretty=format:"- %s (%h)" $PREV_TAG..$TAG >> release_notes.md
+        else
+          echo "## Initial Release" > release_notes.md
+          echo "" >> release_notes.md
+          echo "This is the first release of nx notes application." >> release_notes.md
+        fi
+        
+        echo "" >> release_notes.md
+        echo "## Features" >> release_notes.md
+        echo "- High-performance CLI notes application" >> release_notes.md
+        echo "- SQLite FTS5 full-text search" >> release_notes.md
+        echo "- Interactive TUI with 3-pane layout" >> release_notes.md
+        echo "- AI integration for Q&A and tagging" >> release_notes.md
+        echo "- Git synchronization support" >> release_notes.md
+        echo "- Export to Markdown, JSON, PDF, HTML" >> release_notes.md
+        echo "- Encryption support with age/rage" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## Installation" >> release_notes.md
+        echo "Download the appropriate binary for your platform below." >> release_notes.md
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}
+        release_name: nx ${{ github.event.inputs.version || github.ref_name }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: ${{ github.event.inputs.prerelease || false }}
+
+  build-binaries:
+    name: Build Release Binaries
+    needs: create-release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            arch: x86_64
+            name: linux-x86_64
+            cmake_preset: release-linux
+          - os: ubuntu-20.04
+            arch: aarch64
+            name: linux-aarch64
+            cmake_preset: release-linux
+          - os: macos-latest
+            arch: x86_64
+            name: macos-x86_64
+            cmake_preset: release-macos
+          - os: macos-latest
+            arch: arm64
+            name: macos-arm64
+            cmake_preset: release-macos
+          - os: windows-latest
+            arch: x86_64
+            name: windows-x86_64
+            cmake_preset: release-windows
+            
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg
+          ${{ github.workspace }}/build/vcpkg_installed
+        key: ${{ runner.os }}-${{ matrix.arch }}-release-vcpkg-${{ hashFiles('vcpkg.json') }}
+        
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-20.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev \
+          upx-ucl
+          
+        # Cross-compilation setup for ARM64
+        if [[ "${{ matrix.arch }}" == "aarch64" ]]; then
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchain-aarch64.cmake" >> $GITHUB_ENV
+        fi
+        
+    - name: Install Dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install ninja pkg-config sqlite libgit2 curl upx
+        
+    - name: Install Dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install ninja upx
+        
+    - name: Configure CMake
+      run: |
+        cmake_args="-B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}"
+        
+        # Platform-specific configurations
+        if [[ "${{ matrix.os }}" == "ubuntu-20.04" ]]; then
+          cmake_args="$cmake_args -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++"
+          if [[ "${{ matrix.arch }}" == "aarch64" ]]; then
+            cmake_args="$cmake_args -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++"
+          fi
+        elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+          if [[ "${{ matrix.arch }}" == "arm64" ]]; then
+            cmake_args="$cmake_args -DCMAKE_OSX_ARCHITECTURES=arm64"
+          else
+            cmake_args="$cmake_args -DCMAKE_OSX_ARCHITECTURES=x86_64"
+          fi
+        fi
+        
+        cmake $cmake_args
+        
+    - name: Build
+      run: |
+        cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+        
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --build-config ${{ env.BUILD_TYPE }} --output-on-failure
+        
+    - name: Package Binary
+      run: |
+        cd build
+        
+        # Determine binary name and extension
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          BINARY_NAME="nx.exe"
+          ARCHIVE_EXT="zip"
+        else
+          BINARY_NAME="nx"
+          ARCHIVE_EXT="tar.gz"
+        fi
+        
+        # Strip binary and compress with UPX (if available)
+        if [[ "${{ matrix.os }}" != "windows-latest" ]]; then
+          strip "$BINARY_NAME" || true
+        fi
+        upx --best "$BINARY_NAME" || true
+        
+        # Create archive
+        VERSION="${{ github.event.inputs.version || github.ref_name }}"
+        ARCHIVE_NAME="nx-${VERSION#v}-${{ matrix.name }}"
+        
+        if [[ "$ARCHIVE_EXT" == "zip" ]]; then
+          7z a "${ARCHIVE_NAME}.zip" "$BINARY_NAME"
+        else
+          tar -czf "${ARCHIVE_NAME}.tar.gz" "$BINARY_NAME"
+        fi
+        
+        # Generate checksums
+        if command -v sha256sum >/dev/null; then
+          sha256sum "${ARCHIVE_NAME}.${ARCHIVE_EXT}" > "${ARCHIVE_NAME}.sha256"
+        else
+          shasum -a 256 "${ARCHIVE_NAME}.${ARCHIVE_EXT}" > "${ARCHIVE_NAME}.sha256"
+        fi
+        
+        echo "ARCHIVE_NAME=${ARCHIVE_NAME}" >> $GITHUB_ENV
+        echo "ARCHIVE_EXT=${ARCHIVE_EXT}" >> $GITHUB_ENV
+        
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: build/${{ env.ARCHIVE_NAME }}.${{ env.ARCHIVE_EXT }}
+        asset_name: ${{ env.ARCHIVE_NAME }}.${{ env.ARCHIVE_EXT }}
+        asset_content_type: application/octet-stream
+        
+    - name: Upload Checksum
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: build/${{ env.ARCHIVE_NAME }}.sha256
+        asset_name: ${{ env.ARCHIVE_NAME }}.sha256
+        asset_content_type: text/plain
+
+  publish-packages:
+    name: Publish Packages
+    needs: [create-release, build-binaries]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev \
+          rpm \
+          alien
+          
+    - name: Build Packages
+      run: |
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        cmake --build build
+        cd build
+        
+        # Generate DEB package
+        cpack -G DEB
+        
+        # Generate RPM package  
+        cpack -G RPM
+        
+        # List generated packages
+        ls -la *.deb *.rpm || true
+        
+    - name: Upload DEB Package
+      if: hashFiles('build/*.deb') != ''
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: build/nx-*.deb
+        asset_name: nx-${{ github.event.inputs.version || github.ref_name }}.deb
+        asset_content_type: application/vnd.debian.binary-package
+        
+    - name: Upload RPM Package
+      if: hashFiles('build/*.rpm') != ''
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: build/nx-*.rpm
+        asset_name: nx-${{ github.event.inputs.version || github.ref_name }}.rpm
+        asset_content_type: application/x-rpm
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    needs: [create-release, build-binaries]
+    runs-on: macos-latest
+    if: github.repository == 'nx/nx' && !github.event.inputs.prerelease
+    
+    steps:
+    - name: Update Homebrew Formula
+      run: |
+        # This would update a Homebrew tap repository
+        # Implementation depends on having a separate homebrew-nx repository
+        echo "TODO: Update Homebrew formula"
+        
+  notify-release:
+    name: Notify Release
+    needs: [create-release, build-binaries, publish-packages]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Notify Slack/Discord
+      if: success()
+      run: |
+        # Send notification about successful release
+        echo "TODO: Send release notification"
+        
+    - name: Notify on Failure
+      if: failure()
+      run: |
+        # Send notification about failed release
+        echo "TODO: Send failure notification"

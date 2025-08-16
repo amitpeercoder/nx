@@ -5,8 +5,10 @@
 #include <regex>
 #include <sstream>
 #include <ctime>
+#include <iostream>
 
 #include "nx/util/safe_process.hpp"
+#include "nx/util/filesystem.hpp"
 
 namespace nx::import_export {
 
@@ -248,16 +250,11 @@ Result<void> HtmlExporter::exportNotes(const std::vector<nx::core::Note>& notes,
     std::string html_content = markdownToHtml(note.content());
     std::string full_page = generateHtmlPage(note.title(), html_content, options.template_file);
 
-    std::ofstream file(note_path);
-    if (!file) {
+    // Write HTML file atomically
+    auto write_result = nx::util::FileSystem::writeFileAtomic(note_path, full_page);
+    if (!write_result.has_value()) {
       return std::unexpected(makeError(ErrorCode::kFileWriteError,
-                                       "Failed to create HTML file: " + note_path.string()));
-    }
-
-    file << full_page;
-    if (!file) {
-      return std::unexpected(makeError(ErrorCode::kFileWriteError,
-                                       "Failed to write HTML file: " + note_path.string()));
+                                       "Failed to write HTML file: " + write_result.error().message()));
     }
   }
 
@@ -265,9 +262,11 @@ Result<void> HtmlExporter::exportNotes(const std::vector<nx::core::Note>& notes,
   std::string index_html = generateIndexPage(notes);
   std::filesystem::path index_path = options.output_path / "index.html";
   
-  std::ofstream index_file(index_path);
-  if (index_file) {
-    index_file << generateHtmlPage("Notes Index", index_html);
+  // Write index file atomically
+  auto index_result = nx::util::FileSystem::writeFileAtomic(index_path, generateHtmlPage("Notes Index", index_html));
+  if (!index_result.has_value()) {
+    // Don't fail the entire export if index creation fails
+    std::cerr << "Warning: Failed to create HTML index file: " << index_result.error().message() << std::endl;
   }
 
   return {};
@@ -550,14 +549,13 @@ Result<void> PdfExporter::exportNotes(const std::vector<nx::core::Note>& notes,
       std::string full_page = html_exporter.generateHtmlPage(note.title(), html_content, options.template_file);
       
       std::filesystem::path html_path = temp_dir / (note.id().toString() + ".html");
-      std::ofstream html_file(html_path);
-      if (!html_file) {
+      // Write temporary HTML file atomically
+      auto html_result = nx::util::FileSystem::writeFileAtomic(html_path, full_page);
+      if (!html_result.has_value()) {
         std::filesystem::remove_all(temp_dir, ec);
         return std::unexpected(makeError(ErrorCode::kFileWriteError,
-                                         "Failed to create HTML file: " + html_path.string()));
+                                         "Failed to create HTML file: " + html_result.error().message()));
       }
-      html_file << full_page;
-      html_file.close();
       
       result = convertWithWkhtmltopdf(html_path, pdf_path);
     } else {

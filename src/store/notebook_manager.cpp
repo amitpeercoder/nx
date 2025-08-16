@@ -424,13 +424,23 @@ Result<void> NotebookManager::validateNotebookName(const std::string& name) {
     return std::unexpected(makeError(ErrorCode::kValidationError, "Notebook name cannot be empty"));
   }
   
+  // Trim whitespace and check if empty after trimming
+  std::string trimmed_name = name;
+  trimmed_name.erase(0, trimmed_name.find_first_not_of(" \t\n\r\f\v"));
+  trimmed_name.erase(trimmed_name.find_last_not_of(" \t\n\r\f\v") + 1);
+  
+  if (trimmed_name.empty()) {
+    return std::unexpected(makeError(ErrorCode::kValidationError, "Notebook name cannot be empty or only whitespace"));
+  }
+  
   if (name.length() > MAX_NOTEBOOK_NAME_LENGTH) {
     return std::unexpected(makeError(ErrorCode::kValidationError, 
       "Notebook name too long (max " + std::to_string(MAX_NOTEBOOK_NAME_LENGTH) + " characters)"));
   }
   
   // Check for invalid characters (allow letters, numbers, spaces, hyphens, underscores)
-  std::regex valid_name_pattern("^[a-zA-Z0-9 _-]+$");
+  // But ensure it contains at least one non-space character
+  std::regex valid_name_pattern("^[a-zA-Z0-9 _-]*[a-zA-Z0-9_-][a-zA-Z0-9 _-]*$");
   if (!std::regex_match(name, valid_name_pattern)) {
     return std::unexpected(makeError(ErrorCode::kValidationError, 
       "Notebook name contains invalid characters. Only letters, numbers, spaces, hyphens, and underscores are allowed"));
@@ -461,15 +471,16 @@ Result<NotebookInfo> NotebookManager::calculateNotebookStats(const std::string& 
   }
   
   const auto& note_ids = notes_result.value();
-  info.note_count = note_ids.size();
+  
+  // Count user notes (non-placeholder notes)
+  size_t user_note_count = 0;
+  std::map<std::string, size_t> all_tag_counts;
+  auto earliest_created = std::chrono::system_clock::time_point::max();
+  auto latest_modified = std::chrono::system_clock::time_point::min();
   
   // Calculate detailed statistics
   auto now = std::chrono::system_clock::now();
   auto week_ago = now - std::chrono::hours(24 * 7);
-  
-  std::map<std::string, size_t> all_tag_counts;
-  auto earliest_created = std::chrono::system_clock::time_point::max();
-  auto latest_modified = std::chrono::system_clock::time_point::min();
   
   for (const auto& id : note_ids) {
     auto note_result = note_store_.load(id);
@@ -480,11 +491,12 @@ Result<NotebookInfo> NotebookManager::calculateNotebookStats(const std::string& 
     const auto& note = note_result.value();
     const auto& metadata = note.metadata();
     
-    // Skip placeholder notes for user-facing statistics
+    // Skip placeholder notes for detailed statistics but count them for total
     if (note.title().starts_with(".notebook_")) {
-      info.note_count--;  // Don't count placeholder notes
       continue;
     }
+    
+    user_note_count++;
     
     // Update timestamps
     if (metadata.created() < earliest_created) {
@@ -509,6 +521,13 @@ Result<NotebookInfo> NotebookManager::calculateNotebookStats(const std::string& 
     for (const auto& tag : note.tags()) {
       all_tag_counts[tag]++;
     }
+  }
+  
+  // Set the note count - use user notes if any exist, otherwise show total (including placeholders)
+  if (user_note_count > 0) {
+    info.note_count = user_note_count;
+  } else {
+    info.note_count = note_ids.size();  // Include placeholder notes when no user notes exist
   }
   
   // Get top tags

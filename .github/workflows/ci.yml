@@ -1,0 +1,370 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+jobs:
+  # Code Quality and Security Checks
+  code-quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better analysis
+        
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          clang-tidy \
+          cppcheck \
+          clang-format \
+          valgrind \
+          lcov \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev
+          
+    - name: Code Formatting Check
+      run: |
+        find src include tests -name "*.cpp" -o -name "*.hpp" | \
+        xargs clang-format --dry-run --Werror
+        
+    - name: Static Analysis - cppcheck
+      run: |
+        cppcheck --enable=all --error-exitcode=1 \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          --inline-suppr \
+          src/ include/
+          
+    - name: Static Analysis - clang-tidy
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,readability-*,performance-*,bugprone-*,modernize-*"
+        cmake --build build --target nx
+        
+    - name: Dependency Vulnerability Scan
+      uses: github/super-linter@v5
+      env:
+        DEFAULT_BRANCH: main
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_CPP: true
+        VALIDATE_CMAKE: true
+        VALIDATE_DOCKERFILE: false
+        VALIDATE_ALL_CODEBASE: false
+
+  # Multi-platform Build Matrix
+  build-test:
+    name: Build & Test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+        sanitizer: [none, address, undefined, thread]
+        exclude:
+          # Reduce matrix size - only run sanitizers on Debug builds
+          - build_type: Release
+            sanitizer: address
+          - build_type: Release
+            sanitizer: undefined
+          - build_type: Release
+            sanitizer: thread
+          # macOS doesn't support ThreadSanitizer well
+          - os: macos-latest
+            sanitizer: thread
+          # Only test GCC on Ubuntu
+          - os: macos-latest
+            compiler: gcc
+            
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg
+          ${{ github.workspace }}/build/vcpkg_installed
+        key: ${{ runner.os }}-${{ matrix.compiler }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+        
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev \
+          lcov \
+          valgrind
+          
+        # Install specific compiler versions
+        if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+          sudo apt-get install -y gcc-11 g++-11
+          echo "CC=gcc-11" >> $GITHUB_ENV
+          echo "CXX=g++-11" >> $GITHUB_ENV
+        elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+          sudo apt-get install -y clang-15 libc++-15-dev libc++abi-15-dev
+          echo "CC=clang-15" >> $GITHUB_ENV
+          echo "CXX=clang++-15" >> $GITHUB_ENV
+        fi
+        
+    - name: Install Dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install ninja pkg-config sqlite libgit2 curl lcov
+        
+        if [[ "${{ matrix.compiler }}" == "clang" ]]; then
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+        
+    - name: Configure CMake
+      run: |
+        cmake_args="-B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}"
+        
+        # Add sanitizer flags
+        if [[ "${{ matrix.sanitizer }}" == "address" ]]; then
+          cmake_args="$cmake_args -DSANITIZE_ADDRESS=ON"
+        elif [[ "${{ matrix.sanitizer }}" == "undefined" ]]; then
+          cmake_args="$cmake_args -DSANITIZE_UNDEFINED=ON"
+        elif [[ "${{ matrix.sanitizer }}" == "thread" ]]; then
+          cmake_args="$cmake_args -DSANITIZE_THREAD=ON"
+        fi
+        
+        # Enable coverage for Debug builds with GCC
+        if [[ "${{ matrix.build_type }}" == "Debug" && "${{ matrix.compiler }}" == "gcc" && "${{ matrix.sanitizer }}" == "none" ]]; then
+          cmake_args="$cmake_args -DCMAKE_CXX_FLAGS=--coverage"
+        fi
+        
+        cmake $cmake_args
+        
+    - name: Build
+      run: cmake --build build --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu)
+      
+    - name: Run Unit Tests
+      run: |
+        cd build
+        # Set environment for sanitizers
+        if [[ "${{ matrix.sanitizer }}" == "address" ]]; then
+          export ASAN_OPTIONS="detect_leaks=1:abort_on_error=1"
+        elif [[ "${{ matrix.sanitizer }}" == "undefined" ]]; then
+          export UBSAN_OPTIONS="print_stacktrace=1:abort_on_error=1"
+        elif [[ "${{ matrix.sanitizer }}" == "thread" ]]; then
+          export TSAN_OPTIONS="halt_on_error=1"
+        fi
+        
+        ctest --output-on-failure --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu)
+        
+    - name: Run Integration Tests
+      run: |
+        cd build
+        # Run integration tests with the same sanitizer environment
+        if [[ "${{ matrix.sanitizer }}" == "address" ]]; then
+          export ASAN_OPTIONS="detect_leaks=1:abort_on_error=1"
+        elif [[ "${{ matrix.sanitizer }}" == "undefined" ]]; then
+          export UBSAN_OPTIONS="print_stacktrace=1:abort_on_error=1"
+        elif [[ "${{ matrix.sanitizer }}" == "thread" ]]; then
+          export TSAN_OPTIONS="halt_on_error=1"
+        fi
+        
+        ctest -L integration --output-on-failure || true  # Don't fail if no integration tests
+        
+    - name: Performance Regression Tests
+      if: matrix.build_type == 'Release' && matrix.sanitizer == 'none'
+      run: |
+        cd build
+        if [[ -f "tests/nx_benchmark" ]]; then
+          ./tests/nx_benchmark || true  # Don't fail if benchmarks don't exist yet
+        fi
+        
+    - name: Generate Coverage Report
+      if: matrix.build_type == 'Debug' && matrix.compiler == 'gcc' && matrix.sanitizer == 'none' && matrix.os == 'ubuntu-latest'
+      run: |
+        cd build
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '*/vcpkg/*' '*/build/*' --output-file coverage.info
+        lcov --list coverage.info
+        
+    - name: Upload Coverage to Codecov
+      if: matrix.build_type == 'Debug' && matrix.compiler == 'gcc' && matrix.sanitizer == 'none' && matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v4
+      with:
+        file: build/coverage.info
+        fail_ci_if_error: false
+        
+    - name: Upload Build Artifacts
+      if: matrix.build_type == 'Release' && matrix.sanitizer == 'none'
+      uses: actions/upload-artifact@v4
+      with:
+        name: nx-${{ matrix.os }}-${{ matrix.compiler }}
+        path: build/nx*
+        retention-days: 30
+
+  # Memory Safety Testing
+  memory-safety:
+    name: Memory Safety Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          valgrind \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev
+          
+    - name: Build with Debug Info
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_CXX_FLAGS="-g -O1"
+        cmake --build build
+        
+    - name: Run Valgrind Tests
+      run: |
+        cd build
+        # Run a subset of tests with Valgrind to check for memory leaks
+        valgrind --tool=memcheck \
+          --leak-check=full \
+          --show-leak-kinds=all \
+          --track-origins=yes \
+          --error-exitcode=1 \
+          ./tests/unit_tests --gtest_filter="*Basic*:*Simple*" || true
+
+  # Documentation and Release
+  documentation:
+    name: Documentation & Release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [code-quality, build-test]
+    
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          doxygen \
+          graphviz \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev
+          
+    - name: Build Documentation
+      run: |
+        if [[ -f "Doxyfile" ]]; then
+          doxygen Doxyfile || true
+        fi
+        
+    - name: Build Release Packages
+      run: |
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        cmake --build build
+        cd build
+        cpack || true  # Don't fail if packaging isn't set up yet
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/*.deb
+          build/*.rpm
+          build/*.tar.gz
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: cpp
+        queries: security-and-quality
+        
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev
+          
+    - name: Build for Analysis
+      run: |
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build
+        
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3

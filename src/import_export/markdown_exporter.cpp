@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <regex>
+#include <iostream>
 
 #include "nx/util/filesystem.hpp"
 
@@ -34,32 +35,31 @@ Result<void> MarkdownExporter::exportNotes(const std::vector<nx::core::Note>& no
     // Format note content
     std::string content = formatNoteContent(note, options.include_metadata);
 
-    // Write to file
-    std::ofstream file(note_path);
-    if (!file) {
+    // Write to file atomically
+    auto write_result = nx::util::FileSystem::writeFileAtomic(note_path, content);
+    if (!write_result.has_value()) {
       return std::unexpected(makeError(ErrorCode::kFileWriteError,
-                                       "Failed to create file: " + note_path.string()));
-    }
-
-    file << content;
-    if (!file) {
-      return std::unexpected(makeError(ErrorCode::kFileWriteError,
-                                       "Failed to write to file: " + note_path.string()));
+                                       "Failed to write file: " + write_result.error().message()));
     }
   }
 
   // Create index file if multiple notes
   if (notes.size() > 1) {
     std::filesystem::path index_path = options.output_path / "index.md";
-    std::ofstream index_file(index_path);
-    if (index_file) {
-      index_file << "# Notes Index\n\n";
-      index_file << "This directory contains " << notes.size() << " exported notes.\n\n";
-      
-      for (const auto& note : notes) {
-        std::string filename = generateFilename(note, ".md");
-        index_file << "- [" << note.title() << "](./" << filename << ")\n";
-      }
+    std::stringstream index_content;
+    index_content << "# Notes Index\n\n";
+    index_content << "This directory contains " << notes.size() << " exported notes.\n\n";
+    
+    for (const auto& note : notes) {
+      std::string filename = generateFilename(note, ".md");
+      index_content << "- [" << note.title() << "](./" << filename << ")\n";
+    }
+    
+    // Write index file atomically
+    auto index_result = nx::util::FileSystem::writeFileAtomic(index_path, index_content.str());
+    if (!index_result.has_value()) {
+      // Don't fail the entire export if index creation fails
+      std::cerr << "Warning: Failed to create index file: " << index_result.error().message() << std::endl;
     }
   }
 

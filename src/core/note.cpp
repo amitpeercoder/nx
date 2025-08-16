@@ -112,9 +112,12 @@ Result<Note> Note::fromFileFormat(const std::string& content) {
   
   std::string note_content = content.substr(yaml_end_pos + yaml_end.length());
   
-  // Remove leading newlines from content
-  while (!note_content.empty() && note_content[0] == '\n') {
-    note_content = note_content.substr(1);
+  // Remove leading newlines from content efficiently
+  auto first_non_newline = note_content.find_first_not_of('\n');
+  if (first_non_newline != std::string::npos) {
+    note_content = note_content.substr(first_non_newline);
+  } else if (!note_content.empty()) {
+    note_content.clear(); // All newlines
   }
   
   // Parse metadata

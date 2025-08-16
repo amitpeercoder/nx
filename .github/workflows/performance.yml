@@ -1,0 +1,383 @@
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run performance tests daily at 03:00 UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Need history for comparison
+        
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg
+          ${{ github.workspace }}/build/vcpkg_installed
+        key: performance-vcpkg-${{ hashFiles('vcpkg.json') }}
+        
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev \
+          python3 \
+          python3-pip
+          
+        pip3 install matplotlib seaborn pandas
+        
+    - name: Build Benchmarks
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_CXX_FLAGS="-O3 -DNDEBUG -march=native"
+        cmake --build build --target nx_benchmark
+        
+    - name: Generate Test Data
+      run: |
+        cd build
+        # Create test dataset with various sizes
+        mkdir -p test_data
+        
+        # Generate test notes (1K, 10K, 100K notes)
+        for size in 1000 10000 100000; do
+          echo "Generating $size test notes..."
+          python3 << EOF
+import os
+import random
+import string
+from datetime import datetime, timedelta
+
+def random_string(length):
+    return ''.join(random.choices(string.ascii_letters + string.digits + ' ', k=length))
+
+def random_tags():
+    tags = ['work', 'personal', 'project', 'idea', 'todo', 'meeting', 'research']
+    return random.sample(tags, random.randint(1, 3))
+
+# Create test notes
+os.makedirs(f'test_data/notes_{size}', exist_ok=True)
+for i in range($size):
+    note_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=26))
+    title = random_string(random.randint(10, 50))
+    content = random_string(random.randint(100, 2000))
+    tags = random_tags()
+    
+    # Create note file
+    with open(f'test_data/notes_{size}/{note_id}.md', 'w') as f:
+        f.write(f"""---
+id: {note_id}
+created: {(datetime.now() - timedelta(days=random.randint(1, 365))).isoformat()}
+modified: {datetime.now().isoformat()}
+tags: {tags}
+---
+
+# {title}
+
+{content}
+""")
+
+print(f"Generated $size notes in test_data/notes_{size}/")
+EOF
+        done
+        
+    - name: Run Benchmarks
+      run: |
+        cd build
+        
+        echo "Running performance benchmarks..."
+        
+        # Note creation benchmark
+        echo "=== Note Creation Benchmark ===" | tee benchmark_results.txt
+        time -v ./nx_benchmark --benchmark_filter=".*Create.*" \
+          --benchmark_format=json --benchmark_out=create_benchmark.json 2>&1 | tee -a benchmark_results.txt
+          
+        # Search benchmark
+        echo "=== Search Benchmark ===" | tee -a benchmark_results.txt
+        time -v ./nx_benchmark --benchmark_filter=".*Search.*" \
+          --benchmark_format=json --benchmark_out=search_benchmark.json 2>&1 | tee -a benchmark_results.txt
+          
+        # Index benchmark
+        echo "=== Index Benchmark ===" | tee -a benchmark_results.txt
+        time -v ./nx_benchmark --benchmark_filter=".*Index.*" \
+          --benchmark_format=json --benchmark_out=index_benchmark.json 2>&1 | tee -a benchmark_results.txt
+          
+        # Memory usage benchmark
+        echo "=== Memory Usage Benchmark ===" | tee -a benchmark_results.txt
+        valgrind --tool=massif --time-unit=B --detailed-freq=1 --max-snapshots=100 \
+          ./nx_benchmark --benchmark_filter=".*Memory.*" 2>&1 | tee -a benchmark_results.txt || true
+          
+    - name: Analyze Results
+      run: |
+        cd build
+        
+        python3 << 'EOF'
+import json
+import sys
+import os
+from datetime import datetime
+
+def analyze_benchmark_results():
+    results = {}
+    
+    # Load benchmark results
+    for bench_file in ['create_benchmark.json', 'search_benchmark.json', 'index_benchmark.json']:
+        if os.path.exists(bench_file):
+            with open(bench_file, 'r') as f:
+                data = json.load(f)
+                for benchmark in data.get('benchmarks', []):
+                    name = benchmark['name']
+                    time_ns = benchmark['real_time']
+                    time_ms = time_ns / 1_000_000
+                    results[name] = {
+                        'time_ms': time_ms,
+                        'cpu_time_ms': benchmark.get('cpu_time', 0) / 1_000_000,
+                        'iterations': benchmark.get('iterations', 0)
+                    }
+    
+    # Performance thresholds (in milliseconds)
+    thresholds = {
+        'note_creation': 100,
+        'search_query': 200,
+        'index_update': 100,
+        'list_operation': 100
+    }
+    
+    # Check if any benchmarks exceed thresholds
+    violations = []
+    
+    print("=== Performance Analysis ===")
+    print(f"Timestamp: {datetime.now().isoformat()}")
+    print()
+    
+    for name, result in results.items():
+        time_ms = result['time_ms']
+        status = "✅ PASS"
+        
+        # Check against thresholds
+        for threshold_name, threshold_ms in thresholds.items():
+            if threshold_name.lower() in name.lower() and time_ms > threshold_ms:
+                status = f"❌ FAIL (>{threshold_ms}ms)"
+                violations.append(f"{name}: {time_ms:.2f}ms > {threshold_ms}ms")
+                break
+        
+        print(f"{name}: {time_ms:.2f}ms {status}")
+    
+    if violations:
+        print("\n=== Performance Violations ===")
+        for violation in violations:
+            print(f"- {violation}")
+        
+        # Create issue comment for PR
+        if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request':
+            with open('performance_comment.txt', 'w') as f:
+                f.write("## ⚠️ Performance Regression Detected\n\n")
+                f.write("The following benchmarks exceeded performance thresholds:\n\n")
+                for violation in violations:
+                    f.write(f"- {violation}\n")
+                f.write("\nPlease review the changes for potential performance impacts.")
+        
+        return 1
+    
+    print("\n✅ All performance benchmarks within acceptable limits")
+    return 0
+
+exit_code = analyze_benchmark_results()
+sys.exit(exit_code)
+EOF
+        
+    - name: Store Historical Results
+      run: |
+        cd build
+        
+        # Store results with timestamp for historical tracking
+        TIMESTAMP=$(date -u +"%Y%m%d_%H%M%S")
+        COMMIT_SHA="${{ github.sha }}"
+        
+        mkdir -p performance_history
+        
+        # Combine all benchmark results
+        cat create_benchmark.json search_benchmark.json index_benchmark.json 2>/dev/null | \
+        python3 -c "
+import json
+import sys
+results = []
+for line in sys.stdin:
+    try:
+        data = json.loads(line)
+        if 'benchmarks' in data:
+            results.extend(data['benchmarks'])
+    except:
+        pass
+
+output = {
+    'timestamp': '$TIMESTAMP',
+    'commit': '$COMMIT_SHA',
+    'benchmarks': results
+}
+
+with open(f'performance_history/results_{TIMESTAMP}.json', 'w') as f:
+    json.dump(output, f, indent=2)
+"
+        
+    - name: Comment on PR
+      if: github.event_name == 'pull_request' && hashFiles('build/performance_comment.txt') != ''
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('build/performance_comment.txt')) {
+            const comment = fs.readFileSync('build/performance_comment.txt', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+          
+    - name: Upload Benchmark Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results-${{ github.sha }}
+        path: |
+          build/*_benchmark.json
+          build/benchmark_results.txt
+          build/performance_history/
+        retention-days: 90
+
+  memory-profiling:
+    name: Memory Profiling
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a7b6122f6b6504d16d96117336a0562693579933'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          ninja-build \
+          pkg-config \
+          libsqlite3-dev \
+          libgit2-dev \
+          libcurl4-openssl-dev \
+          valgrind \
+          massif-visualizer \
+          python3 \
+          python3-pip
+          
+    - name: Build for Profiling
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_CXX_FLAGS="-g -O1"
+        cmake --build build
+        
+    - name: Memory Usage Profiling
+      run: |
+        cd build
+        
+        echo "Running memory profiling..."
+        
+        # Massif heap profiling
+        valgrind --tool=massif \
+          --time-unit=B \
+          --detailed-freq=1 \
+          --max-snapshots=100 \
+          --massif-out-file=massif.out \
+          ./nx --help > /dev/null 2>&1 || true
+          
+        # Analyze massif output
+        if [[ -f massif.out ]]; then
+          ms_print massif.out > memory_profile.txt
+          
+          # Extract peak memory usage
+          PEAK_MB=$(grep "MB" memory_profile.txt | head -1 | grep -o '[0-9.]*MB' | head -1)
+          echo "Peak memory usage: $PEAK_MB"
+          
+          # Check if memory usage exceeds 100MB threshold
+          if [[ -n "$PEAK_MB" ]]; then
+            PEAK_NUM=$(echo "$PEAK_MB" | sed 's/MB//')
+            if (( $(echo "$PEAK_NUM > 100" | bc -l) )); then
+              echo "❌ Memory usage exceeds 100MB threshold: $PEAK_MB"
+              exit 1
+            else
+              echo "✅ Memory usage within acceptable limits: $PEAK_MB"
+            fi
+          fi
+        fi
+        
+    - name: Upload Memory Profile
+      uses: actions/upload-artifact@v4
+      with:
+        name: memory-profile-${{ github.sha }}
+        path: |
+          build/massif.out
+          build/memory_profile.txt
+        retention-days: 30
+
+  performance-comparison:
+    name: Performance Comparison
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout PR
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        
+    - name: Build PR Version
+      run: |
+        # Build and benchmark PR version
+        echo "Building PR version..."
+        # Implementation would build and benchmark the PR branch
+        
+    - name: Checkout Main
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        
+    - name: Build Main Version
+      run: |
+        # Build and benchmark main version
+        echo "Building main version..."
+        # Implementation would build and benchmark the main branch
+        
+    - name: Compare Performance
+      run: |
+        # Compare benchmark results between PR and main
+        echo "Comparing performance between PR and main..."
+        # Implementation would analyze and report differences

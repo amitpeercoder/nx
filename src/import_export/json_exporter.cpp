@@ -3,6 +3,8 @@
 #include <fstream>
 #include <chrono>
 
+#include "nx/util/filesystem.hpp"
+
 namespace nx::import_export {
 
 Result<void> JsonExporter::exportNotes(const std::vector<nx::core::Note>& notes, 
@@ -44,17 +46,11 @@ Result<void> JsonExporter::exportNotes(const std::vector<nx::core::Note>& notes,
     }
   }
 
-  std::ofstream file(output_file);
-  if (!file) {
+  // Write JSON file atomically
+  auto write_result = nx::util::FileSystem::writeFileAtomic(output_file, export_data.dump(2));
+  if (!write_result.has_value()) {
     return std::unexpected(makeError(ErrorCode::kFileWriteError,
-                                     "Failed to create JSON file: " + output_file.string()));
-  }
-
-  // Write with pretty formatting
-  file << export_data.dump(2);
-  if (!file) {
-    return std::unexpected(makeError(ErrorCode::kFileWriteError,
-                                     "Failed to write JSON data"));
+                                     "Failed to write JSON file: " + write_result.error().message()));
   }
 
   return {};

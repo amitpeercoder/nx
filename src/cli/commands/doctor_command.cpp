@@ -457,7 +457,7 @@ Result<DoctorCommand::HealthCheck> DoctorCommand::checkExternalTools() {
     };
     
     int available = 0;
-    int total = tools.size();
+    int total = static_cast<int>(tools.size());
     std::string missing_tools;
     
     for (const auto& [tool, exists] : tools) {
@@ -633,12 +633,12 @@ Result<DoctorCommand::HealthCheck> DoctorCommand::checkNotesIntegrity() {
     } else {
       auto notes = notes_result.value();
       int corrupted = 0;
-      int total = notes.size();
+      int total = static_cast<int>(notes.size());
       
       // Sample a few notes to check for corruption
       int to_check = std::min(10, total);
       for (int i = 0; i < to_check && i < total; ++i) {
-        auto note_result = note_store.load(notes[i]);
+        auto note_result = note_store.load(notes[static_cast<size_t>(i)]);
         if (!note_result.has_value()) {
           corrupted++;
         }

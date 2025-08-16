@@ -1,106 +1,118 @@
----
-Checks: >
-  *,
-  -abseil-*,
-  -altera-*,
-  -android-*,
-  -fuchsia-*,
-  -google-*,
-  -llvm-*,
-  -objc-*,
-  -zircon-*,
-  -readability-else-after-return,
-  -readability-static-accessed-through-instance,
-  -readability-avoid-const-params-in-decls,
-  -cppcoreguidelines-non-private-member-variables-in-classes,
-  -misc-non-private-member-variables-in-classes,
-  -modernize-return-braced-init-list,
-  -modernize-use-trailing-return-type,
-  -modernize-avoid-c-arrays,
-  -cppcoreguidelines-avoid-c-arrays,
-  -hicpp-avoid-c-arrays,
-  -cppcoreguidelines-pro-bounds-constant-array-index,
-  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
-  -hicpp-no-array-decay,
-  -cppcoreguidelines-avoid-magic-numbers,
-  -readability-magic-numbers
+# Clang-Tidy configuration for nx project
+# Comprehensive static analysis configuration
 
-WarningsAsErrors: ''
-HeaderFilterRegex: '.*'
-AnalyzeTemporaryDtors: false
-FormatStyle: none
+Checks: >
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  clang-analyzer-*,
+  misc-*,
+  hicpp-*,
+  
+  # Disable some overly strict or problematic checks
+  -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-vararg,
+  -hicpp-avoid-c-arrays,
+  -hicpp-no-array-decay,
+  -hicpp-vararg,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-avoid-c-arrays,
+  -modernize-use-trailing-return-type,
+  -readability-magic-numbers,
+  -readability-named-parameter,
+  -readability-uppercase-literal-suffix,
+  
+  # Add specific security-focused checks
+  cert-*,
+  -cert-dcl50-cpp,
+  -cert-dcl58-cpp,
+  
+  # Add concurrency checks
+  concurrency-*
+
+WarningsAsErrors: >
+  bugprone-use-after-move,
+  bugprone-dangling-handle,
+  bugprone-infinite-loop,
+  cppcoreguidelines-narrowing-conversions,
+  cppcoreguidelines-pro-type-static-cast-downcast,
+  modernize-deprecated-headers,
+  performance-inefficient-string-concatenation,
+  performance-unnecessary-copy-initialization
+
 CheckOptions:
-  - key: readability-identifier-naming.NamespaceCase
-    value: lower_case
-  - key: readability-identifier-naming.ClassCase
-    value: CamelCase
-  - key: readability-identifier-naming.StructCase
-    value: CamelCase
-  - key: readability-identifier-naming.TemplateParameterCase
-    value: CamelCase
-  - key: readability-identifier-naming.FunctionCase
-    value: camelBack
-  - key: readability-identifier-naming.VariableCase
-    value: lower_case
-  - key: readability-identifier-naming.ClassMemberCase
-    value: lower_case
-  - key: readability-identifier-naming.ClassMemberSuffix
-    value: _
-  - key: readability-identifier-naming.PrivateMemberSuffix
-    value: _
-  - key: readability-identifier-naming.ProtectedMemberSuffix
-    value: _
-  - key: readability-identifier-naming.EnumConstantCase
-    value: CamelCase
-  - key: readability-identifier-naming.EnumConstantPrefix
-    value: k
-  - key: readability-identifier-naming.ConstexprVariableCase
-    value: CamelCase
-  - key: readability-identifier-naming.ConstexprVariablePrefix
-    value: k
-  - key: readability-identifier-naming.GlobalConstantCase
-    value: CamelCase
-  - key: readability-identifier-naming.GlobalConstantPrefix
-    value: k
-  - key: readability-identifier-naming.MemberConstantCase
-    value: CamelCase
-  - key: readability-identifier-naming.MemberConstantPrefix
-    value: k
-  - key: readability-identifier-naming.StaticConstantCase
-    value: CamelCase
-  - key: readability-identifier-naming.StaticConstantPrefix
-    value: k
-  - key: readability-function-cognitive-complexity.Threshold
-    value: 25
-  - key: readability-function-size.LineThreshold
-    value: 80
-  - key: readability-function-size.StatementThreshold
-    value: 800
-  - key: readability-function-size.BranchThreshold
-    value: 60
-  - key: readability-function-size.ParameterThreshold
-    value: 10
-  - key: readability-function-size.NestingThreshold
-    value: 4
-  - key: readability-function-size.VariableThreshold
-    value: 200
-  - key: performance-for-range-copy.WarnOnAllAutoCopies
-    value: true
-  - key: performance-for-range-copy.AllowedTypes
-    value: ''
-  - key: performance-unnecessary-copy-initialization.AllowedTypes
-    value: ''
-  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
-    value: true
-  - key: modernize-loop-convert.MaxCopySize
-    value: 16
-  - key: modernize-loop-convert.MinConfidence
-    value: reasonable
-  - key: modernize-loop-convert.NamingStyle
-    value: CamelCase
-  - key: modernize-pass-by-value.IncludeStyle
-    value: llvm
-  - key: modernize-replace-auto-ptr.IncludeStyle
-    value: llvm
-  - key: modernize-use-nullptr.NullMacros
-    value: 'NULL'
+  # Naming conventions
+  readability-identifier-naming.NamespaceCase: 'lower_case'
+  readability-identifier-naming.ClassCase: 'CamelCase'
+  readability-identifier-naming.StructCase: 'CamelCase'
+  readability-identifier-naming.FunctionCase: 'camelBack'
+  readability-identifier-naming.MethodCase: 'camelBack'
+  readability-identifier-naming.VariableCase: 'lower_case'
+  readability-identifier-naming.ParameterCase: 'lower_case'
+  readability-identifier-naming.EnumCase: 'CamelCase'
+  readability-identifier-naming.EnumConstantCase: 'CamelCase'
+  readability-identifier-naming.ConstantCase: 'UPPER_CASE'
+  readability-identifier-naming.GlobalConstantCase: 'UPPER_CASE'
+  readability-identifier-naming.MemberCase: 'lower_case'
+  readability-identifier-naming.PrivateMemberSuffix: '_'
+  readability-identifier-naming.ProtectedMemberSuffix: '_'
+  
+  # Function length limits
+  readability-function-size.LineThreshold: 80
+  readability-function-size.StatementThreshold: 50
+  readability-function-size.BranchThreshold: 15
+  readability-function-size.ParameterThreshold: 8
+  readability-function-size.NestingThreshold: 4
+  
+  # Performance tuning
+  performance-unnecessary-value-param.AllowedTypes: 'std::string_view;std::span'
+  performance-for-range-copy.WarnOnAllAutoCopies: true
+  performance-inefficient-vector-operation.VectorLikeClasses: 'std::vector;std::deque;std::list'
+  
+  # Modernization options
+  modernize-loop-convert.MaxCopySize: 16
+  modernize-loop-convert.MinConfidence: reasonable
+  modernize-pass-by-value.IncludeStyle: llvm
+  modernize-replace-auto-ptr.IncludeStyle: llvm
+  modernize-use-auto.MinTypeNameLength: 5
+  modernize-use-auto.RemoveStars: false
+  modernize-use-nullptr.NullMacros: 'NULL'
+  
+  # Core Guidelines compliance
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
+  cppcoreguidelines-special-member-functions.AllowMissingMoveFunctions: true
+  cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors: true
+  
+  # Readability improvements
+  readability-braces-around-statements.ShortStatementLines: 1
+  readability-else-after-return.WarnOnUnfixable: false
+  readability-implicit-bool-conversion.AllowIntegerConditions: true
+  readability-implicit-bool-conversion.AllowPointerConditions: true
+  readability-redundant-member-init.IgnoreBaseInCopyConstructors: true
+  readability-simplify-boolean-expr.ChainedConditionalReturn: true
+  readability-simplify-boolean-expr.ChainedConditionalAssignment: true
+  
+  # Security-specific options
+  cert-err34-c.ReportMoreUnsafeFunctions: true
+  cert-str34-c.DiagnoseSignedUnsignedCharComparisons: true
+  
+  # Miscellaneous options
+  misc-throw-by-value-catch-by-reference.CheckThrowTemporaries: true
+  misc-uniqueptr-reset-release.IncludeStyle: llvm
+
+HeaderFilterRegex: '^.*/(src|include|tests)/.*\.(h|hpp)$'
+
+# Exclude external dependencies and generated files
+FormatStyle: file
+UseColor: true
+
+# Analysis configuration
+AnalyzeTemporaryDtors: true

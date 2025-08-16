@@ -55,13 +55,13 @@ bool Security::validateApiKeyFormat(const std::string& api_key, const std::strin
     return false;
   }
   
-  // Provider-specific validation
+  // Provider-specific validation with bounds checking
   if (provider == "openai") {
     // OpenAI keys typically start with "sk-"
-    return api_key.substr(0, 3) == "sk-" && api_key.length() >= 48;
+    return api_key.length() >= 48 && api_key.substr(0, 3) == "sk-";
   } else if (provider == "anthropic") {
     // Anthropic keys typically start with "sk-ant-"
-    return api_key.substr(0, 7) == "sk-ant-" && api_key.length() >= 50;
+    return api_key.length() >= 50 && api_key.substr(0, 7) == "sk-ant-";
   }
   
   // Generic validation for unknown providers

@@ -518,12 +518,28 @@ std::string SqliteIndex::buildFtsQuery(const SearchQuery& query) {
   return fts_query;
 }
 
+namespace {
+  // Helper function for safe SQLite text extraction
+  std::string safeGetText(sqlite3_stmt* stmt, int column) {
+    const unsigned char* text = sqlite3_column_text(stmt, column);
+    if (!text) {
+      return "";
+    }
+    // Verify the text length to prevent buffer overruns
+    int length = sqlite3_column_bytes(stmt, column);
+    if (length < 0) {
+      return "";
+    }
+    return std::string(reinterpret_cast<const char*>(text), static_cast<size_t>(length));
+  }
+}
+
 Result<SearchResult> SqliteIndex::extractSearchResult(sqlite3_stmt* stmt, bool highlight) {
   SearchResult result;
   
-  // Extract basic fields
-  const char* id_str = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-  if (!id_str) {
+  // Extract basic fields with safety checks
+  std::string id_str = safeGetText(stmt, 0);
+  if (id_str.empty()) {
     return std::unexpected(makeError(ErrorCode::kDatabaseError, "Invalid note ID"));
   }
   
@@ -533,37 +549,37 @@ Result<SearchResult> SqliteIndex::extractSearchResult(sqlite3_stmt* stmt, bool h
   }
   result.id = *id_result;
   
-  const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-  result.title = title ? title : "";
+  result.title = safeGetText(stmt, 1);
   
   // Use current time as modified timestamp for FTS-only results
   // This is a design trade-off for search performance vs timestamp accuracy
   result.modified = std::chrono::system_clock::now();
   
   // Extract tags (JSON array) - column 4
-  const char* tags_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-  if (tags_json) {
+  std::string tags_json = safeGetText(stmt, 4);
+  if (!tags_json.empty()) {
     // Parse JSON tags using regex for simplicity and performance
-    std::string tags_str(tags_json);
     std::regex tag_regex("\"([^\"]+)\"");
-    std::sregex_iterator iter(tags_str.begin(), tags_str.end(), tag_regex);
+    std::sregex_iterator iter(tags_json.begin(), tags_json.end(), tag_regex);
     std::sregex_iterator end;
     
     for (; iter != end; ++iter) {
-      result.tags.push_back((*iter)[1].str());
+      std::string tag = (*iter)[1].str();
+      if (!tag.empty() && tag.length() < 100) { // Bounds check
+        result.tags.push_back(tag);
+      }
     }
   }
   
   // Extract notebook - column 5
-  const char* notebook = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
-  if (notebook) {
-    result.notebook = std::string(notebook);
+  std::string notebook = safeGetText(stmt, 5);
+  if (!notebook.empty() && notebook.length() < 100) { // Bounds check
+    result.notebook = notebook;
   }
   
   // Extract snippet and score
   if (highlight) {
-    const char* snippet = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
-    result.snippet = snippet ? snippet : "";
+    result.snippet = safeGetText(stmt, 6);
   }
   
   double score = sqlite3_column_double(stmt, 7);
@@ -593,9 +609,9 @@ Result<std::vector<std::string>> SqliteIndex::suggestTags(const std::string& pre
       return std::unexpected(makeSqliteError("Tag suggestion query failed"));
     }
     
-    const char* tag = reinterpret_cast<const char*>(sqlite3_column_text(stmt_suggest_tags_, 0));
-    if (tag) {
-      suggestions.emplace_back(tag);
+    std::string tag = safeGetText(stmt_suggest_tags_, 0);
+    if (!tag.empty() && tag.length() < 100) { // Bounds check
+      suggestions.emplace_back(std::move(tag));
     }
   }
   
@@ -623,9 +639,9 @@ Result<std::vector<std::string>> SqliteIndex::suggestNotebooks(const std::string
       return std::unexpected(makeSqliteError("Notebook suggestion query failed"));
     }
     
-    const char* notebook = reinterpret_cast<const char*>(sqlite3_column_text(stmt_suggest_notebooks_, 0));
-    if (notebook) {
-      suggestions.emplace_back(notebook);
+    std::string notebook = safeGetText(stmt_suggest_notebooks_, 0);
+    if (!notebook.empty() && notebook.length() < 100) { // Bounds check
+      suggestions.emplace_back(std::move(notebook));
     }
   }
   
@@ -699,12 +715,12 @@ Result<void> SqliteIndex::validateIndex() {
   
   result = sqlite3_step(stmt);
   if (result == SQLITE_ROW) {
-    const char* check_result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+    std::string check_result = safeGetText(stmt, 0);
     sqlite3_finalize(stmt);
     
-    if (check_result && std::string(check_result) != "ok") {
+    if (!check_result.empty() && check_result != "ok") {
       return std::unexpected(makeError(ErrorCode::kDatabaseError, 
-                                       "Database integrity check failed: " + std::string(check_result)));
+                                       "Database integrity check failed: " + check_result));
     }
   } else {
     sqlite3_finalize(stmt);

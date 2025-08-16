@@ -10,6 +10,7 @@
 #include <nlohmann/json.hpp>
 
 #include "nx/util/time.hpp"
+#include "nx/util/filesystem.hpp"
 
 namespace nx::template_system {
 
@@ -44,15 +45,12 @@ Result<void> TemplateManager::createTemplate(const std::string& name,
   }
 
   try {
-    // Write template file
-    std::ofstream file(template_path);
-    if (!file.is_open()) {
+    // Write template file atomically
+    auto write_result = nx::util::FileSystem::writeFileAtomic(template_path, content);
+    if (!write_result.has_value()) {
       return std::unexpected(makeError(ErrorCode::kFileWriteError, 
-                           "Cannot create template file: " + template_path.string()));
+                           "Cannot create template file: " + write_result.error().message()));
     }
-    
-    file << content;
-    file.close();
 
     // Update template info
     TemplateInfo info;
@@ -156,15 +154,12 @@ Result<void> TemplateManager::updateTemplate(const std::string& name, const std:
   }
 
   try {
-    // Write updated template
-    std::ofstream file(template_path);
-    if (!file.is_open()) {
+    // Write updated template atomically
+    auto write_result = nx::util::FileSystem::writeFileAtomic(template_path, content);
+    if (!write_result.has_value()) {
       return std::unexpected(makeError(ErrorCode::kFileWriteError, 
-                           "Cannot update template file: " + template_path.string()));
+                           "Cannot update template file: " + write_result.error().message()));
     }
-    
-    file << content;
-    file.close();
 
     // Update cache
     auto it = template_cache_.find(name);
@@ -477,13 +472,12 @@ Result<void> TemplateManager::saveMetadata() {
       metadata_json[name] = template_json;
     }
 
-    std::ofstream file(config_.metadata_file);
-    if (!file.is_open()) {
+    // Write metadata atomically
+    auto write_result = nx::util::FileSystem::writeFileAtomic(config_.metadata_file, metadata_json.dump(2));
+    if (!write_result.has_value()) {
       return std::unexpected(makeError(ErrorCode::kFileWriteError, 
-                           "Cannot write metadata file: " + config_.metadata_file.string()));
+                           "Cannot write metadata file: " + write_result.error().message()));
     }
-
-    file << metadata_json.dump(2);
     return {};
 
   } catch (const std::exception& e) {

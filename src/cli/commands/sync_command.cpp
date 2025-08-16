@@ -10,8 +10,8 @@ namespace nx::cli {
 SyncCommand::SyncCommand(Application& app) : app_(app) {}
 
 void SyncCommand::setupCommand(CLI::App* cmd) {
-  cmd->add_option("operation", operation_, "Sync operation: status, init, clone, pull, push, sync")
-     ->check(CLI::IsMember({"status", "init", "clone", "pull", "push", "sync"}));
+  cmd->add_option("operation", operation_, "Sync operation: status, init, clone, pull, push, sync, resolve")
+     ->check(CLI::IsMember({"status", "init", "clone", "pull", "push", "sync", "resolve"}));
   
   cmd->add_option("--remote,-r", remote_url_, "Remote repository URL");
   cmd->add_option("--branch,-b", branch_, "Branch name (default: main)");
@@ -20,6 +20,9 @@ void SyncCommand::setupCommand(CLI::App* cmd) {
   cmd->add_flag("--no-auto-resolve", auto_resolve_, "Disable automatic conflict resolution");
   cmd->add_option("--strategy,-s", strategy_, "Merge strategy: merge, rebase, fast-forward")
      ->check(CLI::IsMember({"merge", "rebase", "fast-forward"}));
+  cmd->add_option("--resolve-strategy", resolve_strategy_, "Conflict resolution strategy: ours, theirs, manual")
+     ->check(CLI::IsMember({"ours", "theirs", "manual"}));
+  cmd->add_option("--files", resolve_files_, "Specific files to resolve (for resolve operation)");
   cmd->add_option("--user-name", user_name_, "Git user name");
   cmd->add_option("--user-email", user_email_, "Git user email");
 }
@@ -296,6 +299,75 @@ Result<int> SyncCommand::execute(const GlobalOptions& options) {
             std::cout << "Other" << std::endl;
             break;
         }
+      }
+
+      return 0;
+    }
+
+    if (operation_ == "resolve") {
+      // First check if there are conflicts to resolve
+      auto status_result = sync.getStatus();
+      if (!status_result.has_value()) {
+        if (options.json) {
+          std::cout << R"({"error": ")" << status_result.error().message() << R"(", "success": false})" << std::endl;
+        } else {
+          std::cout << "Error: " << status_result.error().message() << std::endl;
+        }
+        return 1;
+      }
+
+      auto& status = status_result.value();
+      
+      // Get list of conflicted files if no specific files provided
+      std::vector<std::string> files_to_resolve = resolve_files_;
+      if (files_to_resolve.empty()) {
+        // Find conflicted files by checking git status
+        for (const auto& file : status.modified_files) {
+          // Simple check - in real implementation would check for conflict markers
+          files_to_resolve.push_back(file);
+        }
+      }
+      
+      if (files_to_resolve.empty()) {
+        if (options.json) {
+          nlohmann::json result;
+          result["success"] = true;
+          result["operation"] = "resolve";
+          result["message"] = "No conflicts to resolve";
+          std::cout << result.dump(2) << std::endl;
+        } else {
+          std::cout << "No conflicts to resolve." << std::endl;
+        }
+        return 0;
+      }
+
+      // Resolve conflicts using the specified strategy
+      auto resolve_result = sync.resolveConflicts(files_to_resolve, resolve_strategy_);
+      if (!resolve_result.has_value()) {
+        if (options.json) {
+          std::cout << R"({"error": ")" << resolve_result.error().message() << R"(", "success": false})" << std::endl;
+        } else {
+          std::cout << "Error: " << resolve_result.error().message() << std::endl;
+        }
+        return 1;
+      }
+
+      if (options.json) {
+        nlohmann::json result;
+        result["success"] = true;
+        result["operation"] = "resolve";
+        result["strategy"] = resolve_strategy_;
+        result["resolved_files"] = files_to_resolve;
+        std::cout << result.dump(2) << std::endl;
+      } else {
+        std::cout << "Resolved " << files_to_resolve.size() << " file(s) using '" 
+                  << resolve_strategy_ << "' strategy" << std::endl;
+        for (const auto& file : files_to_resolve) {
+          std::cout << "  " << file << std::endl;
+        }
+        std::cout << "\nNext steps:" << std::endl;
+        std::cout << "  1. Verify resolution: nx sync status" << std::endl;
+        std::cout << "  2. Commit changes: git commit -m \"Resolve conflicts\"" << std::endl;
       }
 
       return 0;

@@ -12,6 +12,7 @@
 
 #include "nx/store/note_store.hpp"
 #include "nx/util/time.hpp"
+#include "nx/util/filesystem.hpp"
 
 namespace nx::import_export {
 
@@ -699,15 +700,13 @@ Result<ImportManager::ImportResult> NotionImporter::processJsonItem(
       auto temp_file = std::filesystem::temp_directory_path() / 
                        ("nx_notion_json_" + std::to_string(std::time(nullptr)) + ".md");
       
-      std::ofstream temp_out(temp_file);
-      if (!temp_out) {
+      // Write temporary file atomically
+      auto write_result = nx::util::FileSystem::writeFileAtomic(temp_file, note_content.str());
+      if (!write_result.has_value()) {
         result.files_failed = 1;
-        result.errors.push_back("Failed to create temporary file for note import");
+        result.errors.push_back("Failed to create temporary file for note import: " + write_result.error().message());
         return result;
       }
-      
-      temp_out << note_content.str();
-      temp_out.close();
       
       auto import_result = manager.importFile(temp_file, "notion-json-import");
       

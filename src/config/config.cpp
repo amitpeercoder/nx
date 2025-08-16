@@ -8,6 +8,7 @@
 #include <toml++/toml.hpp>
 
 #include "nx/util/xdg.hpp"
+#include "nx/util/filesystem.hpp"
 
 namespace nx::config {
 
@@ -304,14 +305,14 @@ Result<void> Config::save(const std::filesystem::path& config_path) const {
       std::filesystem::create_directories(parent);
     }
     
-    // Write to file
-    std::ofstream file(save_path);
-    if (!file) {
+    // Write to file atomically
+    std::stringstream ss;
+    ss << config_data;
+    auto write_result = nx::util::FileSystem::writeFileAtomic(save_path, ss.str());
+    if (!write_result.has_value()) {
       return std::unexpected(makeError(ErrorCode::kConfigError, 
-                                       "Cannot write config file: " + save_path.string()));
+                                       "Cannot write config file: " + write_result.error().message()));
     }
-    
-    file << config_data;
     
     return {};
     

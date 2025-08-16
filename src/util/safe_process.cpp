@@ -23,15 +23,26 @@ namespace {
 
 
   /**
-   * @brief Read all data from file descriptor
+   * @brief Read all data from file descriptor with bounds checking
    */
   std::string readFromFd(int fd) {
     std::string result;
-    char buffer[4096];
+    constexpr size_t BUFFER_SIZE = 4096;
+    constexpr size_t MAX_OUTPUT_SIZE = 10 * 1024 * 1024; // 10MB limit
+    char buffer[BUFFER_SIZE];
     ssize_t bytes_read;
     
     while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0) {
-      result.append(buffer, bytes_read);
+      // Check for potential overflow
+      if (result.size() + static_cast<size_t>(bytes_read) > MAX_OUTPUT_SIZE) {
+        // Truncate output to prevent memory exhaustion
+        size_t remaining = MAX_OUTPUT_SIZE - result.size();
+        if (remaining > 0) {
+          result.append(buffer, remaining);
+        }
+        break;
+      }
+      result.append(buffer, static_cast<size_t>(bytes_read));
     }
     
     return result;
@@ -48,18 +59,33 @@ namespace {
 
   /**
    * @brief Convert vector of strings to char* array for execvp
+   * @note This function creates a safe copy to avoid const_cast issues
    */
-  std::vector<char*> vectorToCharArray(const std::vector<std::string>& strings) {
-    std::vector<char*> result;
-    result.reserve(strings.size() + 1);
+  class SafeArgvBuilder {
+  private:
+    std::vector<std::unique_ptr<char[]>> storage_;
+    std::vector<char*> argv_;
     
-    for (const auto& str : strings) {
-      result.push_back(const_cast<char*>(str.c_str()));
+  public:
+    explicit SafeArgvBuilder(const std::vector<std::string>& strings) {
+      storage_.reserve(strings.size());
+      argv_.reserve(strings.size() + 1);
+      
+      for (const auto& str : strings) {
+        // Create a safe copy of each string
+        auto len = str.length() + 1;
+        auto buffer = std::make_unique<char[]>(len);
+        std::memcpy(buffer.get(), str.c_str(), len);
+        
+        argv_.push_back(buffer.get());
+        storage_.push_back(std::move(buffer));
+      }
+      argv_.push_back(nullptr);
     }
-    result.push_back(nullptr);
     
-    return result;
-  }
+    char* const* data() { return argv_.data(); }
+  };
+  
 }
 
 Result<SafeProcess::ProcessResult> SafeProcess::execute(
@@ -92,8 +118,13 @@ bool SafeProcess::commandExists(const std::string& command) {
 }
 
 std::optional<std::string> SafeProcess::findCommand(const std::string& command) {
+  // Validate command first
+  if (!SafeProcess::isValidCommand(command)) {
+    return std::nullopt;
+  }
+  
   // Check if command is an absolute path
-  if (command.front() == '/') {
+  if (!command.empty() && command.front() == '/') {
     struct stat st;
     if (stat(command.c_str(), &st) == 0 && (st.st_mode & S_IXUSR)) {
       return command;
@@ -129,6 +160,19 @@ Result<pid_t> SafeProcess::executeAsync(
     const std::vector<std::string>& args,
     const std::optional<std::string>& working_dir) {
   
+  // Validate inputs
+  if (!SafeProcess::isValidCommand(command)) {
+    return std::unexpected(makeError(ErrorCode::kInvalidArgument,
+                                     "Invalid command name: " + command));
+  }
+  
+  for (const auto& arg : args) {
+    if (!SafeProcess::isValidArgument(arg)) {
+      return std::unexpected(makeError(ErrorCode::kInvalidArgument,
+                                       "Invalid argument: " + arg.substr(0, 50) + "..."));
+    }
+  }
+  
   // Find the command in PATH
   auto command_path = findCommand(command);
   if (!command_path.has_value()) {
@@ -141,7 +185,7 @@ Result<pid_t> SafeProcess::executeAsync(
   full_args.push_back(command);
   full_args.insert(full_args.end(), args.begin(), args.end());
   
-  auto char_args = vectorToCharArray(full_args);
+  SafeArgvBuilder argv_builder(full_args);
   
   // Change working directory if specified
   std::string old_cwd;
@@ -160,7 +204,7 @@ Result<pid_t> SafeProcess::executeAsync(
   
   pid_t pid;
   int result = posix_spawn(&pid, command_path->c_str(), nullptr, nullptr, 
-                          char_args.data(), environ);
+                          argv_builder.data(), environ);
   
   // Restore working directory
   if (!old_cwd.empty()) {
@@ -176,14 +220,42 @@ Result<pid_t> SafeProcess::executeAsync(
 }
 
 bool SafeProcess::isArgumentSafe(const std::string& arg) {
-  // Check for dangerous characters that could be interpreted by shell
-  const std::string dangerous_chars = "|&;(){}[]<>*?~$`\"'\\";
+  return isValidArgument(arg);
+}
+
+bool SafeProcess::isValidCommand(const std::string& command) {
+  if (command.empty() || command.length() > 255) {
+    return false;
+  }
   
-  for (char c : arg) {
+  // Check for dangerous characters
+  const std::string dangerous_chars = "|&;(){}[]<>*?~$`\"'\\";
+  for (char c : command) {
     if (dangerous_chars.find(c) != std::string::npos) {
       return false;
     }
-    // Check for control characters
+    // Reject control characters except tab, newline, carriage return
+    if (c < 32 && c != '\t' && c != '\n' && c != '\r') {
+      return false;
+    }
+  }
+  
+  // Reject paths with .. to prevent directory traversal
+  if (command.find("..") != std::string::npos) {
+    return false;
+  }
+  
+  return true;
+}
+
+bool SafeProcess::isValidArgument(const std::string& arg) {
+  // Allow longer arguments than commands
+  if (arg.length() > 4096) {
+    return false;
+  }
+  
+  // Allow most characters in arguments, but reject control characters
+  for (char c : arg) {
     if (c < 32 && c != '\t' && c != '\n' && c != '\r') {
       return false;
     }
@@ -217,6 +289,19 @@ Result<SafeProcess::ProcessResult> SafeProcess::executeInternal(
     const std::optional<std::string>& working_dir,
     bool capture_output) {
   
+  // Validate inputs
+  if (!SafeProcess::isValidCommand(command)) {
+    return std::unexpected(makeError(ErrorCode::kInvalidArgument,
+                                     "Invalid command name: " + command));
+  }
+  
+  for (const auto& arg : args) {
+    if (!SafeProcess::isValidArgument(arg)) {
+      return std::unexpected(makeError(ErrorCode::kInvalidArgument,
+                                       "Invalid argument: " + arg.substr(0, 50) + "..."));
+    }
+  }
+  
   // Find the command in PATH
   auto command_path = findCommand(command);
   if (!command_path.has_value()) {
@@ -244,7 +329,7 @@ Result<SafeProcess::ProcessResult> SafeProcess::executeInternal(
   full_args.push_back(command);
   full_args.insert(full_args.end(), args.begin(), args.end());
   
-  auto char_args = vectorToCharArray(full_args);
+  SafeArgvBuilder argv_builder(full_args);
   
   // Set up file actions for posix_spawn
   posix_spawn_file_actions_t file_actions;
@@ -282,7 +367,7 @@ Result<SafeProcess::ProcessResult> SafeProcess::executeInternal(
   
   pid_t pid;
   int spawn_result = posix_spawn(&pid, command_path->c_str(), &file_actions, nullptr,
-                                char_args.data(), environ);
+                                argv_builder.data(), environ);
   
   posix_spawn_file_actions_destroy(&file_actions);
   

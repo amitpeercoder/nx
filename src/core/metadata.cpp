@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <set>
+#include <unordered_set>
 #include <yaml-cpp/yaml.h>
 
 #include "nx/util/time.hpp"
@@ -235,10 +236,11 @@ Result<Metadata> Metadata::fromYaml(const std::string& yaml) {
     // Parse tags
     if (node["tags"] && node["tags"].IsSequence()) {
       std::vector<std::string> tags;
+      tags.reserve(node["tags"].size());  // Pre-allocate to avoid reallocations
       for (const auto& tag_node : node["tags"]) {
-        tags.push_back(tag_node.as<std::string>());
+        tags.emplace_back(tag_node.as<std::string>());  // Use emplace_back for efficiency
       }
-      metadata.setTags(tags);
+      metadata.setTags(std::move(tags));  // Move to avoid copy
     }
     
     // Parse notebook
@@ -249,21 +251,23 @@ Result<Metadata> Metadata::fromYaml(const std::string& yaml) {
     // Parse links
     if (node["links"] && node["links"].IsSequence()) {
       std::vector<NoteId> links;
+      links.reserve(node["links"].size());  // Pre-allocate to avoid reallocations
       for (const auto& link_node : node["links"]) {
         auto link_result = NoteId::fromString(link_node.as<std::string>());
         if (link_result.has_value()) {
-          links.push_back(*link_result);
+          links.emplace_back(std::move(*link_result));  // Move the NoteId
         }
       }
-      metadata.setLinks(links);
+      metadata.setLinks(std::move(links));  // Move to avoid copy
     }
     
     // Parse custom fields (skip standard fields)
-    std::set<std::string> standard_fields = {"id", "title", "created", "updated", "tags", "notebook", "links"};
+    // Use static set to avoid recreation on each call and unordered_set for O(1) lookup
+    static const std::unordered_set<std::string> standard_fields = {"id", "title", "created", "updated", "tags", "notebook", "links"};
     for (const auto& pair : node) {
       std::string key = pair.first.as<std::string>();
       if (standard_fields.find(key) == standard_fields.end()) {
-        metadata.setCustomField(key, pair.second.as<std::string>());
+        metadata.setCustomField(std::move(key), pair.second.as<std::string>());  // Move key to avoid copy
       }
     }
     

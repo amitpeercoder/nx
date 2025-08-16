@@ -1,0 +1,52 @@
+FROM debian:bookworm
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    ninja-build \
+    git \
+    pkg-config \
+    curl \
+    zip \
+    unzip \
+    tar \
+    libsqlite3-dev \
+    libspdlog-dev \
+    libyaml-cpp-dev \
+    nlohmann-json3-dev \
+    libgit2-dev \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install vcpkg
+WORKDIR /opt
+RUN git clone https://github.com/Microsoft/vcpkg.git && \
+    cd vcpkg && \
+    ./bootstrap-vcpkg.sh && \
+    ln -sf /opt/vcpkg/vcpkg /usr/local/bin/vcpkg
+
+# Install vcpkg packages for ARM64
+WORKDIR /opt/vcpkg
+RUN ./vcpkg install cli11 tomlplusplus ftxui --triplet=arm64-linux
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy source code
+COPY . .
+
+# Configure and build
+RUN cmake -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake \
+    -DVCPKG_TARGET_TRIPLET=arm64-linux
+
+RUN cmake --build build
+
+# Create package
+WORKDIR /workspace/build
+RUN cpack
+
+# Copy package to output directory
+RUN mkdir -p /output && cp *.deb /output/

@@ -2,10 +2,17 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <iostream>
 
 namespace nx::util {
 
 std::filesystem::path Xdg::dataHome() {
+  // If NX_NOTES_DIR is set, use its parent as the data home
+  std::string nx_notes_dir = getEnvVar("NX_NOTES_DIR", "");
+  if (!nx_notes_dir.empty()) {
+    return std::filesystem::path(nx_notes_dir).parent_path() / ".nx_data";
+  }
+  
   std::string xdg_data_home = getEnvVar("XDG_DATA_HOME", "");
   if (!xdg_data_home.empty()) {
     return std::filesystem::path(xdg_data_home) / "nx";
@@ -73,6 +80,12 @@ bool Xdg::ensureDirectory(const std::filesystem::path& path, std::filesystem::pe
 }
 
 std::filesystem::path Xdg::notesDir() {
+  // Check for explicit notes directory override first
+  std::string nx_notes_dir = getEnvVar("NX_NOTES_DIR", "");
+  if (!nx_notes_dir.empty()) {
+    return std::filesystem::path(nx_notes_dir);
+  }
+  
   return dataHome() / "notes";
 }
 

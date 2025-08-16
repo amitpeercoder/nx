@@ -144,36 +144,36 @@ TEST_F(NotebookManagerTest, RenameNonExistentNotebook) {
 
 // Test notebook deletion
 TEST_F(NotebookManagerTest, DeleteNotebook) {
-    // Create notebook
-    ASSERT_TRUE(notebook_manager_->createNotebook("temp").has_value());
+    // Create notebook (using non-reserved name)
+    ASSERT_TRUE(notebook_manager_->createNotebook("temporary").has_value());
     
     // Delete notebook (only placeholder notes, should work without force)
-    auto result = notebook_manager_->deleteNotebook("temp", false);
+    auto result = notebook_manager_->deleteNotebook("temporary", false);
     ASSERT_TRUE(result.has_value()) << "Failed to delete notebook: " << result.error().message();
     
     // Verify notebook is gone
-    auto info = notebook_manager_->getNotebookInfo("temp");
+    auto info = notebook_manager_->getNotebookInfo("temporary");
     EXPECT_FALSE(info.has_value());
 }
 
 // Test force deletion of notebook with real notes
 TEST_F(NotebookManagerTest, ForceDeleteNotebookWithNotes) {
-    // Create notebook with real notes
-    ASSERT_TRUE(notebook_manager_->createNotebook("temp").has_value());
+    // Create notebook with real notes (using non-reserved name)
+    ASSERT_TRUE(notebook_manager_->createNotebook("temporary").has_value());
     
-    auto note = createTestNote("Important Note", "Don't delete this", "temp");
+    auto note = createTestNote("Important Note", "Don't delete this", "temporary");
     ASSERT_TRUE(store_->store(note).has_value());
     
     // Try to delete without force (should fail)
-    auto result1 = notebook_manager_->deleteNotebook("temp", false);
+    auto result1 = notebook_manager_->deleteNotebook("temporary", false);
     EXPECT_FALSE(result1.has_value());
     
     // Delete with force (should succeed)
-    auto result2 = notebook_manager_->deleteNotebook("temp", true);
+    auto result2 = notebook_manager_->deleteNotebook("temporary", true);
     ASSERT_TRUE(result2.has_value()) << "Failed to force delete notebook: " << result2.error().message();
     
     // Verify notebook and notes are gone
-    auto info = notebook_manager_->getNotebookInfo("temp");
+    auto info = notebook_manager_->getNotebookInfo("temporary");
     EXPECT_FALSE(info.has_value());
     
     auto note_result = store_->load(note.id());
