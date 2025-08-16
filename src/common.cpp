@@ -6,6 +6,13 @@
 #include <format>
 #endif
 
+#ifdef __has_include
+  #if __has_include("nx/version.hpp")
+    #include "nx/version.hpp"
+    #define HAS_GIT_VERSION 1
+  #endif
+#endif
+
 namespace nx {
 
 std::string_view errorCodeToString(ErrorCode code) {
@@ -58,6 +65,8 @@ std::string_view errorCodeToString(ErrorCode code) {
       return "Not implemented";
     case ErrorCode::kNotFound:
       return "Not found";
+    case ErrorCode::kRecoveryAttempted:
+      return "Recovery attempted";
     case ErrorCode::kUnknownError:
       return "Unknown error";
   }
@@ -88,7 +97,59 @@ std::string Version::toString() const {
 }
 
 Version getVersion() {
-  return Version{0, 1, 0, "dev"};
+#ifdef HAS_GIT_VERSION
+  // Use git-based version information
+  Version version;
+  version.major = GitVersionInfo::major;
+  version.minor = GitVersionInfo::minor;
+  version.patch = GitVersionInfo::patch;
+  
+  // Construct build string from git info
+  std::string build_info;
+  
+  // Add prerelease if present
+  if (!GitVersionInfo::prerelease.empty()) {
+    build_info = std::string(GitVersionInfo::prerelease);
+  }
+  
+  // Add build metadata
+  if (!GitVersionInfo::build.empty()) {
+    if (!build_info.empty()) {
+      build_info += "+";
+    }
+    build_info += std::string(GitVersionInfo::build);
+  }
+  
+  // For development builds, construct from git info
+  if (GitVersionInfo::isDevelopment()) {
+    build_info = "";
+    if (GitVersionInfo::version_type == "debug") {
+      build_info = "debug.";
+    } else {
+      build_info = "dev.";
+    }
+    
+    // Add commit count if available
+    if (!GitVersionInfo::commits_since_tag.empty() && 
+        GitVersionInfo::commits_since_tag != "0") {
+      build_info += std::string(GitVersionInfo::commits_since_tag) + ".";
+    }
+    
+    // Add commit hash
+    build_info += std::string(GitVersionInfo::commit_hash);
+    
+    // Add dirty flag
+    if (GitVersionInfo::isDirty()) {
+      build_info += "+dirty";
+    }
+  }
+  
+  version.build = build_info;
+  return version;
+#else
+  // Fallback when git version info is not available
+  return Version{0, 1, 0, "no-git"};
+#endif
 }
 
 }  // namespace nx

@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iomanip>
 #include <chrono>
+#include <fstream>
 #include <regex>
 #include <cstdlib>
 #include <cstring>
@@ -52,6 +53,10 @@ TUIApp::TUIApp(nx::config::Config& config,
     , search_index_(search_index)
     , screen_(ScreenInteractive::Fullscreen()) {
   
+  
+  // Initialize enhanced editor components
+  initializeEditor();
+  
   registerCommands();
   main_component_ = createMainComponent();
 }
@@ -63,6 +68,58 @@ TUIApp::~TUIApp() {
   } catch (...) {
     // Ignore errors during cleanup
   }
+}
+
+void TUIApp::initializeEditor() {
+  // Configure editor buffer for optimal performance
+  EditorBuffer::Config buffer_config;
+  buffer_config.max_line_length = 10000;
+  buffer_config.gap_config.initial_gap_size = 1024;
+  buffer_config.gap_config.max_buffer_size = 100 * 1024 * 1024; // 100MB
+  
+  // Configure input validator for security
+  EditorInputValidator::ValidationConfig validator_config;
+  validator_config.max_line_length = 10000;
+  validator_config.max_total_size = 100 * 1024 * 1024; // 100MB
+  validator_config.max_lines = 1000000;
+  validator_config.allow_control_chars = false;
+  validator_config.strict_utf8 = true;
+  validator_config.allow_terminal_escapes = false;
+  
+  // Initialize components
+  state_.editor_buffer = std::make_unique<EditorBuffer>(buffer_config);
+  state_.input_validator = std::make_unique<EditorInputValidator>(validator_config);
+  state_.clipboard = std::make_unique<SecureClipboard>();
+  
+  // Initialize command history with disabled auto-merge for TUI editing
+  CommandHistory::Config history_config;
+  history_config.auto_merge_commands = false;
+  history_config.max_history_size = 500;
+  history_config.memory_limit_bytes = 50 * 1024 * 1024; // 50MB
+  state_.command_history = std::make_unique<CommandHistory>(history_config);
+  
+  // Initialize enhanced cursor management
+  EnhancedCursor::Config cursor_config;
+  cursor_config.enable_virtual_column = true;
+  cursor_config.word_boundary_type = EnhancedCursor::WordBoundary::Unicode;
+  cursor_config.clamp_to_content = true;
+  state_.enhanced_cursor = std::make_unique<EnhancedCursor>(cursor_config);
+  
+  // Initialize search functionality
+  state_.editor_search = std::make_unique<EditorSearch>(state_.editor_buffer.get());
+  state_.editor_search->setCursor(state_.enhanced_cursor.get());
+  state_.editor_search->setCommandHistory(state_.command_history.get());
+  
+  // Initialize dialog manager
+  state_.dialog_manager = std::make_unique<DialogManager>();
+  
+  // Initialize viewport managers
+  state_.editor_viewport = ViewportManagerFactory::createForEditor();
+  state_.preview_viewport = ViewportManagerFactory::createForPreview();
+  
+  // Initialize markdown highlighter with default theme
+  auto highlight_config = HighlightThemes::getDefaultTheme();
+  state_.markdown_highlighter = std::make_unique<MarkdownHighlighter>(highlight_config);
 }
 
 bool TUIApp::shouldLaunchTUI(int argc, char* argv[]) {
@@ -245,10 +302,13 @@ Result<void> TUIApp::loadNotes() {
       return std::unexpected(notes_result.error());
     }
     
-    // Convert notes to metadata and store in state
+    // Convert notes to metadata and store in state, filtering out notebook placeholders
     state_.all_notes.clear();
     for (const auto& note : *notes_result) {
-      state_.all_notes.push_back(note.metadata());
+      // Filter out notebook placeholder notes (notes starting with .notebook_)
+      if (!note.title().starts_with(".notebook_")) {
+        state_.all_notes.push_back(note.metadata());
+      }
     }
     
     // Copy to filtered list and apply current sorting
@@ -576,9 +636,76 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     if (event == ftxui::Event::Escape) {
       // Cancel edit mode
       state_.edit_mode_active = false;
-      state_.edit_content.clear();
+      state_.editor_buffer->clear();
       state_.edit_has_changes = false;
       setStatusMessage("Edit cancelled");
+      return;
+    }
+    
+    // Search functionality in edit mode (Ctrl+F)
+    if (event.character() == "\x06") { // Ctrl+F (ASCII 6)
+      if (state_.editor_search && state_.dialog_manager) {
+        auto dialog_result = state_.dialog_manager->showFindDialog();
+        if (dialog_result.has_value()) {
+          SearchOptions search_opts;
+          search_opts.case_sensitive = dialog_result.value().options.case_sensitive;
+          search_opts.whole_words = dialog_result.value().options.whole_words;
+          search_opts.regex_mode = dialog_result.value().options.regex_mode;
+          search_opts.wrap_search = dialog_result.value().options.wrap_search;
+          
+          auto search_result = state_.editor_search->startSearch(dialog_result.value().query, search_opts);
+          if (search_result.has_value()) {
+            setStatusMessage("Search found " + std::to_string(state_.editor_search->getSearchState().getResultCount()) + " matches");
+          } else {
+            setStatusMessage("Search failed: " + search_result.error().message());
+          }
+        }
+      }
+      return;
+    }
+    
+    // Find next (F3 or Ctrl+G)
+    if (event == ftxui::Event::F3 || event.character() == "\x07") { // Ctrl+G (ASCII 7)
+      if (state_.editor_search && state_.editor_search->isSearchActive()) {
+        auto next_result = state_.editor_search->findNext();
+        if (next_result.has_value()) {
+          setStatusMessage("Found next match");
+        } else {
+          setStatusMessage("No more matches");
+        }
+      }
+      return;
+    }
+    
+    // Find previous (Shift+F3)
+    if (event == ftxui::Event::F3 && event == ftxui::Event::Special("\x1b[1;2R")) { // Shift+F3
+      if (state_.editor_search && state_.editor_search->isSearchActive()) {
+        auto prev_result = state_.editor_search->findPrevious();
+        if (prev_result.has_value()) {
+          setStatusMessage("Found previous match");
+        } else {
+          setStatusMessage("No previous matches");
+        }
+      }
+      return;
+    }
+    
+    // Go to line (Ctrl+G)
+    if (event.character() == "\x0c") { // Ctrl+L (ASCII 12) - changed from Ctrl+G to avoid conflict
+      if (state_.editor_buffer && state_.dialog_manager) {
+        size_t current_line = static_cast<size_t>(state_.edit_cursor_line) + 1; // Convert to 1-based
+        size_t max_line = state_.editor_buffer->getLineCount();
+        
+        auto dialog_result = state_.dialog_manager->showGotoLineDialog(current_line, max_line);
+        if (dialog_result.has_value()) {
+          size_t target_line = dialog_result.value() - 1; // Convert to 0-based
+          if (target_line < max_line) {
+            state_.edit_cursor_line = static_cast<int>(target_line);
+            state_.edit_cursor_col = 0;
+            setStatusMessage("Jumped to line " + std::to_string(target_line + 1));
+          }
+        }
+      }
       return;
     }
     if (event.character() == "\x13") { // Ctrl+S (ASCII 19)
@@ -1232,6 +1359,17 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     return;
   }
   
+  // Manual panel scrolling (independent of selection)
+  if (event.character() == "\x0A") { // Ctrl+J - scroll down
+    scrollPanelDown();
+    return;
+  }
+  
+  if (event.character() == "\x0B") { // Ctrl+K - scroll up  
+    scrollPanelUp();
+    return;
+  }
+  
   // Enter key - context dependent
   if (event == ftxui::Event::Return) {
     switch (state_.current_pane) {
@@ -1479,7 +1617,10 @@ void TUIApp::performSimpleFilter(const std::string& query) {
       auto notes_result = store.search(note_query);
       if (notes_result) {
         for (const auto& note : *notes_result) {
-          notes.push_back(note.metadata());
+          // Filter out notebook placeholder notes (notes starting with .notebook_)
+          if (!note.title().starts_with(".notebook_")) {
+            notes.push_back(note.metadata());
+          }
         }
         timestamp = std::chrono::steady_clock::now();
         force_refresh = false;
@@ -1590,7 +1731,10 @@ void TUIApp::invalidateSearchCache() {
       auto notes_result = store.search(note_query);
       if (notes_result) {
         for (const auto& note : *notes_result) {
-          notes.push_back(note.metadata());
+          // Filter out notebook placeholder notes (notes starting with .notebook_)
+          if (!note.title().starts_with(".notebook_")) {
+            notes.push_back(note.metadata());
+          }
         }
         timestamp = std::chrono::steady_clock::now();
         force_refresh = false;
@@ -1657,8 +1801,69 @@ Element TUIApp::renderNoteMetadata(const nx::core::Metadata& metadata, bool sele
 }
 
 Element TUIApp::renderNotePreview(const nx::core::NoteId& note_id) const {
-  (void)note_id;
-  return text("Note preview would appear here");
+  // Load the note for preview
+  auto note_result = note_store_.load(note_id);
+  if (!note_result) {
+    return text("Error loading note: " + note_result.error().message()) | color(Color::Red);
+  }
+  
+  const auto& note = note_result.value();
+  Elements content;
+  
+  // Note title
+  content.push_back(text("# " + note.title()) | bold);
+  content.push_back(text(""));
+  
+  // Metadata line
+  auto created_time = std::chrono::system_clock::to_time_t(note.metadata().created());
+  auto modified_time = std::chrono::system_clock::to_time_t(note.metadata().updated());
+  std::string created_str = std::ctime(&created_time);
+  std::string modified_str = std::ctime(&modified_time);
+  // Remove trailing newlines from ctime
+  created_str.pop_back();
+  modified_str.pop_back();
+  
+  content.push_back(text("Created: " + created_str) | dim);
+  content.push_back(text("Modified: " + modified_str) | dim);
+  
+  // Tags if present
+  if (!note.metadata().tags().empty()) {
+    std::string tags_str = "Tags: ";
+    for (size_t i = 0; i < note.metadata().tags().size(); ++i) {
+      if (i > 0) tags_str += ", ";
+      tags_str += note.metadata().tags()[i];
+    }
+    content.push_back(text(tags_str) | dim);
+  }
+  
+  // Notebook if present
+  if (note.metadata().notebook().has_value() && !note.metadata().notebook().value().empty()) {
+    content.push_back(text("Notebook: " + note.metadata().notebook().value()) | dim);
+  }
+  
+  content.push_back(text(""));
+  
+  // Note content (first 20 lines for preview)
+  std::istringstream content_stream(note.content());
+  std::string line;
+  int line_count = 0;
+  const int max_preview_lines = 20;
+  
+  while (std::getline(content_stream, line) && line_count < max_preview_lines) {
+    content.push_back(text(line));
+    line_count++;
+  }
+  
+  // Show truncation indicator if there's more content
+  if (line_count == max_preview_lines) {
+    std::getline(content_stream, line); // Try to read one more line
+    if (!content_stream.eof()) {
+      content.push_back(text(""));
+      content.push_back(text("... (content truncated)") | italic | dim);
+    }
+  }
+  
+  return vbox(content);
 }
 
 void TUIApp::registerCommands() {
@@ -1780,9 +1985,17 @@ Result<void> TUIApp::editNote(const nx::core::NoteId& note_id) {
       return std::unexpected(note_result.error());
     }
     
+    // Initialize editor buffer with note content
+    auto init_result = state_.editor_buffer->initialize(note_result->content());
+    if (!init_result) {
+      return std::unexpected(init_result.error());
+    }
+    
+    // Clear command history for clean editing session
+    state_.command_history->clear();
+    
     // Enter edit mode
     state_.edit_mode_active = true;
-    state_.edit_content = note_result->content();
     state_.edit_cursor_line = 0;
     state_.edit_cursor_col = 0;
     state_.edit_scroll_offset = 0;
@@ -1791,7 +2004,7 @@ Result<void> TUIApp::editNote(const nx::core::NoteId& note_id) {
     // Focus the preview panel for editing
     state_.current_pane = ActivePane::Preview;
     
-    setStatusMessage("Ctrl+S: Save | Esc: Cancel | ↓ on last line: new line | Enter on empty last line: new line");
+    setStatusMessage("Ctrl+S: Save | Esc: Cancel | Ctrl+Z: Undo | Ctrl+Y: Redo | Enhanced editor with security validation");
     
     return Result<void>();
   } catch (const std::exception& e) {
@@ -2018,6 +2231,25 @@ void TUIApp::moveSelection(int delta) {
           static_cast<int>(state_.notes.size()) - 1
         );
         
+        // Auto-scroll to keep selected note visible
+        const int visible_notes = calculateVisibleNotesCount();
+        
+        // Scroll up if selection moved above visible area
+        if (state_.selected_note_index < state_.notes_scroll_offset) {
+          state_.notes_scroll_offset = state_.selected_note_index;
+        }
+        // Scroll down if selection moved below visible area
+        else if (state_.selected_note_index >= state_.notes_scroll_offset + visible_notes) {
+          state_.notes_scroll_offset = state_.selected_note_index - visible_notes + 1;
+        }
+        
+        // Ensure scroll offset is within bounds
+        state_.notes_scroll_offset = std::clamp(
+          state_.notes_scroll_offset,
+          0,
+          std::max(0, static_cast<int>(state_.notes.size()) - visible_notes)
+        );
+        
         // Update selected note ID
         if (state_.selected_note_index >= 0 && static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
           state_.selected_note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
@@ -2100,6 +2332,44 @@ void TUIApp::pageDown() {
   moveSelection(10); // Move down by 10 items
 }
 
+void TUIApp::scrollPanelUp() {
+  switch (state_.current_pane) {
+    case ActivePane::Navigation:
+      state_.navigation_scroll_offset = std::max(0, state_.navigation_scroll_offset - 1);
+      break;
+    case ActivePane::Notes:
+      state_.notes_scroll_offset = std::max(0, state_.notes_scroll_offset - 1);
+      break;
+    case ActivePane::Preview:
+      state_.preview_scroll_offset = std::max(0, state_.preview_scroll_offset - 1);
+      break;
+    default:
+      break;
+  }
+}
+
+void TUIApp::scrollPanelDown() {
+  switch (state_.current_pane) {
+    case ActivePane::Navigation: {
+      int visible_count = calculateVisibleNavigationItemsCount();
+      int max_scroll = std::max(0, static_cast<int>(state_.nav_items.size()) - visible_count);
+      state_.navigation_scroll_offset = std::min(max_scroll, state_.navigation_scroll_offset + 1);
+      break;
+    }
+    case ActivePane::Notes: {
+      int visible_count = calculateVisibleNotesCount();
+      int max_scroll = std::max(0, static_cast<int>(state_.notes.size()) - visible_count);
+      state_.notes_scroll_offset = std::min(max_scroll, state_.notes_scroll_offset + 1);
+      break;
+    }
+    case ActivePane::Preview:
+      state_.preview_scroll_offset = state_.preview_scroll_offset + 1;
+      break;
+    default:
+      break;
+  }
+}
+
 void TUIApp::followLinkInPreview() {
   if (state_.notes.empty() || state_.selected_note_index >= static_cast<int>(state_.notes.size())) {
     setStatusMessage("No note selected");
@@ -2162,16 +2432,22 @@ Element TUIApp::renderNavigationPanel() const {
   );
   nav_content.push_back(separator());
   
-  // Render flattened navigation items with proper selection
+  // Render flattened navigation items with proper selection and scrolling
   if (state_.nav_items.empty()) {
     nav_content.push_back(text("No navigation items") | center | dim);
   } else {
-    // Add section headers and items
+    // Add section headers and items with scroll offset
     bool in_notebooks = false;
     bool in_global_tags = false;
     
-    for (size_t i = 0; i < state_.nav_items.size(); ++i) {
-      const auto& item = state_.nav_items[i];
+    // Calculate visible range based on scroll offset
+    int visible_start = std::max(0, state_.navigation_scroll_offset);
+    int visible_count = calculateVisibleNavigationItemsCount();
+    int visible_end = std::min(static_cast<int>(state_.nav_items.size()), visible_start + visible_count);
+    
+    for (int i = visible_start; i < visible_end; ++i) {
+      size_t idx = static_cast<size_t>(i);
+      const auto& item = state_.nav_items[idx];
       
       // Add section headers when needed
       if (item.type == NavItemType::Notebook && !in_notebooks) {
@@ -2218,11 +2494,19 @@ Element TUIApp::renderNavigationPanel() const {
       
       // Highlight currently selected navigation item
       if (state_.current_pane == ActivePane::Navigation && 
-          static_cast<int>(i) == state_.selected_nav_index) {
+          i == state_.selected_nav_index) {
         item_element = item_element | inverted;
       }
       
       nav_content.push_back(item_element);
+    }
+    
+    // Add scroll indicators
+    if (visible_start > 0 || visible_end < static_cast<int>(state_.nav_items.size())) {
+      nav_content.push_back(text(""));
+      nav_content.push_back(text("↕ " + std::to_string(visible_start + 1) + "-" + 
+                                std::to_string(visible_end) + "/" + 
+                                std::to_string(state_.nav_items.size())) | center | dim);
     }
   }
   
@@ -2267,14 +2551,19 @@ Element TUIApp::renderNotesPanel() const {
   notes_content.push_back(search_element);
   notes_content.push_back(separator());
   
-  // Notes list
+  // Notes list with scrolling
   if (state_.notes.empty()) {
     notes_content.push_back(text("No notes found") | center | dim);
   } else {
-    int index = 0;
-    for (const auto& metadata : state_.notes) {
+    // Calculate visible range based on scroll offset
+    int visible_start = std::max(0, state_.notes_scroll_offset);
+    int visible_count = calculateVisibleNotesCount();
+    int visible_end = std::min(static_cast<int>(state_.notes.size()), visible_start + visible_count);
+    
+    for (int i = visible_start; i < visible_end; ++i) {
+      const auto& metadata = state_.notes[static_cast<size_t>(i)];
       auto note_element = renderNoteMetadata(metadata, 
-        state_.current_pane == ActivePane::Notes && index == state_.selected_note_index);
+        state_.current_pane == ActivePane::Notes && i == state_.selected_note_index);
       
       // Multi-select indicator
       if (state_.selected_notes.count(metadata.id())) {
@@ -2286,13 +2575,21 @@ Element TUIApp::renderNotesPanel() const {
       }
       
       notes_content.push_back(note_element);
-      index++;
+    }
+    
+    // Add scroll indicators
+    if (visible_start > 0 || visible_end < static_cast<int>(state_.notes.size())) {
+      notes_content.push_back(text(""));
+      notes_content.push_back(text("↕ " + std::to_string(visible_start + 1) + "-" + 
+                                  std::to_string(visible_end) + "/" + 
+                                  std::to_string(state_.notes.size())) | center | dim);
     }
   }
   
-  notes_content.push_back(separator());
+  // Create main content (everything except status line)
+  Element main_content = vbox(notes_content) | flex;
   
-  // Status info
+  // Create status line that's always at the bottom
   std::string sort_indicator;
   switch (state_.sort_mode) {
     case SortMode::Modified: sort_indicator = "↓ modified"; break;
@@ -2301,13 +2598,16 @@ Element TUIApp::renderNotesPanel() const {
     case SortMode::Relevance: sort_indicator = "↓ relevance"; break;
   }
   
-  notes_content.push_back(
-    text("📄 " + std::to_string(state_.notes.size()) + " notes | " +
-         "🏷️ " + std::to_string(state_.tag_counts.size()) + " tags | " +
-         sort_indicator) | dim
-  );
+  Element status_line = text("📄 " + std::to_string(state_.notes.size()) + " notes | " +
+                             "🏷️ " + std::to_string(state_.tag_counts.size()) + " tags | " +
+                             sort_indicator) | dim;
   
-  return vbox(notes_content) | border;
+  // Return notes panel with status line at bottom
+  return vbox({
+    main_content,
+    separator(),
+    status_line
+  }) | border;
 }
 
 Element TUIApp::renderPreviewPane() const {
@@ -2326,8 +2626,17 @@ Element TUIApp::renderPreviewPane() const {
   preview_content.push_back(separator());
   
   if (state_.edit_mode_active) {
-    // Render editor mode
+    // Render editor mode with status line at bottom
     preview_content.push_back(renderEditor());
+    preview_content.push_back(separator());
+    
+    // Get line count for status
+    std::vector<std::string> lines = state_.editor_buffer->toLines();
+    if (lines.empty()) lines.push_back("");
+    
+    Element status_line = text("↕ Line " + std::to_string(state_.edit_cursor_line + 1) + 
+                               "/" + std::to_string(lines.size())) | center | dim;
+    preview_content.push_back(status_line);
   } else if (state_.notes.empty() || state_.selected_note_index >= static_cast<int>(state_.notes.size())) {
     preview_content.push_back(text("No note selected") | center | dim);
   } else {
@@ -2355,20 +2664,13 @@ Element TUIApp::renderPreviewPane() const {
       int line_count = 0;
       while (std::getline(stream, line) && line_count < 20) { // Limit preview
         if (line_count >= state_.preview_scroll_offset) {
-          Element line_element = text(line);
+          // Apply proper markdown highlighting to the line
+          HighlightResult highlight = state_.markdown_highlighter->highlightLine(line, static_cast<size_t>(line_count));
+          Element line_element = createStyledLine(line, highlight);
           
-          // Basic markdown styling
-          if (line.starts_with("# ")) {
-            line_element = text(line.substr(2)) | bold;
-          } else if (line.starts_with("## ")) {
-            line_element = text(line.substr(3)) | bold | dim;
-          } else if (line.starts_with("- ") || line.starts_with("* ")) {
-            line_element = text("• " + line.substr(2));
-          }
-          
-          // Highlight wiki links
-          if (line.find("[[") != std::string::npos) {
-            line_element = line_element | color(Color::Blue);
+          // Apply search highlighting on top if there's an active search query
+          if (!state_.search_query.empty()) {
+            line_element = highlightSearchInLine(line, state_.search_query);
           }
           
           preview_content.push_back(line_element);
@@ -2485,6 +2787,8 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  h/←     Focus left pane (tags)"));
   help_content.push_back(text("  j/↓     Move down in current pane"));
   help_content.push_back(text("  k/↑     Move up in current pane"));
+  help_content.push_back(text("  Ctrl+J  Scroll panel down (no selection change)"));
+  help_content.push_back(text("  Ctrl+K  Scroll panel up (no selection change)"));
   help_content.push_back(text("  l/→     Focus right pane (auto-edit)"));
   help_content.push_back(text("  Tab     Cycle through panes"));
   help_content.push_back(text("  ↑ from first note → search box"));
@@ -2524,6 +2828,8 @@ Element TUIApp::renderHelpModal() const {
   
   help_content.push_back(text("Editor Mode:") | bold);
   help_content.push_back(text("  Ctrl+S  Save note"));
+  help_content.push_back(text("  Ctrl+Z  Undo operation"));
+  help_content.push_back(text("  Ctrl+Y  Redo operation"));
   help_content.push_back(text("  Esc     Cancel editing"));
   help_content.push_back(text("  Arrows  Move cursor (auto-scroll)"));
   help_content.push_back(text("  ↓ on last line: create new line"));
@@ -2588,93 +2894,331 @@ std::vector<TUICommand> TUIApp::getFilteredCommands(const std::string& query) co
   return filtered;
 }
 
+// Helper function to apply TextStyle to FTXUI elements
+ftxui::Decorator TUIApp::textStyleToDecorator(const TextStyle& style) const {
+  ftxui::Decorator decorator = nothing;
+  
+  if (style.foreground != ftxui::Color::Default) {
+    decorator = decorator | color(style.foreground);
+  }
+  if (style.background != ftxui::Color::Default) {
+    decorator = decorator | bgcolor(style.background);
+  }
+  if (style.bold) {
+    decorator = decorator | bold;
+  }
+  if (style.italic) {
+    decorator = decorator | italic;
+  }
+  if (style.underlined) {
+    decorator = decorator | underlined;
+  }
+  if (style.dim) {
+    decorator = decorator | dim;
+  }
+  if (style.blink) {
+    decorator = decorator | blink;
+  }
+  if (style.inverted) {
+    decorator = decorator | inverted;
+  }
+  
+  return decorator;
+}
+
+// Helper function to create a styled line element
+ftxui::Element TUIApp::createStyledLine(const std::string& line, const HighlightResult& highlight) const {
+  if (highlight.segments.empty()) {
+    return text(line);
+  }
+  
+  Elements elements;
+  size_t pos = 0;
+  
+  for (const auto& segment : highlight.segments) {
+    // Add unstyled text before this segment
+    if (pos < segment.start_pos) {
+      std::string before = line.substr(pos, segment.start_pos - pos);
+      if (!before.empty()) {
+        elements.push_back(text(before));
+      }
+    }
+    
+    // Add styled segment
+    if (segment.start_pos < line.length()) {
+      size_t end_pos = std::min(segment.end_pos, line.length());
+      std::string styled_text = line.substr(segment.start_pos, end_pos - segment.start_pos);
+      if (!styled_text.empty()) {
+        elements.push_back(text(styled_text) | textStyleToDecorator(segment.style));
+      }
+    }
+    
+    pos = segment.end_pos;
+  }
+  
+  // Add remaining unstyled text
+  if (pos < line.length()) {
+    std::string remaining = line.substr(pos);
+    if (!remaining.empty()) {
+      elements.push_back(text(remaining));
+    }
+  }
+  
+  return elements.empty() ? text(line) : hbox(elements);
+}
+
+// Helper function to create a styled line with cursor at specified position
+ftxui::Element TUIApp::createStyledLineWithCursor(const std::string& line, const HighlightResult& highlight, size_t cursor_pos) const {
+  if (highlight.segments.empty()) {
+    // No highlighting - simple case
+    if (cursor_pos < line.length()) {
+      std::string before = line.substr(0, cursor_pos);
+      std::string cursor_char = line.substr(cursor_pos, 1);
+      std::string after = cursor_pos + 1 < line.length() ? line.substr(cursor_pos + 1) : "";
+      
+      Elements elements;
+      if (!before.empty()) elements.push_back(text(before));
+      elements.push_back(text(cursor_char) | inverted);
+      if (!after.empty()) elements.push_back(text(after));
+      
+      return hbox(elements);
+    } else {
+      // Cursor at end of line (including empty lines)
+      if (line.empty()) {
+        // For completely empty lines, just show the cursor space
+        return text(" ") | inverted;
+      } else {
+        // For lines with content, show content + cursor space
+        return hbox({text(line), text(" ") | inverted});
+      }
+    }
+  }
+  
+  // With highlighting - need to carefully insert cursor
+  Elements elements;
+  size_t pos = 0;
+  bool cursor_added = false;
+  
+  for (const auto& segment : highlight.segments) {
+    // Add unstyled text before this segment
+    if (pos < segment.start_pos) {
+      std::string before_segment = line.substr(pos, segment.start_pos - pos);
+      
+      // Check if cursor is in this unstyled section
+      if (!cursor_added && cursor_pos >= pos && cursor_pos < segment.start_pos) {
+        size_t offset_in_section = cursor_pos - pos;
+        if (offset_in_section > 0) {
+          elements.push_back(text(before_segment.substr(0, offset_in_section)));
+        }
+        if (offset_in_section < before_segment.length()) {
+          elements.push_back(text(before_segment.substr(offset_in_section, 1)) | inverted);
+          if (offset_in_section + 1 < before_segment.length()) {
+            elements.push_back(text(before_segment.substr(offset_in_section + 1)));
+          }
+        } else {
+          elements.push_back(text(" ") | inverted);
+        }
+        cursor_added = true;
+      } else {
+        elements.push_back(text(before_segment));
+      }
+    }
+    
+    // Add styled segment
+    if (segment.start_pos < line.length()) {
+      size_t end_pos = std::min(segment.end_pos, line.length());
+      std::string styled_text = line.substr(segment.start_pos, end_pos - segment.start_pos);
+      
+      // Check if cursor is in this styled segment
+      if (!cursor_added && cursor_pos >= segment.start_pos && cursor_pos < end_pos) {
+        size_t offset_in_segment = cursor_pos - segment.start_pos;
+        if (offset_in_segment > 0) {
+          elements.push_back(text(styled_text.substr(0, offset_in_segment)) | textStyleToDecorator(segment.style));
+        }
+        if (offset_in_segment < styled_text.length()) {
+          // Cursor character with both style and inversion
+          elements.push_back(text(styled_text.substr(offset_in_segment, 1)) | textStyleToDecorator(segment.style) | inverted);
+          if (offset_in_segment + 1 < styled_text.length()) {
+            elements.push_back(text(styled_text.substr(offset_in_segment + 1)) | textStyleToDecorator(segment.style));
+          }
+        } else {
+          elements.push_back(text(" ") | inverted);
+        }
+        cursor_added = true;
+      } else {
+        elements.push_back(text(styled_text) | textStyleToDecorator(segment.style));
+      }
+    }
+    
+    pos = segment.end_pos;
+  }
+  
+  // Add remaining unstyled text
+  if (pos < line.length()) {
+    std::string remaining = line.substr(pos);
+    
+    // Check if cursor is in remaining text
+    if (!cursor_added && cursor_pos >= pos) {
+      size_t offset_in_remaining = cursor_pos - pos;
+      if (offset_in_remaining > 0) {
+        elements.push_back(text(remaining.substr(0, offset_in_remaining)));
+      }
+      if (offset_in_remaining < remaining.length()) {
+        elements.push_back(text(remaining.substr(offset_in_remaining, 1)) | inverted);
+        if (offset_in_remaining + 1 < remaining.length()) {
+          elements.push_back(text(remaining.substr(offset_in_remaining + 1)));
+        }
+      } else {
+        elements.push_back(text(" ") | inverted);
+      }
+      cursor_added = true;
+    } else {
+      elements.push_back(text(remaining));
+    }
+  }
+  
+  // If cursor is at end of line and not yet added
+  if (!cursor_added && cursor_pos >= line.length()) {
+    elements.push_back(text(" ") | inverted);
+  }
+  
+  // Always return hbox, even if elements is empty
+  if (elements.empty()) {
+    // This should not happen with proper cursor logic, but as fallback
+    return line.empty() ? text(" ") | inverted : text(line);
+  }
+  
+  return hbox(elements);
+}
+
+// Helper function to highlight search terms in a line
+ftxui::Element TUIApp::highlightSearchInLine(const std::string& line, const std::string& query) const {
+  if (query.empty() || line.empty()) {
+    return text(line);
+  }
+  
+  Elements elements;
+  std::string line_lower = line;
+  std::string query_lower = query;
+  std::transform(line_lower.begin(), line_lower.end(), line_lower.begin(), ::tolower);
+  std::transform(query_lower.begin(), query_lower.end(), query_lower.begin(), ::tolower);
+  
+  size_t pos = 0;
+  size_t found = 0;
+  
+  while ((found = line_lower.find(query_lower, pos)) != std::string::npos) {
+    // Add text before match
+    if (found > pos) {
+      std::string before = line.substr(pos, found - pos);
+      elements.push_back(text(before));
+    }
+    
+    // Add highlighted match
+    std::string match = line.substr(found, query.length());
+    elements.push_back(text(match) | bgcolor(Color::Yellow) | color(Color::Black));
+    
+    pos = found + query.length();
+  }
+  
+  // Add remaining text
+  if (pos < line.length()) {
+    std::string remaining = line.substr(pos);
+    elements.push_back(text(remaining));
+  }
+  
+  return elements.empty() ? text(line) : hbox(elements);
+}
+
 Element TUIApp::renderEditor() const {
   Elements editor_content;
   
-  // Split content into lines
-  std::vector<std::string> lines;
-  std::istringstream stream(state_.edit_content);
-  std::string line;
-  while (std::getline(stream, line)) {
-    lines.push_back(line);
-  }
+  // Get lines from editor buffer
+  std::vector<std::string> lines = state_.editor_buffer->toLines();
   
-  // If empty, add a blank line
+  // Ensure we have at least one line for cursor positioning
   if (lines.empty()) {
     lines.push_back("");
   }
   
   // Calculate visible range based on scroll offset
-  const int visible_lines = 20; // Approximate visible lines in editor area
+  const int visible_lines = calculateVisibleEditorLinesCount(); // Dynamic calculation based on terminal height
   int start_line = std::max(0, state_.edit_scroll_offset);
   int end_line = std::min(static_cast<int>(lines.size()), start_line + visible_lines);
   
-  // Render visible lines with cursor indicator
+  // Render visible lines with markdown highlighting and cursor indicator
   for (int i = start_line; i < end_line; ++i) {
     std::string display_line = lines[static_cast<size_t>(i)];
+    
+    // Apply markdown highlighting to the line
+    HighlightResult highlight = state_.markdown_highlighter->highlightLine(display_line, static_cast<size_t>(i));
     
     // Show cursor position as a caret
     if (i == state_.edit_cursor_line) {
       // Insert cursor at current column - use a simple caret
       size_t cursor_pos = std::min(static_cast<size_t>(state_.edit_cursor_col), display_line.length());
       
-      // Split line at cursor position for proper caret rendering
-      if (cursor_pos < display_line.length()) {
-        std::string before = display_line.substr(0, cursor_pos);
-        std::string after = display_line.substr(cursor_pos);
-        
-        // Create line with cursor highlighting just the character at cursor
-        auto line_elements = hbox({
-          text(before),
-          text(after.empty() ? " " : after.substr(0, 1)) | inverted,
-          after.length() > 1 ? text(after.substr(1)) : text("")
-        });
-        editor_content.push_back(line_elements);
-      } else {
-        // Cursor at end of line - show a space with inverted background
-        auto line_elements = hbox({
-          text(display_line),
-          text(" ") | inverted
-        });
-        editor_content.push_back(line_elements);
-      }
+      // Create a custom styled line with cursor embedded
+      editor_content.push_back(createStyledLineWithCursor(display_line, highlight, cursor_pos));
     } else {
-      editor_content.push_back(text(display_line));
+      // Regular line with markdown highlighting
+      editor_content.push_back(createStyledLine(display_line, highlight));
     }
   }
   
-  // Add scroll indicator if needed
-  if (start_line > 0 || end_line < static_cast<int>(lines.size())) {
-    editor_content.push_back(text(""));
-    editor_content.push_back(text("↕ Line " + std::to_string(state_.edit_cursor_line + 1) + 
-                                 "/" + std::to_string(lines.size())) | center | dim);
+  // Handle cursor beyond the visible content
+  if (state_.edit_cursor_line >= end_line && state_.edit_cursor_line >= static_cast<int>(lines.size())) {
+    // Cursor is past the last line - show an empty line with cursor
+    editor_content.push_back(text(" ") | inverted);
   }
   
-  // Return just the editor content - hints will be handled at the main layout level
-  return vbox(editor_content);
+  // Return just the main editor content - status will be handled by preview pane
+  return vbox(editor_content) | flex;
 }
 
 void TUIApp::handleEditModeInput(const ftxui::Event& event) {
-  // Split content into lines for easier manipulation
-  std::vector<std::string> lines;
-  std::istringstream stream(state_.edit_content);
-  std::string line;
-  while (std::getline(stream, line)) {
-    lines.push_back(line);
+  // Security-first: Validate all input using EditorInputValidator
+  
+  // Handle undo/redo operations
+  if (event.character() == "\x1a") { // Ctrl+Z (ASCII 26)
+    if (state_.command_history->canUndo()) {
+      auto undo_result = state_.command_history->undo(*state_.editor_buffer);
+      if (undo_result) {
+        state_.edit_has_changes = true;
+        setStatusMessage("Undo successful");
+      } else {
+        setStatusMessage("Undo failed: " + undo_result.error().message());
+      }
+    } else {
+      setStatusMessage("Nothing to undo");
+    }
+    return;
   }
   
-  // Ensure we have at least one line
-  if (lines.empty()) {
-    lines.push_back("");
+  if (event.character() == "\x19") { // Ctrl+Y (ASCII 25)
+    if (state_.command_history->canRedo()) {
+      auto redo_result = state_.command_history->redo(*state_.editor_buffer);
+      if (redo_result) {
+        state_.edit_has_changes = true;
+        setStatusMessage("Redo successful");
+      } else {
+        setStatusMessage("Redo failed: " + redo_result.error().message());
+      }
+    } else {
+      setStatusMessage("Nothing to redo");
+    }
+    return;
   }
   
-  // Clamp cursor position
-  state_.edit_cursor_line = std::clamp(state_.edit_cursor_line, 0, static_cast<int>(lines.size()) - 1);
-  
-  // Handle navigation
+  // Handle navigation first (no validation needed)
   if (event == ftxui::Event::ArrowUp && state_.edit_cursor_line > 0) {
     state_.edit_cursor_line--;
-    state_.edit_cursor_col = std::min(state_.edit_cursor_col, static_cast<int>(lines[state_.edit_cursor_line].length()));
+    
+    // Get current line and clamp column position
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      auto line_length = EditorBoundsChecker::safeStringLength(line_result.value());
+      state_.edit_cursor_col = std::min(state_.edit_cursor_col, static_cast<int>(line_length));
+    }
     
     // Scroll up if cursor moves above visible area
     if (state_.edit_cursor_line < state_.edit_scroll_offset) {
@@ -2684,31 +3228,42 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
   }
   
   if (event == ftxui::Event::ArrowDown) {
-    // Check if we're on the last line
-    bool is_last_line = (state_.edit_cursor_line >= static_cast<int>(lines.size()) - 1);
+    size_t total_lines = state_.editor_buffer->getLineCount();
+    bool is_last_line = (state_.edit_cursor_line >= static_cast<int>(total_lines) - 1);
     
-    if (is_last_line) {
-      // Simple approach: add newline to end of content and move cursor
-      state_.edit_content += "\n";
+    if (is_last_line && total_lines > 0) {
+      // Add new line at end by moving to end of last line and splitting
+      auto last_line_result = state_.editor_buffer->getLine(total_lines - 1);
+      if (last_line_result) {
+        size_t last_line_length = last_line_result.value().length();
+        auto command = CommandFactory::createSplitLine(
+            CursorPosition(total_lines - 1, last_line_length));
+        auto result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+        if (result) {
+          state_.edit_cursor_line++;
+          state_.edit_cursor_col = 0;
+          state_.edit_has_changes = true;
+        
+          // Scroll down to show new line
+          const int visible_lines = calculateVisibleEditorLinesCount();
+          if (state_.edit_cursor_line >= state_.edit_scroll_offset + visible_lines) {
+            state_.edit_scroll_offset = state_.edit_cursor_line - visible_lines + 1;
+          }
+        }
+      }
+    } else if (state_.edit_cursor_line + 1 < static_cast<int>(total_lines)) {
+      // Normal down movement
       state_.edit_cursor_line++;
-      state_.edit_cursor_col = 0;
-      state_.edit_has_changes = true;
       
-      // Scroll down to show new line
-      const int visible_lines = 20;
-      if (state_.edit_cursor_line >= state_.edit_scroll_offset + visible_lines) {
-        state_.edit_scroll_offset = state_.edit_cursor_line - visible_lines + 1;
+      // Clamp column position to new line length
+      auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+      if (line_result) {
+        auto line_length = EditorBoundsChecker::safeStringLength(line_result.value());
+        state_.edit_cursor_col = std::min(state_.edit_cursor_col, static_cast<int>(line_length));
       }
       
-      // Force screen refresh to show changes
-      screen_.Post([](){});
-    } else {
-      // Normal down movement to next line
-      state_.edit_cursor_line++;
-      state_.edit_cursor_col = std::min(state_.edit_cursor_col, static_cast<int>(lines[state_.edit_cursor_line].length()));
-      
       // Scroll down if cursor moves below visible area
-      const int visible_lines = 20;
+      const int visible_lines = calculateVisibleEditorLinesCount();
       if (state_.edit_cursor_line >= state_.edit_scroll_offset + visible_lines) {
         state_.edit_scroll_offset = state_.edit_cursor_line - visible_lines + 1;
       }
@@ -2722,105 +3277,147 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
   }
   
   if (event == ftxui::Event::ArrowRight) {
-    state_.edit_cursor_col = std::min(state_.edit_cursor_col + 1, static_cast<int>(lines[state_.edit_cursor_line].length()));
+    // Get current line length and clamp
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      auto line_length = EditorBoundsChecker::safeStringLength(line_result.value());
+      state_.edit_cursor_col = std::min(state_.edit_cursor_col + 1, static_cast<int>(line_length));
+    }
     return;
   }
   
-  // Handle text input
+  // Handle text input with security validation
   if (event.is_character() && event.character().size() == 1) {
     char c = event.character()[0];
-    if (c >= 32 && c <= 126) { // Printable ASCII
-      // Insert character at cursor position
-      lines[state_.edit_cursor_line].insert(state_.edit_cursor_col, 1, c);
-      state_.edit_cursor_col++;
-      state_.edit_has_changes = true;
-      
-      // Rebuild content string
-      rebuildEditContent(lines);
+    
+    // Validate character input
+    auto char_result = state_.input_validator->validateCharacter(c, state_.edit_cursor_col);
+    if (!char_result) {
+      setStatusMessage("Invalid character: " + char_result.error().message());
       return;
     }
-  }
-  
-  // Handle Enter (new line)
-  if (event == ftxui::Event::Return) {
-    // Check if we're on the last line and it's empty
-    bool is_last_line = (state_.edit_cursor_line >= static_cast<int>(lines.size()) - 1);
-    bool is_line_empty = (state_.edit_cursor_line < static_cast<int>(lines.size()) && 
-                         lines[state_.edit_cursor_line].empty());
     
-    if (is_last_line && is_line_empty) {
-      // Simple approach: just add newline and move cursor
-      state_.edit_content += "\n";
-      state_.edit_cursor_line++;
-      state_.edit_cursor_col = 0;
+    // Insert character using command pattern for undo/redo support
+    auto command = CommandFactory::createInsertChar(
+        CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col), c);
+    auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+    if (insert_result) {
+      state_.edit_cursor_col++;
       state_.edit_has_changes = true;
-      
-      // Ensure new line is visible - scroll down if needed
-      const int visible_lines = 20;
-      if (state_.edit_cursor_line >= state_.edit_scroll_offset + visible_lines) {
-        state_.edit_scroll_offset = state_.edit_cursor_line - visible_lines + 1;
-      }
-      
-      // Force screen refresh
-      screen_.Post([](){});
     } else {
-      // Normal behavior: split line at cursor position
-      std::string current_line = lines[state_.edit_cursor_line];
-      std::string left_part = current_line.substr(0, state_.edit_cursor_col);
-      std::string right_part = current_line.substr(state_.edit_cursor_col);
-      
-      // Update current line and insert new line
-      lines[state_.edit_cursor_line] = left_part;
-      lines.insert(lines.begin() + state_.edit_cursor_line + 1, right_part);
-      
-      // Move cursor to beginning of new line
-      state_.edit_cursor_line++;
-      state_.edit_cursor_col = 0;
-      state_.edit_has_changes = true;
-      
-      // Rebuild content string
-      rebuildEditContent(lines);
-      
-      // Ensure new line is visible - scroll down if needed
-      const int visible_lines = 20;
-      if (state_.edit_cursor_line >= state_.edit_scroll_offset + visible_lines) {
-        state_.edit_scroll_offset = state_.edit_cursor_line - visible_lines + 1;
-      }
-      
-      // Force screen refresh
-      screen_.Post([](){});
+      setStatusMessage("Insert failed: " + insert_result.error().message());
     }
-    
     return;
   }
   
-  // Handle Backspace
+  // Handle Enter (new line) with bounds checking
+  if (event == ftxui::Event::Return) {
+    auto command = CommandFactory::createSplitLine(
+        CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col));
+    auto split_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+    if (split_result) {
+      state_.edit_cursor_line++;
+      state_.edit_cursor_col = 0;
+      state_.edit_has_changes = true;
+      
+      // Ensure new line is visible
+      const int visible_lines = calculateVisibleEditorLinesCount();
+      if (state_.edit_cursor_line >= state_.edit_scroll_offset + visible_lines) {
+        state_.edit_scroll_offset = state_.edit_cursor_line - visible_lines + 1;
+      }
+    } else {
+      setStatusMessage("Line split failed: " + split_result.error().message());
+    }
+    return;
+  }
+  
+  // Handle Backspace with secure deletion
   if (event == ftxui::Event::Backspace) {
     if (state_.edit_cursor_col > 0) {
-      // Delete character before cursor
-      lines[state_.edit_cursor_line].erase(state_.edit_cursor_col - 1, 1);
-      state_.edit_cursor_col--;
+      // Delete character before cursor - need to get the character first
+      auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+      if (line_result && state_.edit_cursor_col - 1 < static_cast<int>(line_result.value().size())) {
+        char deleted_char = line_result.value()[state_.edit_cursor_col - 1];
+        auto command = CommandFactory::createDeleteChar(
+            CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col - 1), deleted_char);
+        auto delete_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+        if (delete_result) {
+          state_.edit_cursor_col--;
+          state_.edit_has_changes = true;
+        }
+      }
     } else if (state_.edit_cursor_line > 0) {
-      // Join with previous line
-      state_.edit_cursor_col = static_cast<int>(lines[state_.edit_cursor_line - 1].length());
-      lines[state_.edit_cursor_line - 1] += lines[state_.edit_cursor_line];
-      lines.erase(lines.begin() + state_.edit_cursor_line);
-      state_.edit_cursor_line--;
+      // Join with previous line using command pattern
+      auto command = CommandFactory::createJoinLines(
+          CursorPosition(state_.edit_cursor_line - 1, 0), "");
+      auto join_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+      if (join_result) {
+        // Get previous line length for cursor positioning
+        auto prev_line_result = state_.editor_buffer->getLine(state_.edit_cursor_line - 1);
+        if (prev_line_result) {
+          state_.edit_cursor_col = static_cast<int>(EditorBoundsChecker::safeStringLength(prev_line_result.value()));
+        }
+        state_.edit_cursor_line--;
+        state_.edit_has_changes = true;
+      }
     }
-    state_.edit_has_changes = true;
-    rebuildEditContent(lines);
+    return;
+  }
+  
+  // Handle clipboard operations (Ctrl+C, Ctrl+V, Ctrl+X)
+  if (event.character() == "\x03") { // Ctrl+C
+    // Copy current line to clipboard
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      auto copy_result = state_.clipboard->setContent(line_result.value());
+      if (copy_result) {
+        setStatusMessage("Line copied to clipboard");
+      } else {
+        setStatusMessage("Copy failed: " + copy_result.error().message());
+      }
+    }
+    return;
+  }
+  
+  if (event.character() == "\x16") { // Ctrl+V
+    // Paste from clipboard
+    auto paste_result = state_.clipboard->getContent();
+    if (paste_result) {
+      // Validate clipboard content before pasting
+      auto validation_result = state_.input_validator->validateString(paste_result.value(), 0);
+      if (validation_result) {
+        // Insert sanitized content at cursor position using commands
+        for (char c : validation_result.value()) {
+          if (c == '\n') {
+            auto command = CommandFactory::createSplitLine(
+                CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col));
+            auto result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+            if (result) {
+              state_.edit_cursor_line++;
+              state_.edit_cursor_col = 0;
+            }
+          } else {
+            auto command = CommandFactory::createInsertChar(
+                CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col), c);
+            auto result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+            if (result) {
+              state_.edit_cursor_col++;
+            }
+          }
+        }
+        state_.edit_has_changes = true;
+        setStatusMessage("Content pasted");
+      } else {
+        setStatusMessage("Paste validation failed: " + validation_result.error().message());
+      }
+    } else {
+      setStatusMessage("Clipboard empty or inaccessible");
+    }
     return;
   }
 }
 
-void TUIApp::rebuildEditContent(const std::vector<std::string>& lines) {
-  std::ostringstream oss;
-  for (size_t i = 0; i < lines.size(); ++i) {
-    if (i > 0) oss << "\n";
-    oss << lines[i];
-  }
-  state_.edit_content = oss.str();
-}
+// rebuildEditContent method removed - now using EditorBuffer directly
 
 void TUIApp::saveEditedNote() {
   try {
@@ -2838,9 +3435,10 @@ void TUIApp::saveEditedNote() {
       return;
     }
     
-    // Update content
+    // Update content from editor buffer
     auto note = *note_result;
-    note.setContent(state_.edit_content);
+    std::string content = state_.editor_buffer->toString();
+    note.setContent(content);
     
     // Save the note
     auto save_result = note_store_.store(note);
@@ -2857,7 +3455,7 @@ void TUIApp::saveEditedNote() {
     
     // Exit edit mode
     state_.edit_mode_active = false;
-    state_.edit_content.clear();
+    state_.editor_buffer->clear();
     state_.edit_has_changes = false;
     
     // Refresh data to reflect changes
@@ -3789,21 +4387,67 @@ int TUIApp::calculateVisibleTagsCount() const {
 }
 
 int TUIApp::calculateVisibleNavigationItemsCount() const {
-  // Show all navigation items unless we have a huge number
-  // This lets FTXUI's layout engine handle the space naturally
-  
-  int nav_count = static_cast<int>(state_.nav_items.size());
-  
-  // Only limit if we have more than 30 items (to prevent performance issues)
-  if (nav_count <= 30) {
-    return nav_count; // Show all items
-  }
-  
-  // For many items, calculate based on terminal height
+  // Calculate based on terminal height to enable proper scrolling
   int terminal_height = screen_.dimy();
-  int max_items = std::max(15, terminal_height - 8);
   
-  return std::min(nav_count, max_items);
+  // Account for UI elements in navigation panel:
+  // - Header (1 line)
+  // - Separator (1 line)
+  // - Section headers like "NOTEBOOKS", "ALL TAGS" (2-3 lines)
+  // - Scroll indicators (1-2 lines)
+  // - Panel borders (2 lines)
+  // Total: ~7-8 lines reserved
+  int reserved_lines = 12;  // Increased to be more conservative
+  int max_items = std::max(5, terminal_height - reserved_lines);
+  
+  // Cap at a reasonable maximum to force scrolling for testing
+  max_items = std::min(max_items, 10);
+  
+  return max_items;
+}
+
+int TUIApp::calculateVisibleNotesCount() const {
+  // Calculate based on terminal height to enable proper scrolling
+  int terminal_height = screen_.dimy();
+  
+  // Account for UI elements in notes panel:
+  // - Header (1 line)
+  // - Separator (1 line) 
+  // - Search box (1 line)
+  // - Separator (1 line)
+  // - Scroll indicators (1-2 lines)
+  // - Status line (1 line)
+  // - Bottom separator (1 line)
+  // - Panel borders (2 lines)
+  // - Additional spacing/padding (2 lines)
+  // Total: 11 lines reserved
+  int reserved_lines = 11;
+  int max_notes = std::max(4, terminal_height - reserved_lines);
+  
+  // Cap at a reasonable maximum to force scrolling for testing
+  max_notes = std::min(max_notes, 6);  // Reduced from 8 to 6
+  
+  return max_notes;
+}
+
+int TUIApp::calculateVisibleEditorLinesCount() const {
+  // Calculate based on terminal height to enable proper scrolling in editor
+  int terminal_height = screen_.dimy();
+  
+  // Account for UI elements in editor/preview panel:
+  // - Preview panel header (1 line)
+  // - Separator after header (1 line)
+  // - Separator before editor status (1 line)  
+  // - Editor status line (1 line)
+  // - Panel borders top+bottom (2 lines)
+  // - Main separator + status line (2 lines)
+  // Total: 9 lines reserved as per user specification
+  int reserved_lines = 9;
+  
+  int max_lines = std::max(5, terminal_height - reserved_lines);
+  
+  // Don't cap the editor lines like other panels since it needs more space
+  return max_lines;
 }
 
 } // namespace nx::tui

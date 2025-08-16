@@ -48,6 +48,18 @@ add_library(nx_core STATIC
     ../src/index/ripgrep_index.cpp
     ../src/template/template_manager.cpp
     ../src/tui/tui_app.cpp
+    ../src/tui/editor_security.cpp
+    ../src/tui/editor_buffer.cpp
+    ../src/tui/unicode_handler.cpp
+    ../src/tui/editor_commands.cpp
+    ../src/tui/enhanced_cursor.cpp
+    ../src/tui/editor_search.cpp
+    ../src/tui/editor_dialogs.cpp
+    ../src/tui/viewport_manager.cpp
+    ../src/tui/editor_preferences.cpp
+    ../src/tui/editor_autocomplete.cpp
+    ../src/tui/markdown_highlighter.cpp
+    ../src/tui/markdown_shortcuts.cpp
     ../src/sync/git_sync.cpp
     ../src/crypto/age_crypto.cpp
     ../src/cli/application.cpp
@@ -58,6 +70,7 @@ add_library(nx_core STATIC
 
 target_include_directories(nx_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${ICU_INCLUDE_DIRS}
 )
 
 target_link_libraries(nx_core PUBLIC
@@ -69,6 +82,7 @@ target_link_libraries(nx_core PUBLIC
     ${SQLITE3_LIBRARIES}
     CURL::libcurl
     ${FTXUI_LIBRARIES}
+    ${ICU_LIBRARIES}
 )
 
 # Platform-specific libraries

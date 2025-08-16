@@ -8,6 +8,7 @@ UICommand::UICommand(Application& app) : app_(app) {}
 Result<int> UICommand::execute(const GlobalOptions& options) {
   // Create and run TUI app
   nx::tui::TUIApp tui_app(app_.config(), app_.noteStore(), app_.notebookManager(), app_.searchIndex());
+  
   return tui_app.run();
 }
 

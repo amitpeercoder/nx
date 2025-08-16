@@ -83,10 +83,35 @@ ContextualResult<T> ErrorHandler::handleError(const ContextualError& error,
   for (const auto& strategy : all_strategies) {
     auto recovery_result = strategy(error);
     if (recovery_result.has_value()) {
-      // Recovery succeeded, but we can't reconstruct T from just a string
-      // This would need to be implemented per operation type
-      // For now, just return the error
-      break;
+      // Recovery succeeded - log the recovery and return an appropriate error
+      // indicating that recovery was attempted
+      if (error_logger_) {
+        ContextualError recovery_info(
+          ErrorCode::kRecoveryAttempted,
+          "Recovery attempted: " + recovery_result.value(),
+          ErrorSeverity::kInfo
+        );
+        error_logger_(recovery_info);
+      }
+      
+      // Create a new error indicating recovery was attempted
+      ContextualError recovery_error(
+        ErrorCode::kRecoveryAttempted,
+        "Recovery was attempted for error: " + error.message() + ". Recovery action: " + recovery_result.value(),
+        ErrorSeverity::kWarning
+      );
+      
+      // Copy context if it exists
+      if (error.context().has_value()) {
+        recovery_error = ContextualError(
+          ErrorCode::kRecoveryAttempted,
+          recovery_error.message(),
+          error.context().value(),
+          ErrorSeverity::kWarning
+        );
+      }
+      
+      return std::unexpected(recovery_error);
     }
   }
   

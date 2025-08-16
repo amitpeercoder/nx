@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.25)
 
-# Project definition
+# Include git versioning system
+include(cmake/GitVersion.cmake)
+
+# Get git version information
+get_git_version()
+
+# Project definition with git-based version
 project(nx
-    VERSION 0.1.0
+    VERSION ${GIT_VERSION_MAJOR}.${GIT_VERSION_MINOR}.${GIT_VERSION_PATCH}
     DESCRIPTION "High-performance CLI notes application"
     LANGUAGES CXX
 )
@@ -136,6 +142,22 @@ pkg_check_modules(SQLITE3 REQUIRED sqlite3>=3.38)
 # HTTP client for AI API calls
 find_package(CURL REQUIRED)
 
+# ICU for Unicode support (MVP3 requirement)
+if(APPLE)
+    # Use explicit paths for Homebrew ICU on macOS
+    set(ICU_INCLUDE_DIRS "/opt/homebrew/Cellar/icu4c@77/77.1/include")
+    set(ICU_LIBRARY_DIRS "/opt/homebrew/Cellar/icu4c@77/77.1/lib")
+    set(ICU_LIBRARIES 
+        "${ICU_LIBRARY_DIRS}/libicuuc.dylib"
+        "${ICU_LIBRARY_DIRS}/libicui18n.dylib" 
+        "${ICU_LIBRARY_DIRS}/libicuio.dylib"
+    )
+else()
+    # Use pkg-config for other platforms
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(ICU REQUIRED icu-uc icu-io icu-i18n)
+endif()
+
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -158,6 +180,9 @@ file(GLOB_RECURSE SOURCES
 # Main executable
 add_executable(nx ${SOURCES})
 
+# Configure version header
+configure_version_header(nx)
+
 # Link libraries
 target_link_libraries(nx PRIVATE
     CLI11::CLI11
@@ -168,6 +193,7 @@ target_link_libraries(nx PRIVATE
     ${SQLITE3_LIBRARIES}
     CURL::libcurl
     ${FTXUI_LIBRARIES}
+    ${ICU_LIBRARIES}
 )
 
 # Platform-specific libraries
@@ -189,6 +215,7 @@ target_include_directories(nx PRIVATE
     ${SQLITE3_INCLUDE_DIRS}
     ${GIT2_INCLUDE_DIRS}
     ${FTXUI_INCLUDE_DIRS}
+    ${ICU_INCLUDE_DIRS}
 )
 
 # Compiler definitions
@@ -211,14 +238,19 @@ install(TARGETS nx
 # Install man page (when created)
 # install(FILES docs/nx.1 DESTINATION share/man/man1)
 
-# CPack configuration
+# CPack configuration with semantic versioning
 include(InstallRequiredSystemLibraries)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
-set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${GIT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${GIT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${GIT_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION "${GIT_VERSION_FULL}")
 set(CPACK_PACKAGE_CONTACT "nx-dev@example.com")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
+
+# Include git metadata in package
+set(CPACK_PACKAGE_VENDOR "nx Project")
+set(CPACK_PACKAGE_FILE_NAME "nx-${GIT_VERSION_FULL}-${CMAKE_SYSTEM_NAME}")
 
 # Debian package
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsqlite3-0 (>= 3.38)")
