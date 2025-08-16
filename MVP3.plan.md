@@ -2,53 +2,75 @@
 
 ## Executive Summary
 
+**⚠️ SUPERSEDED**: This document has been superseded by the comprehensive implementation plan in `mvp3-implementation-plan.md` which addresses critical security and performance issues identified through codebase analysis.
+
 MVP3 focuses on enhancing the existing TUI (Terminal User Interface) editor in nx with practical editing capabilities while maintaining the Unix philosophy of using external editors for complex tasks. The goal is to provide users with convenient in-TUI editing for quick modifications without leaving the interface.
 
-**Key Goals:**
+**Key Goals (Enhanced):**
 - Enhance existing basic editor with professional editing features
-- Maintain <100ms response time for all operations
-- Ensure broad terminal compatibility (xterm, gnome-terminal, kitty, alacritty)
-- Support UTF-8 and multi-byte characters properly
-- Provide graceful fallbacks for limited terminals
-- Integrate with system clipboard when possible
+- **UPGRADED**: Maintain <50ms response time for all operations (was <100ms)
+- Ensure broad terminal compatibility using FTXUI's existing capabilities
+- Support UTF-8 and multi-byte characters using proven libraries (ICU)
+- **NEW**: Integrate properly with existing security patterns (`nx::util::Security`, `SensitiveString`)
+- **NEW**: Use existing error handling patterns (`std::expected<T, Error>`)
+- **NEW**: Maintain compatibility with current FTXUI component architecture
 
 ## Current State Analysis
 
-### Existing TUI Editor Features
+**⚠️ CRITICAL ANALYSIS**: Comprehensive codebase review revealed significant architectural and security issues requiring complete overhaul.
+
+### Existing TUI Editor Features (src/tui/tui_app.cpp:2657-2800+)
 The nx TUI already includes a basic editor with:
-- ✅ Basic text input and character insertion
+- ✅ Basic text input and character insertion (ASCII only)
 - ✅ Cursor movement with arrow keys  
 - ✅ Save functionality (Ctrl+S)
 - ✅ Cancel editing (Escape)
-- ✅ Line-based navigation
-- ✅ Simple backspace/delete
+- ✅ Line-based navigation with scroll management
+- ✅ Simple backspace/delete with line merging
 - ✅ Auto-edit mode when focusing preview pane
+- ✅ Line splitting on Enter with proper cursor positioning
 
-### Current Limitations
-- ❌ No word-level navigation
-- ❌ No text selection capabilities
-- ❌ No copy/paste operations
+### **CRITICAL** Issues Identified
+- ⚠️ **SECURITY**: No input validation, vulnerable to terminal injection
+- ⚠️ **PERFORMANCE**: O(n) content rebuilding on every edit (`rebuildEditContent()`)
+- ⚠️ **MEMORY**: No bounds checking, potential memory exhaustion
+- ⚠️ **ARCHITECTURE**: Violates existing patterns, doesn't use `std::expected<T, Error>`
+- ⚠️ **UNICODE**: ASCII-only support, broken for international text
+
+### Available Infrastructure
+- ✅ `nx::util::Security` class with input sanitization
+- ✅ `SensitiveString` RAII wrapper for secure memory handling
+- ✅ Existing error handling with `std::expected<T, Error>` pattern
+- ✅ Secure file operations and temporary file management
+
+### Current Limitations Requiring **IMMEDIATE** Attention
+- ❌ **CRITICAL**: No bounds checking on buffer operations
+- ❌ **CRITICAL**: Inefficient O(n) edit operations will fail on large files
+- ❌ **SECURITY**: Raw character input without validation
+- ❌ No word-level navigation or text selection
+- ❌ No clipboard integration with security considerations
 - ❌ No undo/redo functionality
-- ❌ Limited cursor movement options
-- ❌ No search within note
-- ❌ No auto-save capabilities
-- ❌ Poor handling of large files (>1000 lines)
 - ❌ No UTF-8/multi-byte character support
-- ❌ No system clipboard integration
-- ❌ Limited terminal compatibility
+- ❌ No auto-save with dirty bit tracking
+- ❌ No search within note functionality
 
 ## Implementation Strategy
 
-### Design Principles
+### **ENHANCED** Design Principles
 1. **Preserve Unix Philosophy**: External editors remain primary; TUI editor for quick edits
-2. **Performance First**: All operations must maintain <100ms response time
-3. **Backward Compatible**: Existing keybindings and workflows unchanged
-4. **Progressive Enhancement**: Add features incrementally without breaking existing functionality
-5. **Memory Efficient**: Limit undo history and avoid memory bloat
-6. **Terminal Agnostic**: Work across different terminal emulators and configurations
-7. **Graceful Degradation**: Provide fallbacks when advanced features aren't available
-8. **Safety First**: Auto-save and error recovery to prevent data loss
-9. **Accessibility**: Support screen readers and keyboard-only navigation
+2. **Security First**: All input validated, memory operations bounds-checked
+3. **Performance First**: All operations must maintain <50ms response time (upgraded)
+4. **Architecture Compliance**: Use existing `std::expected<T, Error>` and security patterns
+5. **Memory Safety**: RAII throughout, automatic pressure detection and mitigation
+6. **Unicode Ready**: Full international text support with ICU library
+7. **Backward Compatible**: Existing keybindings and workflows unchanged
+8. **Progressive Enhancement**: Add features incrementally without breaking existing functionality
+9. **FTXUI Integration**: Leverage existing component architecture properly
+10. **Terminal Agnostic**: Work across different terminal emulators via FTXUI
+11. **Graceful Degradation**: Provide fallbacks when advanced features aren't available
+12. **Zero Data Loss**: Multiple safety mechanisms to prevent data corruption
+13. **Accessibility**: Support screen readers and keyboard-only navigation
+14. **Production Ready**: Enterprise-grade security, performance, and reliability
 
 ### Technical Architecture
 

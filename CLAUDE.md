@@ -200,12 +200,21 @@ Shell completions for bash/zsh
 
 ## Performance Requirements
 
+### Core Operations
 - Note creation/update: P95 < 100ms on 10k notes
 - Search (FTS queries): P95 < 200ms
 - List operations: P95 < 100ms
 - Full reindex: < 45s on mid-range laptop
 - Import/export: < 1s per 100 notes
 - Memory usage: < 100MB for typical operations
+
+### **MVP3 TUI Editor Requirements** (Enhanced)
+- **All editor operations: <50ms** (upgraded from 100ms)
+- **Cursor movement: <10ms**
+- **Large file support: 1GB+ with virtual scrolling**
+- **Memory overhead: <20MB additional**
+- **Search in editor: <200ms for 1M+ characters**
+- **Unicode operations: Full ICU support**
 
 ## Security and Encryption
 
@@ -241,7 +250,15 @@ Shell completions for bash/zsh
   - **Garbage Collection**: `nx gc` with cleanup, optimize, vacuum, stats operations
   - **Health Diagnostics**: `nx doctor` with comprehensive system health checks
 
-### 🚧 MVP2 Phase 2 - Power Features (Next)
+### 🚧 MVP3 - Enhanced TUI Editor (Active Development)
+- **⚠️ CRITICAL OVERHAUL**: Complete editor rewrite addressing security and performance issues
+- **Security-First Architecture**: Input validation, bounds checking, memory safety
+- **Performance Optimization**: <50ms operations, gap buffer, virtual scrolling
+- **Unicode Support**: Full international text with ICU library integration
+- **Advanced Editing**: Selection, clipboard, undo/redo with command pattern
+- **Enterprise Features**: Regex search, large file support (1GB+), accessibility
+
+### 🔮 MVP2 Phase 2 - Power Features (After MVP3)
 - **Wiki-links**: `[[note-title]]` syntax with auto-completion and link resolution
 - **Advanced Search**: Boolean queries (AND/OR/NOT) with field-specific search
 - **Shell Integration**: Bash/zsh completions and better Unix tool integration
