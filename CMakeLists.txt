@@ -106,18 +106,37 @@ find_package(yaml-cpp CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
-# Try to find FTXUI via CONFIG first, then pkg-config
+# Try to find FTXUI via CONFIG first, then pkg-config, then manual search
 find_package(ftxui CONFIG QUIET)
 if(ftxui_FOUND)
     set(FTXUI_LIBRARIES ftxui::screen ftxui::dom ftxui::component)
 else()
-    pkg_check_modules(FTXUI REQUIRED ftxui)
-    # Link to full library paths
-    set(FTXUI_LIBRARIES 
-        ${CMAKE_PREFIX_PATH}/lib/libftxui-screen.dylib
-        ${CMAKE_PREFIX_PATH}/lib/libftxui-dom.dylib
-        ${CMAKE_PREFIX_PATH}/lib/libftxui-component.dylib
-    )
+    pkg_check_modules(FTXUI QUIET ftxui)
+    if(FTXUI_FOUND)
+        set(FTXUI_LIBRARIES ${FTXUI_LIBRARIES})
+    else()
+        # Manual search for FTXUI libraries (cross-platform)
+        find_library(FTXUI_SCREEN_LIB 
+            NAMES ftxui-screen libftxui-screen
+            PATHS ${CMAKE_PREFIX_PATH}/lib /usr/local/lib /opt/homebrew/lib
+        )
+        find_library(FTXUI_DOM_LIB 
+            NAMES ftxui-dom libftxui-dom  
+            PATHS ${CMAKE_PREFIX_PATH}/lib /usr/local/lib /opt/homebrew/lib
+        )
+        find_library(FTXUI_COMPONENT_LIB 
+            NAMES ftxui-component libftxui-component
+            PATHS ${CMAKE_PREFIX_PATH}/lib /usr/local/lib /opt/homebrew/lib
+        )
+        
+        if(FTXUI_SCREEN_LIB AND FTXUI_DOM_LIB AND FTXUI_COMPONENT_LIB)
+            set(FTXUI_LIBRARIES ${FTXUI_SCREEN_LIB} ${FTXUI_DOM_LIB} ${FTXUI_COMPONENT_LIB})
+        else()
+            message(FATAL_ERROR "FTXUI library not found. Please install FTXUI:\n"
+                                "  Ubuntu/Debian: Install from source or use vcpkg\n"
+                                "  macOS: brew install ftxui\n")
+        endif()
+    endif()
 endif()
 
 # Try to find libgit2 via pkg-config first, then CONFIG
@@ -142,21 +161,84 @@ pkg_check_modules(SQLITE3 REQUIRED sqlite3>=3.38)
 # HTTP client for AI API calls
 find_package(CURL REQUIRED)
 
-# ICU for Unicode support (MVP3 requirement)
-if(APPLE)
-    # Use explicit paths for Homebrew ICU on macOS
-    set(ICU_INCLUDE_DIRS "/opt/homebrew/Cellar/icu4c@77/77.1/include")
-    set(ICU_LIBRARY_DIRS "/opt/homebrew/Cellar/icu4c@77/77.1/lib")
-    set(ICU_LIBRARIES 
-        "${ICU_LIBRARY_DIRS}/libicuuc.dylib"
-        "${ICU_LIBRARY_DIRS}/libicui18n.dylib" 
-        "${ICU_LIBRARY_DIRS}/libicuio.dylib"
-    )
-else()
-    # Use pkg-config for other platforms
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(ICU REQUIRED icu-uc icu-io icu-i18n)
+# ICU for Unicode support (MVP3 requirement) - Cross-platform detection
+# Try multiple methods to find ICU in order of preference
+find_package(PkgConfig QUIET)
+
+# Method 1: Try pkg-config first (works on most systems including Homebrew)
+if(PkgConfig_FOUND)
+    pkg_check_modules(ICU QUIET icu-uc icu-io icu-i18n)
 endif()
+
+# Method 2: Try CMake's built-in FindICU
+if(NOT ICU_FOUND)
+    find_package(ICU QUIET COMPONENTS uc i18n io)
+endif()
+
+# Method 3: Manual search in common locations
+if(NOT ICU_FOUND)
+    # Search paths for different systems
+    set(ICU_SEARCH_PATHS
+        # Standard system paths
+        /usr/local
+        /usr
+        /opt/local
+        # macOS Homebrew paths (multiple versions)
+        /opt/homebrew
+        /usr/local/Cellar/icu4c*/*/
+        /opt/homebrew/Cellar/icu4c*/*/
+        # Linux package manager paths  
+        /usr/lib/x86_64-linux-gnu
+        /usr/lib/aarch64-linux-gnu
+    )
+    
+    find_path(ICU_INCLUDE_DIRS 
+        NAMES unicode/unistr.h
+        PATHS ${ICU_SEARCH_PATHS}
+        PATH_SUFFIXES include
+    )
+    
+    find_library(ICU_UC_LIBRARY
+        NAMES icuuc libicuuc
+        PATHS ${ICU_SEARCH_PATHS}
+        PATH_SUFFIXES lib lib64
+    )
+    
+    find_library(ICU_I18N_LIBRARY
+        NAMES icui18n libicui18n  
+        PATHS ${ICU_SEARCH_PATHS}
+        PATH_SUFFIXES lib lib64
+    )
+    
+    find_library(ICU_IO_LIBRARY
+        NAMES icuio libicuio
+        PATHS ${ICU_SEARCH_PATHS}
+        PATH_SUFFIXES lib lib64
+    )
+    
+    if(ICU_INCLUDE_DIRS AND ICU_UC_LIBRARY AND ICU_I18N_LIBRARY AND ICU_IO_LIBRARY)
+        set(ICU_LIBRARIES ${ICU_UC_LIBRARY} ${ICU_I18N_LIBRARY} ${ICU_IO_LIBRARY})
+        set(ICU_FOUND TRUE)
+    endif()
+endif()
+
+# Method 4: Last resort - look for any ICU installation  
+if(NOT ICU_FOUND)
+    find_library(ICU_LIBRARIES NAMES icuuc libicuuc REQUIRED)
+    find_path(ICU_INCLUDE_DIRS NAMES unicode/unistr.h REQUIRED)
+endif()
+
+# Verify ICU was found
+if(NOT ICU_FOUND AND NOT ICU_LIBRARIES)
+    message(FATAL_ERROR "ICU library not found. Please install ICU development packages:\n"
+                        "  Ubuntu/Debian: sudo apt-get install libicu-dev\n"  
+                        "  CentOS/RHEL: sudo yum install libicu-devel\n"
+                        "  macOS: brew install icu4c\n"
+                        "  Or set ICU_ROOT to your ICU installation directory")
+endif()
+
+message(STATUS "Found ICU libraries: ${ICU_LIBRARIES}")
+message(STATUS "ICU include directories: ${ICU_INCLUDE_DIRS}")
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)

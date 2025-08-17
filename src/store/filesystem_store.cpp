@@ -439,11 +439,47 @@ void FilesystemStore::setChangeCallback(ChangeCallback callback) {
 
 std::filesystem::path FilesystemStore::getNotePath(const nx::core::NoteId& id) const {
   // Use ULID + .md extension as filename
-  return config_.notes_dir / (id.toString() + ".md");
+  std::filesystem::path note_path = config_.notes_dir / (id.toString() + ".md");
+  
+  // Canonicalize and validate path to prevent directory traversal attacks
+  try {
+    std::filesystem::path canonical_notes_dir = std::filesystem::canonical(config_.notes_dir);
+    std::filesystem::path canonical_note_path = std::filesystem::weakly_canonical(note_path);
+    
+    // Ensure the canonical path is within the notes directory
+    auto relative_path = std::filesystem::relative(canonical_note_path, canonical_notes_dir);
+    if (relative_path.string().starts_with("..")) {
+      // Path traversal attempt - return a safe default path
+      return canonical_notes_dir / "invalid.md";
+    }
+    
+    return canonical_note_path;
+  } catch (const std::filesystem::filesystem_error&) {
+    // If canonicalization fails, return the original path (safer than throwing)
+    return note_path;
+  }
 }
 
 std::filesystem::path FilesystemStore::getTrashPath(const nx::core::NoteId& id) const {
-  return config_.trash_dir / (id.toString() + ".md");
+  std::filesystem::path trash_path = config_.trash_dir / (id.toString() + ".md");
+  
+  // Canonicalize and validate path to prevent directory traversal attacks
+  try {
+    std::filesystem::path canonical_trash_dir = std::filesystem::canonical(config_.trash_dir);
+    std::filesystem::path canonical_trash_path = std::filesystem::weakly_canonical(trash_path);
+    
+    // Ensure the canonical path is within the trash directory
+    auto relative_path = std::filesystem::relative(canonical_trash_path, canonical_trash_dir);
+    if (relative_path.string().starts_with("..")) {
+      // Path traversal attempt - return a safe default path
+      return canonical_trash_dir / "invalid.md";
+    }
+    
+    return canonical_trash_path;
+  } catch (const std::filesystem::filesystem_error&) {
+    // If canonicalization fails, return the original path (safer than throwing)
+    return trash_path;
+  }
 }
 
 Result<void> FilesystemStore::ensureDirectories() {

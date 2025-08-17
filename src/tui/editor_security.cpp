@@ -6,6 +6,7 @@
 #include <sstream>
 #include <unicode/utf8.h>
 #include <unicode/utypes.h>
+#include "nx/util/safe_process.hpp"
 
 namespace nx::tui {
 
@@ -286,71 +287,60 @@ size_t SecureClipboard::getContentSize() const {
 }
 
 bool SecureClipboard::setSystemClipboard(const std::string& content) {
-    // Try different system clipboard tools
+    // Try different system clipboard tools using secure process execution
     
     // macOS: pbcopy
-    if (system("which pbcopy > /dev/null 2>&1") == 0) {
-        std::string command = "echo '" + content + "' | pbcopy";
-        return system(command.c_str()) == 0;
+    if (nx::util::SafeProcess::commandExists("pbcopy")) {
+        // Use echo with proper escaping to pipe content to pbcopy
+        auto echo_result = nx::util::SafeProcess::execute("sh", {"-c", "echo " + nx::util::SafeProcess::escapeArgument(content) + " | pbcopy"});
+        if (echo_result.has_value() && echo_result->success()) {
+            return true;
+        }
     }
     
     // Linux X11: xclip
-    if (system("which xclip > /dev/null 2>&1") == 0) {
-        std::string command = "echo '" + content + "' | xclip -selection clipboard";
-        return system(command.c_str()) == 0;
+    if (nx::util::SafeProcess::commandExists("xclip")) {
+        auto echo_result = nx::util::SafeProcess::execute("sh", {"-c", "echo " + nx::util::SafeProcess::escapeArgument(content) + " | xclip -selection clipboard"});
+        if (echo_result.has_value() && echo_result->success()) {
+            return true;
+        }
     }
     
     // Linux Wayland: wl-clipboard
-    if (system("which wl-copy > /dev/null 2>&1") == 0) {
-        std::string command = "echo '" + content + "' | wl-copy";
-        return system(command.c_str()) == 0;
+    if (nx::util::SafeProcess::commandExists("wl-copy")) {
+        auto echo_result = nx::util::SafeProcess::execute("sh", {"-c", "echo " + nx::util::SafeProcess::escapeArgument(content) + " | wl-copy"});
+        if (echo_result.has_value() && echo_result->success()) {
+            return true;
+        }
     }
     
     return false;
 }
 
 std::optional<std::string> SecureClipboard::getSystemClipboard() const {
-    // Try different system clipboard tools
+    // Try different system clipboard tools using secure process execution
     
     // macOS: pbpaste
-    if (system("which pbpaste > /dev/null 2>&1") == 0) {
-        FILE* pipe = popen("pbpaste", "r");
-        if (pipe) {
-            std::string result;
-            char buffer[1024];
-            while (fgets(buffer, sizeof(buffer), pipe)) {
-                result += buffer;
-            }
-            pclose(pipe);
-            return result;
+    if (nx::util::SafeProcess::commandExists("pbpaste")) {
+        auto result = nx::util::SafeProcess::executeForOutput("pbpaste", {});
+        if (result.has_value()) {
+            return result.value();
         }
     }
     
     // Linux X11: xclip
-    if (system("which xclip > /dev/null 2>&1") == 0) {
-        FILE* pipe = popen("xclip -selection clipboard -o", "r");
-        if (pipe) {
-            std::string result;
-            char buffer[1024];
-            while (fgets(buffer, sizeof(buffer), pipe)) {
-                result += buffer;
-            }
-            pclose(pipe);
-            return result;
+    if (nx::util::SafeProcess::commandExists("xclip")) {
+        auto result = nx::util::SafeProcess::executeForOutput("xclip", {"-selection", "clipboard", "-o"});
+        if (result.has_value()) {
+            return result.value();
         }
     }
     
     // Linux Wayland: wl-clipboard
-    if (system("which wl-paste > /dev/null 2>&1") == 0) {
-        FILE* pipe = popen("wl-paste", "r");
-        if (pipe) {
-            std::string result;
-            char buffer[1024];
-            while (fgets(buffer, sizeof(buffer), pipe)) {
-                result += buffer;
-            }
-            pclose(pipe);
-            return result;
+    if (nx::util::SafeProcess::commandExists("wl-paste")) {
+        auto result = nx::util::SafeProcess::executeForOutput("wl-paste", {});
+        if (result.has_value()) {
+            return result.value();
         }
     }
     
@@ -358,11 +348,11 @@ std::optional<std::string> SecureClipboard::getSystemClipboard() const {
 }
 
 void SecureClipboard::detectSystemClipboard() {
-    // Check for available system clipboard tools
+    // Check for available system clipboard tools using secure process execution
     system_clipboard_available_ = 
-        system("which pbcopy > /dev/null 2>&1") == 0 ||      // macOS
-        system("which xclip > /dev/null 2>&1") == 0 ||       // Linux X11
-        system("which wl-copy > /dev/null 2>&1") == 0;       // Linux Wayland
+        nx::util::SafeProcess::commandExists("pbcopy") ||     // macOS
+        nx::util::SafeProcess::commandExists("xclip") ||      // Linux X11
+        nx::util::SafeProcess::commandExists("wl-copy");      // Linux Wayland
 }
 
 // EditorBoundsChecker Implementation

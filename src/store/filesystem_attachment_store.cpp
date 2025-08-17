@@ -461,7 +461,25 @@ Result<void> FilesystemAttachmentStore::validateFile(const std::filesystem::path
 
 std::filesystem::path FilesystemAttachmentStore::getAttachmentPath(const nx::core::NoteId& attachment_id) const {
   // Use attachment ULID as filename
-  return config_.attachments_dir / (attachment_id.toString());
+  std::filesystem::path attachment_path = config_.attachments_dir / (attachment_id.toString());
+  
+  // Canonicalize and validate path to prevent directory traversal attacks
+  try {
+    std::filesystem::path canonical_attachments_dir = std::filesystem::canonical(config_.attachments_dir);
+    std::filesystem::path canonical_attachment_path = std::filesystem::weakly_canonical(attachment_path);
+    
+    // Ensure the canonical path is within the attachments directory
+    auto relative_path = std::filesystem::relative(canonical_attachment_path, canonical_attachments_dir);
+    if (relative_path.string().starts_with("..")) {
+      // Path traversal attempt - return a safe default path
+      return canonical_attachments_dir / "invalid";
+    }
+    
+    return canonical_attachment_path;
+  } catch (const std::filesystem::filesystem_error&) {
+    // If canonicalization fails, return the original path (safer than throwing)
+    return attachment_path;
+  }
 }
 
 void FilesystemAttachmentStore::addToCache(const AttachmentInfo& info) const {
