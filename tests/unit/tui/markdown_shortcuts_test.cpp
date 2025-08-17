@@ -445,7 +445,7 @@ TEST_F(MarkdownShortcutsTest, MarkdownUnwrapCommandUndo) {
 // Edge Cases Tests
 
 TEST_F(MarkdownShortcutsTest, FormatAtEndOfLine) {
-    TextSelection selection(CursorPosition(0, 14), CursorPosition(0, 18)); // "line"
+    TextSelection selection(CursorPosition(0, 15), CursorPosition(0, 19)); // "line"
     
     auto command_result = shortcuts_->formatSelection(
         *buffer_, MarkdownFormat::Bold, selection, CursorPosition(0, 16));
@@ -467,7 +467,7 @@ TEST_F(MarkdownShortcutsTest, FormatEntireLine) {
     EXPECT_TRUE(line_result.has_value());
     std::string original_line = line_result.value();
     
-    TextSelection selection(CursorPosition(0, 0), CursorPosition(0, original_line.length() - 1)); // Exclude newline
+    TextSelection selection(CursorPosition(0, 0), CursorPosition(0, original_line.length())); // Full line
     
     auto command_result = shortcuts_->formatSelection(
         *buffer_, MarkdownFormat::Italic, selection, CursorPosition(0, 10));

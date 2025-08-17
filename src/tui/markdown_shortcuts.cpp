@@ -169,15 +169,18 @@ Result<std::unique_ptr<EditorCommand>> MarkdownShortcuts::createLink(
     }
     
     TextSelection working_selection = selection;
+    std::string link_text;
     
-    // If no selection, select current word
-    if (working_selection.isEmpty() && config_.extend_word_boundaries) {
-        working_selection = findWordAt(buffer, cursor_position);
-    }
-    
-    std::string link_text = working_selection.getText(buffer);
-    if (link_text.empty()) {
+    // For links, if selection is empty, use default placeholder
+    if (working_selection.isEmpty()) {
         link_text = "link text";
+        // Set working_selection to cursor position for insertion
+        working_selection = TextSelection(cursor_position, cursor_position);
+    } else {
+        link_text = working_selection.getText(buffer);
+        if (link_text.empty()) {
+            link_text = "link text";
+        }
     }
     
     std::string link_url = url;

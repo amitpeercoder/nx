@@ -15,7 +15,7 @@
 
 ## Introduction
 
-**nx** is a high-performance command-line Markdown notes application designed for developers, researchers, and knowledge workers who prefer working in the terminal. It combines the power of plain-text Markdown files with advanced features like AI integration, full-text search, and an intuitive Terminal User Interface (TUI).
+**nx** is a high-performance command-line Markdown notes application designed for developers, researchers, and knowledge workers who prefer working in the terminal. Version 1.0.0 represents a complete, production-ready system that combines the power of plain-text Markdown files with advanced features like AI integration, full-text search, and an intuitive Terminal User Interface (TUI).
 
 ### Key Features
 
@@ -30,26 +30,41 @@
 
 ## Installation
 
+### Quick Install (Recommended)
+
+Download the latest release and run the install script:
+
+```bash
+# Download release package (replace with your platform)
+wget https://github.com/amitpeercoder/nx/releases/latest/download/nx-release-v1.0.0-darwin-arm64.tar.gz
+
+# Extract and install
+tar -xzf nx-release-v1.0.0-darwin-arm64.tar.gz
+cd nx-release-v1.0.0-darwin-arm64
+sudo ./install.sh
+```
+
 ### Prerequisites
 
-- **Operating System**: Linux or macOS
-- **Dependencies**: Modern C++ compiler, CMake, vcpkg
+- **Operating System**: Linux or macOS (ARM64/x86_64)
+- **Runtime Dependencies**: libsqlite3, ripgrep (optional), age/rage (for encryption)
 
 ### Building from Source
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/amitpeercoder/nx.git
 cd nx
 
-# Configure build
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+# Configure release build
+cmake -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release
 
 # Build
-cmake --build build
+cmake --build build-release
 
-# Install (optional)
-cmake --install build
+# Install system-wide
+cd build-release
+sudo ./install.sh
 ```
 
 ### Verification

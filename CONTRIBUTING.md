@@ -117,7 +117,7 @@ nx/
 │   ├── integration/       # Integration tests
 │   └── benchmark/         # Performance tests
 ├── docs/                  # Documentation
-└── scripts/               # Development scripts
+└── dev/scripts/           # Development scripts
 ```
 
 ## 🐛 Bug Reports
