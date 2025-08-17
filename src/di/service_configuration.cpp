@@ -54,15 +54,15 @@ Result<void> ServiceConfiguration::configureConfig(
             auto config = std::make_shared<nx::config::Config>();
             
             if (config_path.has_value()) {
-                auto load_result = config->loadFromFile(*config_path);
+                auto load_result = config->load(*config_path);
                 if (!load_result.has_value()) {
                     // Log warning but don't fail - use defaults
                 }
             } else {
                 // Try to load default config file
-                auto default_config_path = nx::util::Xdg::configFile("nx.toml");
+                auto default_config_path = nx::util::Xdg::configFile();
                 if (std::filesystem::exists(default_config_path)) {
-                    auto load_result = config->loadFromFile(default_config_path);
+                    auto load_result = config->load(default_config_path);
                     if (!load_result.has_value()) {
                         // Log warning but don't fail - use defaults
                     }
@@ -117,10 +117,7 @@ Result<void> ServiceConfiguration::configureStorage(
         [container]() -> std::shared_ptr<nx::store::NotebookManager> {
             auto note_store = container->resolve<nx::store::NoteStore>();
             
-            nx::store::NotebookManager::Config notebook_config;
-            notebook_config.config_file = nx::util::Xdg::configFile("notebooks.toml");
-            
-            return std::make_shared<nx::store::NotebookManager>(note_store, notebook_config);
+            return std::make_shared<nx::store::NotebookManager>(*note_store);
         },
         ServiceLifetime::Singleton
     );
@@ -138,7 +135,7 @@ Result<void> ServiceConfiguration::configureIndexing(
             
             // Try SQLite index first
             try {
-                auto db_path = nx::util::Xdg::dataDir() / "search.db";
+                auto db_path = nx::util::Xdg::indexFile();
                 auto sqlite_index = std::make_shared<nx::index::SqliteIndex>(db_path);
                 
                 auto init_result = sqlite_index->initialize();
@@ -175,8 +172,8 @@ Result<void> ServiceConfiguration::configureTemplates(
             auto config = container->resolve<nx::config::Config>();
             
             nx::template_system::TemplateManager::Config template_config;
-            template_config.templates_dir = nx::util::Xdg::templatesDir();
-            template_config.auto_create_dirs = true;
+            template_config.templates_dir = nx::util::Xdg::configHome() / "templates";
+            template_config.metadata_file = nx::util::Xdg::configHome() / "templates" / "metadata.json";
             
             return std::make_shared<nx::template_system::TemplateManager>(template_config);
         },
