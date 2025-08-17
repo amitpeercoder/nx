@@ -63,7 +63,10 @@ add_library(nx_core STATIC
     ../src/sync/git_sync.cpp
     ../src/crypto/age_crypto.cpp
     ../src/cli/application.cpp
+    ../src/cli/application_factory.cpp
     ../src/cli/command_error_handler.cpp
+    ../src/di/service_container.cpp
+    ../src/di/service_configuration.cpp
     ${CLI_COMMAND_SOURCES}
     ${IMPORT_EXPORT_SOURCES}
 )

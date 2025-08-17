@@ -4,6 +4,7 @@
 #include "nx/store/filesystem_attachment_store.hpp"
 #include "nx/index/sqlite_index.hpp"
 #include "nx/index/ripgrep_index.hpp"
+#include "nx/template/template_manager.hpp"
 #include "nx/util/xdg.hpp"
 
 namespace nx::di {

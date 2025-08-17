@@ -7,6 +7,7 @@
 #include "nx/store/filesystem_attachment_store.hpp"
 #include "nx/index/index.hpp"
 #include "nx/util/xdg.hpp"
+#include "nx/di/service_configuration.hpp"
 
 // Command includes
 #include "nx/cli/commands/new_command.hpp"
@@ -64,7 +65,23 @@
 namespace nx::cli {
 
 Application::Application() 
-    : app_("nx", "High-performance CLI notes application") {
+    : app_("nx", "High-performance CLI notes application")
+    , services_initialized_(false) {
+  
+  // Set up the application
+  app_.set_version_flag("--version", nx::getVersion().toString());
+  app_.set_help_all_flag("--help-all", "Expand all help");
+  app_.require_subcommand(1);
+  
+  setupGlobalOptions();
+  setupCommands();
+  setupHelp();
+}
+
+Application::Application(std::shared_ptr<nx::di::IServiceContainer> container)
+    : app_("nx", "High-performance CLI notes application")
+    , service_container_(std::move(container))
+    , services_initialized_(true) {
   
   // Set up the application
   app_.set_version_flag("--version", nx::getVersion().toString());
@@ -91,7 +108,10 @@ int Application::run(int argc, char* argv[]) {
 }
 
 Result<void> Application::initialize() {
-  return initializeServices();
+  if (!services_initialized_) {
+    return initializeServices();
+  }
+  return {};
 }
 
 void Application::setupGlobalOptions() {
@@ -230,84 +250,34 @@ void Application::registerCommand(std::unique_ptr<Command> command) {
 }
 
 Result<void> Application::initializeServices() {
-  // Load configuration first
-  auto config_result = loadConfiguration();
-  if (!config_result.has_value()) {
-    return config_result;
+  if (services_initialized_) {
+    return {};
   }
   
-  // Override config with command line options
-  if (!global_options_.notes_dir.empty()) {
-    config_->notes_dir = global_options_.notes_dir;
-  }
-  
-  // Initialize note store
-  nx::store::FilesystemStore::Config store_config;
-  store_config.notes_dir = config_->notes_dir;
-  store_config.attachments_dir = config_->attachments_dir;
-  store_config.trash_dir = config_->trash_dir;
-  
-  note_store_ = std::make_unique<nx::store::FilesystemStore>(store_config);
-  
-  auto store_init = note_store_->validate();
-  if (!store_init.has_value()) {
-    return store_init;
-  }
-  
-  // Initialize notebook manager
-  notebook_manager_ = std::make_unique<nx::store::NotebookManager>(*note_store_);
-  
-  // Initialize attachment store  
-  nx::store::FilesystemAttachmentStore::Config attachment_config;
-  attachment_config.attachments_dir = store_config.attachments_dir;
-  attachment_config.metadata_file = config_->data_dir / "attachments.json";
-  attachment_store_ = std::make_unique<nx::store::FilesystemAttachmentStore>(attachment_config);
-  
-  // Initialize template manager
-  nx::template_system::TemplateManager::Config template_config;
-  template_config.templates_dir = config_->data_dir / "templates";
-  template_config.metadata_file = config_->data_dir / "templates.json";
-  template_manager_ = std::make_unique<nx::template_system::TemplateManager>(template_config);
-  
-  // Initialize search index
-  if (config_->indexer == nx::config::Config::IndexerType::kFts) {
-    search_index_ = nx::index::IndexFactory::createSqliteIndex(config_->index_file);
-  } else {
-    search_index_ = nx::index::IndexFactory::createRipgrepIndex(config_->notes_dir);
-  }
-  
-  auto index_init = search_index_->initialize();
-  if (!index_init.has_value()) {
-    // If SQLite FTS5 fails, fall back to ripgrep
-    if (config_->indexer == nx::config::Config::IndexerType::kFts) {
-      if (!global_options_.quiet) {
-        std::cerr << "Warning: SQLite FTS5 not available, falling back to ripgrep\n";
-      }
-      search_index_ = nx::index::IndexFactory::createRipgrepIndex(config_->notes_dir);
-      index_init = search_index_->initialize();
-      if (!index_init.has_value()) {
-        return index_init;
-      }
-    } else {
-      return index_init;
+  // Create service container if not provided
+  if (!service_container_) {
+    std::optional<std::filesystem::path> config_path;
+    if (!global_options_.config_file.empty()) {
+      config_path = global_options_.config_file;
     }
+    
+    auto container_result = nx::di::ServiceContainerFactory::createProductionContainer(config_path);
+    if (!container_result.has_value()) {
+      return std::unexpected(container_result.error());
+    }
+    service_container_ = *container_result;
   }
   
+  // Override config with command line options if needed
+  if (!global_options_.notes_dir.empty()) {
+    auto config = service_container_->resolve<nx::config::Config>();
+    config->notes_dir = global_options_.notes_dir;
+  }
+  
+  services_initialized_ = true;
   return {};
 }
 
-Result<void> Application::loadConfiguration() {
-  if (!global_options_.config_file.empty()) {
-    // Load from specified config file
-    config_ = std::make_unique<nx::config::Config>(global_options_.config_file);
-  } else {
-    // Load from default location
-    config_ = std::make_unique<nx::config::Config>();
-  }
-  
-  // Validate configuration
-  return config_->validate();
-}
 
 // Getters for services (to be used by commands)
 const GlobalOptions& Application::globalOptions() const {
@@ -315,27 +285,49 @@ const GlobalOptions& Application::globalOptions() const {
 }
 
 nx::config::Config& Application::config() {
-  return *config_;
+  if (!services_initialized_) {
+    throw std::runtime_error("Services not initialized");
+  }
+  return *service_container_->resolve<nx::config::Config>();
 }
 
 nx::store::NoteStore& Application::noteStore() {
-  return *note_store_;
+  if (!services_initialized_) {
+    throw std::runtime_error("Services not initialized");
+  }
+  return *service_container_->resolve<nx::store::NoteStore>();
 }
 
 nx::store::NotebookManager& Application::notebookManager() {
-  return *notebook_manager_;
+  if (!services_initialized_) {
+    throw std::runtime_error("Services not initialized");
+  }
+  return *service_container_->resolve<nx::store::NotebookManager>();
 }
 
 nx::store::AttachmentStore& Application::attachmentStore() {
-  return *attachment_store_;
+  if (!services_initialized_) {
+    throw std::runtime_error("Services not initialized");
+  }
+  return *service_container_->resolve<nx::store::AttachmentStore>();
 }
 
 nx::index::Index& Application::searchIndex() {
-  return *search_index_;
+  if (!services_initialized_) {
+    throw std::runtime_error("Services not initialized");
+  }
+  return *service_container_->resolve<nx::index::Index>();
 }
 
 nx::template_system::TemplateManager& Application::templateManager() {
-  return *template_manager_;
+  if (!services_initialized_) {
+    throw std::runtime_error("Services not initialized");
+  }
+  return *service_container_->resolve<nx::template_system::TemplateManager>();
+}
+
+std::shared_ptr<nx::di::IServiceContainer> Application::serviceContainer() const {
+  return service_container_;
 }
 
 } // namespace nx::cli

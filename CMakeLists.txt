@@ -270,6 +270,8 @@ file(GLOB_RECURSE SOURCES
     "src/import_export/*.cpp"
     "src/util/*.cpp"
     "src/config/*.cpp"
+    "src/di/*.cpp"
+    "src/template/*.cpp"
 )
 
 # Main executable
