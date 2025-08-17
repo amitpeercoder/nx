@@ -183,11 +183,16 @@ if(NOT ICU_FOUND)
         /usr/local
         /usr
         /opt/local
-        # macOS Homebrew paths (multiple versions)
-        /opt/homebrew
-        /usr/local/Cellar/icu4c*/*/
-        /opt/homebrew/Cellar/icu4c*/*/
-        # Linux package manager paths  
+    )
+    
+    # Add dynamic homebrew paths
+    file(GLOB HOMEBREW_ICU_PATHS 
+         "/opt/homebrew/Cellar/icu4c*/*" 
+         "/usr/local/Cellar/icu4c*/*")
+    list(APPEND ICU_SEARCH_PATHS ${HOMEBREW_ICU_PATHS})
+    
+    # Add common Linux paths
+    list(APPEND ICU_SEARCH_PATHS
         /usr/lib/x86_64-linux-gnu
         /usr/lib/aarch64-linux-gnu
     )
@@ -224,12 +229,20 @@ endif()
 
 # Method 4: Last resort - look for any ICU installation  
 if(NOT ICU_FOUND)
-    find_library(ICU_LIBRARIES NAMES icuuc libicuuc REQUIRED)
-    find_path(ICU_INCLUDE_DIRS NAMES unicode/unistr.h REQUIRED)
+    find_library(ICU_UC_LIBRARY_FALLBACK NAMES icuuc libicuuc)
+    find_library(ICU_I18N_LIBRARY_FALLBACK NAMES icui18n libicui18n)
+    find_library(ICU_IO_LIBRARY_FALLBACK NAMES icuio libicuio)
+    find_path(ICU_INCLUDE_DIRS_FALLBACK NAMES unicode/unistr.h)
+    
+    if(ICU_UC_LIBRARY_FALLBACK AND ICU_I18N_LIBRARY_FALLBACK AND ICU_IO_LIBRARY_FALLBACK AND ICU_INCLUDE_DIRS_FALLBACK)
+        set(ICU_LIBRARIES ${ICU_UC_LIBRARY_FALLBACK} ${ICU_I18N_LIBRARY_FALLBACK} ${ICU_IO_LIBRARY_FALLBACK})
+        set(ICU_INCLUDE_DIRS ${ICU_INCLUDE_DIRS_FALLBACK})
+        set(ICU_FOUND TRUE)
+    endif()
 endif()
 
 # Verify ICU was found
-if(NOT ICU_FOUND AND NOT ICU_LIBRARIES)
+if(NOT ICU_FOUND)
     message(FATAL_ERROR "ICU library not found. Please install ICU development packages:\n"
                         "  Ubuntu/Debian: sudo apt-get install libicu-dev\n"  
                         "  CentOS/RHEL: sudo yum install libicu-devel\n"

@@ -77,7 +77,7 @@ void Metadata::removeTag(const std::string& tag) {
   }
 }
 
-bool Metadata::hasTag(const std::string& tag) const {
+bool Metadata::hasTag(const std::string& tag) const noexcept {
   return std::find(tags_.begin(), tags_.end(), tag) != tags_.end();
 }
 
@@ -97,7 +97,7 @@ void Metadata::removeLink(const NoteId& link) {
   }
 }
 
-bool Metadata::hasLink(const NoteId& link) const {
+bool Metadata::hasLink(const NoteId& link) const noexcept {
   return std::find(links_.begin(), links_.end(), link) != links_.end();
 }
 
@@ -106,7 +106,7 @@ void Metadata::setCustomField(const std::string& key, const std::string& value) 
   touch();
 }
 
-std::optional<std::string> Metadata::getCustomField(const std::string& key) const {
+std::optional<std::string> Metadata::getCustomField(const std::string& key) const noexcept {
   auto it = custom_fields_.find(key);
   return it != custom_fields_.end() ? std::make_optional(it->second) : std::nullopt;
 }

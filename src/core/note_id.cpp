@@ -110,35 +110,35 @@ std::chrono::system_clock::time_point NoteId::timestamp() const {
   };
 }
 
-bool NoteId::operator==(const NoteId& other) const {
+bool NoteId::operator==(const NoteId& other) const noexcept {
   return id_ == other.id_;
 }
 
-bool NoteId::operator!=(const NoteId& other) const {
+bool NoteId::operator!=(const NoteId& other) const noexcept {
   return !(*this == other);
 }
 
-bool NoteId::operator<(const NoteId& other) const {
+bool NoteId::operator<(const NoteId& other) const noexcept {
   return id_ < other.id_;
 }
 
-bool NoteId::operator<=(const NoteId& other) const {
+bool NoteId::operator<=(const NoteId& other) const noexcept {
   return id_ <= other.id_;
 }
 
-bool NoteId::operator>(const NoteId& other) const {
+bool NoteId::operator>(const NoteId& other) const noexcept {
   return id_ > other.id_;
 }
 
-bool NoteId::operator>=(const NoteId& other) const {
+bool NoteId::operator>=(const NoteId& other) const noexcept {
   return id_ >= other.id_;
 }
 
-bool NoteId::isValid() const {
+bool NoteId::isValid() const noexcept {
   return !id_.empty() && isValidFormat(id_);
 }
 
-std::size_t NoteId::Hash::operator()(const NoteId& id) const {
+std::size_t NoteId::Hash::operator()(const NoteId& id) const noexcept {
   return std::hash<std::string>{}(id.id_);
 }
 

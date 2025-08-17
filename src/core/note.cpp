@@ -170,7 +170,7 @@ void Note::updateLinksFromContent() {
   metadata_.setLinks(content_links);
 }
 
-bool Note::containsText(std::string_view text, bool case_sensitive) const {
+bool Note::containsText(std::string_view text, bool case_sensitive) const noexcept {
   if (case_sensitive) {
     return content_.find(text) != std::string::npos ||
            metadata_.title().find(text) != std::string::npos;
@@ -208,7 +208,7 @@ std::vector<size_t> Note::findTextPositions(std::string_view text, bool case_sen
   return positions;
 }
 
-std::string Note::generateSlug(const std::string& title) {
+std::string Note::generateSlug(const std::string& title) noexcept {
   std::string slug = title;
   
   // Convert to lowercase
