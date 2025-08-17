@@ -126,7 +126,41 @@ std::vector<HighlightResult> MarkdownHighlighter::highlightLines(const std::vect
             in_code_block = !in_code_block;
         }
         
-        results.push_back(highlightLine(line, start_line_number + i, in_code_block));
+        // Get the basic highlighting for this line
+        HighlightResult line_result = highlightLine(line, start_line_number + i, in_code_block);
+        
+        // Check for setext headers if not in code block and we have a next line
+        if (!in_code_block && config_.highlight_headers && i + 1 < lines.size()) {
+            const std::string& next_line = lines[i + 1];
+            
+            // Check if next line is setext header underline
+            if (isSetextHeaderUnderline(next_line)) {
+                // Check if current line can be a setext header (non-empty, no ATX header markers)
+                if (!line.empty() && (line.length() == 0 || line[0] != '#') && line.find_first_not_of(" \t") != std::string::npos) {
+                    // Apply header styling to the entire current line
+                    line_result.addSegment(0, line.length(), config_.header_style, "setext_header");
+                }
+            }
+        }
+        
+        results.push_back(std::move(line_result));
+    }
+    
+    // Second pass: style setext header underlines
+    for (size_t i = 1; i < results.size(); ++i) {
+        if (i < lines.size()) {
+            const std::string& line = lines[i];
+            const std::string& prev_line = lines[i - 1];
+            
+            // If this line is a setext underline and previous line was highlighted as setext header
+            if (!in_code_block && isSetextHeaderUnderline(line) && 
+                !prev_line.empty() && (prev_line.length() == 0 || prev_line[0] != '#') && 
+                prev_line.find_first_not_of(" \t") != std::string::npos) {
+                
+                // Style the underline with a dimmed syntax style
+                results[i].addSegment(0, line.length(), config_.syntax_char_style, "setext_underline");
+            }
+        }
     }
     
     return results;
@@ -152,7 +186,7 @@ void MarkdownHighlighter::highlightHeaders(const std::string& text, HighlightRes
     }
     
     // Setext headers: Header\n===== or Header\n-----
-    // Note: This would need multi-line context, for now we'll skip setext headers
+    // Note: Setext headers are handled in highlightLines() method with multi-line context
 }
 
 void MarkdownHighlighter::highlightEmphasis(const std::string& text, HighlightResult& result) const {
@@ -578,6 +612,48 @@ MarkdownHighlightConfig HighlightThemes::getMonochromeTheme() {
     config.horizontal_rule_style = {ftxui::Color::Default, ftxui::Color::Default, false, false, false, true};
     config.syntax_char_style = {ftxui::Color::Default, ftxui::Color::Default, false, false, false, true};
     return config;
+}
+
+bool MarkdownHighlighter::isSetextHeaderUnderline(const std::string& text) const {
+    if (text.empty()) {
+        return false;
+    }
+    
+    // Remove leading and trailing whitespace
+    std::string trimmed = text;
+    size_t start = trimmed.find_first_not_of(" \t");
+    if (start == std::string::npos) {
+        return false;
+    }
+    
+    size_t end = trimmed.find_last_not_of(" \t");
+    trimmed = trimmed.substr(start, end - start + 1);
+    
+    if (trimmed.empty()) {
+        return false;
+    }
+    
+    // Check for setext header level 1: ===== (at least 1 equals sign)
+    if (trimmed[0] == '=') {
+        for (char c : trimmed) {
+            if (c != '=') {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // Check for setext header level 2: ----- (at least 1 dash)
+    if (trimmed[0] == '-') {
+        for (char c : trimmed) {
+            if (c != '-') {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    return false;
 }
 
 } // namespace nx::tui

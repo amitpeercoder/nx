@@ -1,7 +1,9 @@
 #include "nx/di/service_configuration.hpp"
 
+#include <filesystem>
 #include "nx/store/filesystem_store.hpp"
 #include "nx/store/filesystem_attachment_store.hpp"
+#include "nx/store/notebook_manager.hpp"
 #include "nx/index/sqlite_index.hpp"
 #include "nx/index/ripgrep_index.hpp"
 #include "nx/template/template_manager.hpp"
@@ -40,10 +42,91 @@ Result<void> ServiceConfiguration::configureServices(
 Result<void> ServiceConfiguration::configureTestServices(
     std::shared_ptr<IServiceContainer> container) {
     
-    // For testing, we would register mock implementations
-    // This is a placeholder for future test infrastructure
+    // Configure test-specific services with mock implementations
     
-    return configureServices(container);
+    // Mock Config service
+    container->registerInstance<nx::config::Config>(
+        std::make_shared<nx::config::Config>()
+    );
+    
+    // Mock NoteStore with in-memory implementation
+    container->registerFactory<nx::store::NoteStore>(
+        []() -> std::shared_ptr<nx::store::NoteStore> {
+            // Create a filesystem store with a temporary directory for testing
+            auto temp_dir = std::filesystem::temp_directory_path() / "nx_test" / "notes";
+            std::filesystem::create_directories(temp_dir);
+            
+            nx::store::FilesystemStore::Config store_config;
+            store_config.notes_dir = temp_dir;
+            store_config.attachments_dir = temp_dir / "attachments";
+            store_config.trash_dir = temp_dir / "trash";
+            store_config.auto_create_dirs = true;
+            store_config.validate_paths = true;
+            
+            return std::make_shared<nx::store::FilesystemStore>(store_config);
+        },
+        ServiceLifetime::Singleton
+    );
+    
+    // Mock AttachmentStore with in-memory implementation
+    container->registerFactory<nx::store::AttachmentStore>(
+        []() -> std::shared_ptr<nx::store::AttachmentStore> {
+            auto temp_dir = std::filesystem::temp_directory_path() / "nx_test" / "attachments";
+            std::filesystem::create_directories(temp_dir);
+            
+            nx::store::FilesystemAttachmentStore::Config store_config;
+            store_config.attachments_dir = temp_dir;
+            store_config.metadata_file = temp_dir / "metadata.json";
+            store_config.auto_create_dirs = true;
+            
+            return std::make_shared<nx::store::FilesystemAttachmentStore>(store_config);
+        },
+        ServiceLifetime::Singleton
+    );
+    
+    // Mock NotebookManager
+    container->registerFactory<nx::store::NotebookManager>(
+        [container]() -> std::shared_ptr<nx::store::NotebookManager> {
+            auto note_store = container->resolve<nx::store::NoteStore>();
+            return std::make_shared<nx::store::NotebookManager>(*note_store);
+        },
+        ServiceLifetime::Singleton
+    );
+    
+    // Mock Index with in-memory implementation
+    container->registerFactory<nx::index::Index>(
+        []() -> std::shared_ptr<nx::index::Index> {
+            // Use a temporary SQLite database for testing
+            auto temp_db = std::filesystem::temp_directory_path() / "nx_test" / "index.db";
+            std::filesystem::create_directories(temp_db.parent_path());
+            
+            auto sqlite_index = std::make_shared<nx::index::SqliteIndex>(temp_db);
+            auto init_result = sqlite_index->initialize();
+            if (!init_result.has_value()) {
+                throw ServiceResolutionException("Failed to initialize test SQLite index");
+            }
+            
+            return sqlite_index;
+        },
+        ServiceLifetime::Singleton
+    );
+    
+    // Mock TemplateManager
+    container->registerFactory<nx::template_system::TemplateManager>(
+        []() -> std::shared_ptr<nx::template_system::TemplateManager> {
+            auto temp_dir = std::filesystem::temp_directory_path() / "nx_test" / "templates";
+            std::filesystem::create_directories(temp_dir);
+            
+            nx::template_system::TemplateManager::Config template_config;
+            template_config.templates_dir = temp_dir;
+            template_config.metadata_file = temp_dir / "metadata.json";
+            
+            return std::make_shared<nx::template_system::TemplateManager>(template_config);
+        },
+        ServiceLifetime::Singleton
+    );
+    
+    return {};
 }
 
 Result<void> ServiceConfiguration::configureConfig(

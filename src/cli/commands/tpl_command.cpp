@@ -4,7 +4,12 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
 #include <nlohmann/json.hpp>
+#include "nx/util/safe_process.hpp"
+#include "nx/util/filesystem.hpp"
 
 namespace nx::cli {
 
@@ -281,8 +286,8 @@ Result<int> TplCommand::executeEdit() {
   auto& template_mgr = app_.templateManager();
   
   // Check if template exists
-  auto existing = template_mgr.getTemplate(template_name_);
-  if (!existing.has_value()) {
+  auto existing_content = template_mgr.getTemplate(template_name_);
+  if (!existing_content.has_value()) {
     if (app_.globalOptions().json) {
       std::cout << R"({"error": "Template not found: )" << template_name_ << R"("}))" << std::endl;
     } else {
@@ -291,20 +296,131 @@ Result<int> TplCommand::executeEdit() {
     return 1;
   }
 
-  // For now, just show instructions since we can't launch an editor in this context
-  if (app_.globalOptions().json) {
-    nlohmann::json output;
-    output["template"] = template_name_;
-    output["action"] = "edit_info";
-    output["message"] = "Use 'nx tpl show " + template_name_ + "' to view current content, then 'nx tpl create " + template_name_ + " --force --from-file <file>' to update";
-    std::cout << output.dump(2) << std::endl;
-  } else {
-    std::cout << "To edit template '" << template_name_ << "':" << std::endl;
-    std::cout << "1. View current content: nx tpl show " << template_name_ << std::endl;
-    std::cout << "2. Save your changes to a file" << std::endl;
-    std::cout << "3. Update template: nx tpl create " << template_name_ << " --force --from-file <your-file>" << std::endl;
+  // Get editor from config or environment
+  std::string editor = app_.config().editor;
+  
+  if (editor.empty()) {
+    const char* visual_env = std::getenv("VISUAL");
+    const char* editor_env = std::getenv("EDITOR");
+    
+    if (visual_env && strlen(visual_env) > 0) {
+      editor = visual_env;
+    } else if (editor_env && strlen(editor_env) > 0) {
+      editor = editor_env;
+    } else {
+      // Fallback editors in order of preference
+      const std::vector<std::string> fallback_editors = {"nano", "micro", "nvim", "vim", "vi"};
+      for (const auto& candidate : fallback_editors) {
+        if (nx::util::SafeProcess::commandExists(candidate)) {
+          editor = candidate;
+          break;
+        }
+      }
+      
+      // Final fallback
+      if (editor.empty()) {
+        editor = "vi";
+      }
+    }
   }
 
+  // Create temporary file with template content
+  auto temp_result = nx::util::SecureTempFile::create();
+  if (!temp_result.has_value()) {
+    if (app_.globalOptions().json) {
+      std::cout << R"({"error": "Failed to create temporary file: )" << temp_result.error().message() << R"("}))" << std::endl;
+    } else {
+      std::cout << "Error: Failed to create temporary file: " << temp_result.error().message() << std::endl;
+    }
+    return 1;
+  }
+  
+  auto temp_file = std::move(*temp_result);
+  
+  // Write current template content to temporary file
+  auto write_result = temp_file.write(*existing_content);
+  if (!write_result.has_value()) {
+    if (app_.globalOptions().json) {
+      std::cout << R"({"error": "Failed to write template to temporary file: )" << write_result.error().message() << R"("}))" << std::endl;
+    } else {
+      std::cout << "Error: Failed to write template to temporary file: " << write_result.error().message() << std::endl;
+    }
+    return 1;
+  }
+  
+  // Save current terminal state
+  auto save_result = nx::util::TerminalControl::saveSettings();
+  if (!save_result.has_value() && !app_.globalOptions().quiet) {
+    std::cerr << "Warning: Failed to save terminal settings: " << save_result.error().message() << std::endl;
+  }
+  
+  // Launch editor safely
+  auto process_result = nx::util::SafeProcess::execute(editor, {temp_file.path().string()});
+  
+  // Restore terminal state
+  auto restore_result = nx::util::TerminalControl::restoreSaneState();
+  if (!restore_result.has_value() && !app_.globalOptions().quiet) {
+    std::cerr << "Warning: Failed to restore terminal state: " << restore_result.error().message() << std::endl;
+  }
+  
+  if (!process_result.has_value()) {
+    if (app_.globalOptions().json) {
+      std::cout << R"({"error": "Failed to launch editor: )" << process_result.error().message() << R"(", "editor": ")" << editor << R"("}))" << std::endl;
+    } else {
+      std::cout << "Error: Failed to launch editor: " << process_result.error().message() << std::endl;
+    }
+    return 1;
+  }
+  
+  if (process_result->exit_code != 0) {
+    if (app_.globalOptions().json) {
+      std::cout << R"({"error": "Editor exited with non-zero status", "editor": ")" << editor << R"(", "exit_code": )" << process_result->exit_code << "}" << std::endl;
+    } else {
+      std::cout << "Warning: Editor exited with status " << process_result->exit_code << std::endl;
+      std::cout << "Template not updated." << std::endl;
+    }
+    return process_result->exit_code;
+  }
+  
+  // Read updated content from temporary file
+  auto updated_content_result = temp_file.read();
+  if (!updated_content_result.has_value()) {
+    if (app_.globalOptions().json) {
+      std::cout << R"({"error": "Failed to read updated template content: )" << updated_content_result.error().message() << R"("}))" << std::endl;
+    } else {
+      std::cout << "Error: Failed to read updated template content: " << updated_content_result.error().message() << std::endl;
+    }
+    return 1;
+  }
+  
+  // Check if content was actually changed
+  if (*updated_content_result == *existing_content) {
+    if (app_.globalOptions().json) {
+      std::cout << R"({"message": "Template content unchanged", "template": ")" << template_name_ << R"("}))" << std::endl;
+    } else {
+      std::cout << "Template content unchanged." << std::endl;
+    }
+    return 0;
+  }
+  
+  // Update the template with new content
+  auto update_result = template_mgr.updateTemplate(template_name_, *updated_content_result);
+  if (!update_result.has_value()) {
+    if (app_.globalOptions().json) {
+      std::cout << R"({"error": "Failed to update template: )" << update_result.error().message() << R"("}))" << std::endl;
+    } else {
+      std::cout << "Error: Failed to update template: " << update_result.error().message() << std::endl;
+    }
+    return 1;
+  }
+  
+  // Output success
+  if (app_.globalOptions().json) {
+    std::cout << R"({"success": true, "template": ")" << template_name_ << R"(", "editor": ")" << editor << R"("}))" << std::endl;
+  } else if (!app_.globalOptions().quiet) {
+    std::cout << "Template '" << template_name_ << "' updated successfully." << std::endl;
+  }
+  
   return 0;
 }
 

@@ -320,9 +320,61 @@ jobs:
     steps:
     - name: Update Homebrew Formula
       run: |
-        # This would update a Homebrew tap repository
-        # Implementation depends on having a separate homebrew-nx repository
-        echo "TODO: Update Homebrew formula"
+        VERSION="${{ github.event.inputs.version || github.ref_name }}"
+        # Remove 'v' prefix if present
+        VERSION_NUMBER="${VERSION#v}"
+        
+        # Calculate SHA256 for macOS x86_64 binary
+        MACOS_X86_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/nx-${VERSION_NUMBER}-macos-x86_64.tar.gz"
+        MACOS_ARM64_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/nx-${VERSION_NUMBER}-macos-arm64.tar.gz"
+        
+        # Wait a moment for the release assets to be available
+        sleep 30
+        
+        # Download and calculate checksums
+        curl -L "$MACOS_X86_URL" -o nx-macos-x86_64.tar.gz
+        curl -L "$MACOS_ARM64_URL" -o nx-macos-arm64.tar.gz
+        
+        MACOS_X86_SHA256=$(shasum -a 256 nx-macos-x86_64.tar.gz | cut -d' ' -f1)
+        MACOS_ARM64_SHA256=$(shasum -a 256 nx-macos-arm64.tar.gz | cut -d' ' -f1)
+        
+        # Create Homebrew formula
+        cat > nx.rb << EOF
+        class Nx < Formula
+          desc "High-performance CLI notes application with AI integration"
+          homepage "https://github.com/${{ github.repository }}"
+          version "$VERSION_NUMBER"
+          license "MIT"
+        
+          if Hardware::CPU.intel?
+            url "$MACOS_X86_URL"
+            sha256 "$MACOS_X86_SHA256"
+          elsif Hardware::CPU.arm?
+            url "$MACOS_ARM64_URL"
+            sha256 "$MACOS_ARM64_SHA256"
+          end
+        
+          def install
+            bin.install "nx"
+          end
+        
+          test do
+            system "#{bin}/nx", "--version"
+          end
+        end
+        EOF
+        
+        # Output the formula for verification
+        echo "Generated Homebrew formula:"
+        cat nx.rb
+        
+        # If we have access to a homebrew tap repository, we could push this
+        # For now, just output instructions
+        echo ""
+        echo "To update Homebrew tap:"
+        echo "1. Copy the above formula to homebrew-nx/Formula/nx.rb"
+        echo "2. Commit and push to the tap repository"
+        echo "3. Users can then install with: brew install your-org/nx/nx"
         
   notify-release:
     name: Notify Release
@@ -334,11 +386,134 @@ jobs:
     - name: Notify Slack/Discord
       if: success()
       run: |
-        # Send notification about successful release
-        echo "TODO: Send release notification"
+        VERSION="${{ github.event.inputs.version || github.ref_name }}"
+        RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+        
+        # Slack notification (if webhook is configured)
+        if [[ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"🎉 nx CLI Notes Application $VERSION Released!\",
+              \"blocks\": [
+                {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*nx CLI Notes Application $VERSION has been released!*\\n\\n:rocket: High-performance notes application with AI integration\\n:mag: Full-text search with SQLite FTS5\\n:computer: Interactive TUI with 3-pane layout\\n:lock: Encryption support with age/rage\"
+                  }
+                },
+                {
+                  \"type\": \"actions\",
+                  \"elements\": [
+                    {
+                      \"type\": \"button\",
+                      \"text\": {
+                        \"type\": \"plain_text\",
+                        \"text\": \"View Release\"
+                      },
+                      \"url\": \"$RELEASE_URL\"
+                    }
+                  ]
+                }
+              ]
+            }" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
+        fi
+        
+        # Discord notification (if webhook is configured)
+        if [[ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]]; then
+          curl -X POST -H 'Content-Type: application/json' \
+            --data "{
+              \"embeds\": [
+                {
+                  \"title\": \"nx CLI Notes Application $VERSION Released! 🎉\",
+                  \"description\": \"High-performance notes application with AI integration has been updated!\",
+                  \"url\": \"$RELEASE_URL\",
+                  \"color\": 3066993,
+                  \"fields\": [
+                    {
+                      \"name\": \"📝 Features\",
+                      \"value\": \"• Full-text search with SQLite FTS5\\n• Interactive TUI with 3-pane layout\\n• AI integration for Q&A and tagging\\n• Git synchronization support\\n• Export to multiple formats\",
+                      \"inline\": true
+                    },
+                    {
+                      \"name\": \"🔒 Security\",
+                      \"value\": \"• Encryption support with age/rage\\n• Secure file operations\\n• Input validation and bounds checking\",
+                      \"inline\": true
+                    }
+                  ],
+                  \"footer\": {
+                    \"text\": \"Download available for Linux, macOS, and Windows\"
+                  }
+                }
+              ]
+            }" \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        fi
+        
+        echo "Release notifications sent successfully"
         
     - name: Notify on Failure
       if: failure()
       run: |
-        # Send notification about failed release
-        echo "TODO: Send failure notification"
+        VERSION="${{ github.event.inputs.version || github.ref_name }}"
+        WORKFLOW_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        
+        # Slack failure notification (if webhook is configured)
+        if [[ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"❌ nx CLI Release $VERSION Failed\",
+              \"blocks\": [
+                {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Release workflow for nx CLI $VERSION has failed.*\\n\\n:warning: Please check the GitHub Actions logs for details.\"
+                  }
+                },
+                {
+                  \"type\": \"actions\",
+                  \"elements\": [
+                    {
+                      \"type\": \"button\",
+                      \"text\": {
+                        \"type\": \"plain_text\",
+                        \"text\": \"View Workflow\"
+                      },
+                      \"url\": \"$WORKFLOW_URL\"
+                    }
+                  ]
+                }
+              ]
+            }" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
+        fi
+        
+        # Discord failure notification (if webhook is configured)
+        if [[ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]]; then
+          curl -X POST -H 'Content-Type: application/json' \
+            --data "{
+              \"embeds\": [
+                {
+                  \"title\": \"nx CLI Release $VERSION Failed ❌\",
+                  \"description\": \"The release workflow has encountered an error and failed to complete.\",
+                  \"url\": \"$WORKFLOW_URL\",
+                  \"color\": 15158332,
+                  \"fields\": [
+                    {
+                      \"name\": \"🔍 Action Required\",
+                      \"value\": \"Please check the GitHub Actions logs to identify and resolve the issue.\",
+                      \"inline\": false
+                    }
+                  ],
+                  \"footer\": {
+                    \"text\": \"GitHub Actions Workflow\"
+                  }
+                }
+              ]
+            }" \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        fi
+        
+        echo "Failure notifications sent"

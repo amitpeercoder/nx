@@ -1,4 +1,4 @@
-.TH NX 1 "2025-08-17" "nx 1.0.0" "User Commands"
+.TH NX 1 "2024-12-15" "nx 0.2.0" "User Commands"
 .SH NAME
 nx \- high-performance CLI notes application with AI integration
 .SH SYNOPSIS
@@ -156,48 +156,19 @@ Copy file instead of moving
 .BR "tpl list"
 List available templates
 .TP
-.BR "tpl show " \fINAME\fR
-Show template content and details
-.TP
-.BR "tpl create " \fINAME\fR " " [\fIOPTIONS\fR]
+.BR "tpl add " \fINAME\fR " " [\fIOPTIONS\fR]
 Create new template
 .RS
 .TP
-.BR \-\-from\-file " " \fIFILE\fR
+.BR \-\-file " " \fIFILE\fR
 Create template from file
 .TP
-.BR \-\-description " " \fIDESCRIPTION\fR
+.BR \-\-desc " " \fIDESCRIPTION\fR
 Template description
-.TP
-.BR \-\-category " " \fICATEGORY\fR
-Template category
-.TP
-.BR \-\-force
-Overwrite existing template
 .RE
 .TP
-.BR "tpl edit " \fINAME\fR
-Edit existing template in external editor
-.TP
-.BR "tpl delete " \fINAME\fR
-Delete template
-.TP
-.BR "tpl use " \fINAME\fR " " [\fIOPTIONS\fR]
-Create note from template
-.RS
-.TP
-.BR \-\-title " " \fITITLE\fR
-Note title
-.TP
-.BR \-\-vars " " \fIKEY=VALUE\fR
-Template variables
-.RE
-.TP
-.BR "tpl search " \fIQUERY\fR
-Search templates by name or content
-.TP
-.BR "tpl install"
-Install built-in templates
+.BR "tpl remove " \fINAME\fR
+Remove template
 .SS "Import and Export"
 .TP
 .BR "import dir " \fIPATH\fR " " [\fIOPTIONS\fR]
@@ -358,84 +329,6 @@ Generate hierarchical outline for topic
 .BR \-\-create
 Create notes from outline sections
 .RE
-.SS "Configuration Management"
-.TP
-.BR "config get " \fIKEY\fR
-Get configuration value for specified key
-.TP
-.BR "config set " \fIKEY\fR " " \fIVALUE\fR
-Set configuration value
-.TP
-.BR "config list"
-List all configuration settings
-.TP
-.BR "config path"
-Show configuration file path
-.TP
-.BR "config validate"
-Validate current configuration
-.TP
-.BR "config reset " \fIKEY\fR
-Reset configuration key to default value
-.SS "Git Synchronization"
-.TP
-.BR "sync status"
-Show current synchronization status
-.TP
-.BR "sync init " [\fIOPTIONS\fR]
-Initialize Git repository for notes
-.RS
-.TP
-.BR \-\-remote " " \fIURL\fR
-Remote repository URL
-.TP
-.BR \-\-branch " " \fIBRANCH\fR
-Initial branch name (default: main)
-.RE
-.TP
-.BR "sync clone " \fIURL\fR " " [\fIOPTIONS\fR]
-Clone remote repository
-.RS
-.TP
-.BR \-\-branch " " \fIBRANCH\fR
-Branch to clone (default: main)
-.RE
-.TP
-.BR "sync pull " [\fIOPTIONS\fR]
-Pull changes from remote repository
-.RS
-.TP
-.BR \-\-strategy " " \fISTRATEGY\fR
-Merge strategy (merge, rebase, fast-forward)
-.TP
-.BR \-\-no\-auto\-resolve
-Disable automatic conflict resolution
-.RE
-.TP
-.BR "sync push " [\fIOPTIONS\fR]
-Push changes to remote repository
-.RS
-.TP
-.BR \-\-force
-Force push (use with caution)
-.TP
-.BR \-\-message " " \fIMESSAGE\fR
-Commit message for sync
-.RE
-.TP
-.BR "sync sync " [\fIOPTIONS\fR]
-Bidirectional synchronization (pull + push)
-.TP
-.BR "sync resolve " [\fIOPTIONS\fR]
-Resolve merge conflicts
-.RS
-.TP
-.BR \-\-strategy " " \fISTRATEGY\fR
-Resolution strategy (ours, theirs, manual)
-.TP
-.BR \-\-files " " \fIFILES\fR
-Specific files to resolve
-.RE
 .SS "Interactive Interface"
 .TP
 .BR "ui"
@@ -593,13 +486,10 @@ Temporary files and cache
 is designed for high performance with large note collections:
 .PP
 .RS
-- Note operations: P95 < 50ms on 10,000 notes (improved from 100ms)
+- Note operations: P95 < 100ms on 10,000 notes
 - Search queries: P95 < 200ms
 - Full reindex: < 45 seconds on mid-range laptop
 - Memory usage: < 100MB for typical operations
-- TUI operations: < 50ms response time
-- Cursor movement: < 10ms
-- Large file support: 1GB+ with virtual scrolling
 .RE
 .SH SECURITY
 When encryption is enabled:

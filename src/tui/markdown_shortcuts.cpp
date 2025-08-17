@@ -530,8 +530,9 @@ Result<void> MarkdownWrapCommand::execute(EditorBuffer& buffer) {
     // Replace selected text with wrapped version
     std::string wrapped_text = opening_delimiter_ + original_text_ + closing_delimiter_;
     
-    // For single line selections, we can use setLine
+    // Handle both single-line and multi-line selections
     if (selection_.start.line == selection_.end.line) {
+        // Single line selection
         auto line_result = buffer.getLine(selection_.start.line);
         if (!line_result.has_value()) {
             return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access line"));
@@ -547,7 +548,42 @@ Result<void> MarkdownWrapCommand::execute(EditorBuffer& buffer) {
             return std::unexpected(set_result.error());
         }
     } else {
-        return std::unexpected(nx::makeError(nx::ErrorCode::kNotImplemented, "Multi-line selection not yet implemented"));
+        // Multi-line selection
+        // Get the first line and modify it
+        auto first_line_result = buffer.getLine(selection_.start.line);
+        if (!first_line_result.has_value()) {
+            return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access first line"));
+        }
+        
+        // Get the last line and modify it
+        auto last_line_result = buffer.getLine(selection_.end.line);
+        if (!last_line_result.has_value()) {
+            return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access last line"));
+        }
+        
+        std::string first_line = first_line_result.value();
+        std::string last_line = last_line_result.value();
+        
+        // Modify first line: add opening delimiter
+        std::string new_first_line = first_line.substr(0, selection_.start.column) + 
+                                    opening_delimiter_ + 
+                                    first_line.substr(selection_.start.column);
+        
+        // Modify last line: add closing delimiter
+        std::string new_last_line = last_line.substr(0, selection_.end.column) + 
+                                   closing_delimiter_ + 
+                                   last_line.substr(selection_.end.column);
+        
+        // Set the modified lines
+        auto set_first_result = buffer.setLine(selection_.start.line, new_first_line);
+        if (!set_first_result.has_value()) {
+            return std::unexpected(set_first_result.error());
+        }
+        
+        auto set_last_result = buffer.setLine(selection_.end.line, new_last_line);
+        if (!set_last_result.has_value()) {
+            return std::unexpected(set_last_result.error());
+        }
     }
     
     executed_ = true;
@@ -559,8 +595,9 @@ Result<void> MarkdownWrapCommand::undo(EditorBuffer& buffer) {
         return std::unexpected(nx::makeError(nx::ErrorCode::kInvalidState, "Command not executed"));
     }
     
-    // For single line selections, restore original text
+    // Handle both single-line and multi-line selections for undo
     if (selection_.start.line == selection_.end.line) {
+        // Single line selection - restore original text
         auto line_result = buffer.getLine(selection_.start.line);
         if (!line_result.has_value()) {
             return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access line"));
@@ -578,7 +615,40 @@ Result<void> MarkdownWrapCommand::undo(EditorBuffer& buffer) {
             return std::unexpected(set_result.error());
         }
     } else {
-        return std::unexpected(nx::makeError(nx::ErrorCode::kNotImplemented, "Multi-line selection not yet implemented"));
+        // Multi-line selection - remove delimiters from first and last lines
+        // Get the current first line and remove opening delimiter
+        auto first_line_result = buffer.getLine(selection_.start.line);
+        if (!first_line_result.has_value()) {
+            return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access first line"));
+        }
+        
+        // Get the current last line and remove closing delimiter
+        auto last_line_result = buffer.getLine(selection_.end.line);
+        if (!last_line_result.has_value()) {
+            return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access last line"));
+        }
+        
+        std::string first_line = first_line_result.value();
+        std::string last_line = last_line_result.value();
+        
+        // Remove opening delimiter from first line
+        std::string new_first_line = first_line.substr(0, selection_.start.column) + 
+                                    first_line.substr(selection_.start.column + opening_delimiter_.length());
+        
+        // Remove closing delimiter from last line
+        std::string new_last_line = last_line.substr(0, selection_.end.column) + 
+                                   last_line.substr(selection_.end.column + closing_delimiter_.length());
+        
+        // Set the modified lines
+        auto set_first_result = buffer.setLine(selection_.start.line, new_first_line);
+        if (!set_first_result.has_value()) {
+            return std::unexpected(set_first_result.error());
+        }
+        
+        auto set_last_result = buffer.setLine(selection_.end.line, new_last_line);
+        if (!set_last_result.has_value()) {
+            return std::unexpected(set_last_result.error());
+        }
     }
     
     executed_ = false;
@@ -636,8 +706,9 @@ Result<void> MarkdownUnwrapCommand::execute(EditorBuffer& buffer) {
         formatted_text_.length() - opening_delimiter_.length() - closing_delimiter_.length()
     );
     
-    // For single line selections
+    // Handle both single-line and multi-line selections
     if (selection_.start.line == selection_.end.line) {
+        // Single line selection
         auto line_result = buffer.getLine(selection_.start.line);
         if (!line_result.has_value()) {
             return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access line"));
@@ -653,7 +724,45 @@ Result<void> MarkdownUnwrapCommand::execute(EditorBuffer& buffer) {
             return std::unexpected(set_result.error());
         }
     } else {
-        return std::unexpected(nx::makeError(nx::ErrorCode::kNotImplemented, "Multi-line selection not yet implemented"));
+        // Multi-line selection - remove delimiters from first and last lines
+        // Get the first line and remove opening delimiter
+        auto first_line_result = buffer.getLine(selection_.start.line);
+        if (!first_line_result.has_value()) {
+            return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access first line"));
+        }
+        
+        // Get the last line and remove closing delimiter
+        auto last_line_result = buffer.getLine(selection_.end.line);
+        if (!last_line_result.has_value()) {
+            return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access last line"));
+        }
+        
+        std::string first_line = first_line_result.value();
+        std::string last_line = last_line_result.value();
+        
+        // Remove opening delimiter from first line
+        if (first_line.length() >= selection_.start.column + opening_delimiter_.length() &&
+            first_line.substr(selection_.start.column, opening_delimiter_.length()) == opening_delimiter_) {
+            std::string new_first_line = first_line.substr(0, selection_.start.column) + 
+                                        first_line.substr(selection_.start.column + opening_delimiter_.length());
+            
+            auto set_first_result = buffer.setLine(selection_.start.line, new_first_line);
+            if (!set_first_result.has_value()) {
+                return std::unexpected(set_first_result.error());
+            }
+        }
+        
+        // Remove closing delimiter from last line
+        if (last_line.length() >= selection_.end.column + closing_delimiter_.length() &&
+            last_line.substr(selection_.end.column, closing_delimiter_.length()) == closing_delimiter_) {
+            std::string new_last_line = last_line.substr(0, selection_.end.column) + 
+                                       last_line.substr(selection_.end.column + closing_delimiter_.length());
+            
+            auto set_last_result = buffer.setLine(selection_.end.line, new_last_line);
+            if (!set_last_result.has_value()) {
+                return std::unexpected(set_last_result.error());
+            }
+        }
     }
     
     executed_ = true;
@@ -665,8 +774,9 @@ Result<void> MarkdownUnwrapCommand::undo(EditorBuffer& buffer) {
         return std::unexpected(nx::makeError(nx::ErrorCode::kInvalidState, "Command not executed"));
     }
     
-    // For single line selections, restore formatted text
+    // Handle both single-line and multi-line selections for undo
     if (selection_.start.line == selection_.end.line) {
+        // Single line selection - restore formatted text
         auto line_result = buffer.getLine(selection_.start.line);
         if (!line_result.has_value()) {
             return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access line"));
@@ -687,7 +797,42 @@ Result<void> MarkdownUnwrapCommand::undo(EditorBuffer& buffer) {
             return std::unexpected(set_result.error());
         }
     } else {
-        return std::unexpected(nx::makeError(nx::ErrorCode::kNotImplemented, "Multi-line selection not yet implemented"));
+        // Multi-line selection - restore delimiters to first and last lines
+        // Get the current first line and add opening delimiter
+        auto first_line_result = buffer.getLine(selection_.start.line);
+        if (!first_line_result.has_value()) {
+            return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access first line"));
+        }
+        
+        // Get the current last line and add closing delimiter
+        auto last_line_result = buffer.getLine(selection_.end.line);
+        if (!last_line_result.has_value()) {
+            return std::unexpected(nx::makeError(nx::ErrorCode::kFileError, "Cannot access last line"));
+        }
+        
+        std::string first_line = first_line_result.value();
+        std::string last_line = last_line_result.value();
+        
+        // Add opening delimiter to first line
+        std::string new_first_line = first_line.substr(0, selection_.start.column) + 
+                                    opening_delimiter_ + 
+                                    first_line.substr(selection_.start.column);
+        
+        // Add closing delimiter to last line
+        std::string new_last_line = last_line.substr(0, selection_.end.column) + 
+                                   closing_delimiter_ + 
+                                   last_line.substr(selection_.end.column);
+        
+        // Set the modified lines
+        auto set_first_result = buffer.setLine(selection_.start.line, new_first_line);
+        if (!set_first_result.has_value()) {
+            return std::unexpected(set_first_result.error());
+        }
+        
+        auto set_last_result = buffer.setLine(selection_.end.line, new_last_line);
+        if (!set_last_result.has_value()) {
+            return std::unexpected(set_last_result.error());
+        }
     }
     
     executed_ = false;
