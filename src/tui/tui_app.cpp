@@ -4400,9 +4400,7 @@ int TUIApp::calculateVisibleNavigationItemsCount() const {
   int reserved_lines = 12;  // Increased to be more conservative
   int max_items = std::max(5, terminal_height - reserved_lines);
   
-  // Cap at a reasonable maximum to force scrolling for testing
-  max_items = std::min(max_items, 10);
-  
+  // Use all available space - remove artificial cap to fill vertical space
   return max_items;
 }
 
@@ -4424,9 +4422,7 @@ int TUIApp::calculateVisibleNotesCount() const {
   int reserved_lines = 11;
   int max_notes = std::max(4, terminal_height - reserved_lines);
   
-  // Cap at a reasonable maximum to force scrolling for testing
-  max_notes = std::min(max_notes, 6);  // Reduced from 8 to 6
-  
+  // Use all available space - remove artificial cap to fill vertical space
   return max_notes;
 }
 
