@@ -39,7 +39,7 @@ out/
 *.exe
 *.out
 *.app
-nx
+/nx
 
 # CMake
 CMakeCache.txt
