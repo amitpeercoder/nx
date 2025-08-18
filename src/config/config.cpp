@@ -127,6 +127,37 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       git_user_email = *value;
     }
     
+    // Auto-sync configuration
+    if (auto sync_table = config_data["auto_sync"].as_table()) {
+      if (auto value = (*sync_table)["enabled"].value<bool>()) {
+        auto_sync.enabled = *value;
+      }
+      if (auto value = (*sync_table)["auto_pull_on_startup"].value<bool>()) {
+        auto_sync.auto_pull_on_startup = *value;
+      }
+      if (auto value = (*sync_table)["auto_push_on_changes"].value<bool>()) {
+        auto_sync.auto_push_on_changes = *value;
+      }
+      if (auto value = (*sync_table)["auto_push_delay_seconds"].value<int64_t>()) {
+        auto_sync.auto_push_delay_seconds = static_cast<int>(*value);
+      }
+      if (auto value = (*sync_table)["sync_interval_seconds"].value<int64_t>()) {
+        auto_sync.sync_interval_seconds = static_cast<int>(*value);
+      }
+      if (auto value = (*sync_table)["conflict_strategy"].value<std::string>()) {
+        auto_sync.conflict_strategy = *value;
+      }
+      if (auto value = (*sync_table)["max_auto_resolve_attempts"].value<int64_t>()) {
+        auto_sync.max_auto_resolve_attempts = static_cast<int>(*value);
+      }
+      if (auto value = (*sync_table)["sync_on_shutdown"].value<bool>()) {
+        auto_sync.sync_on_shutdown = *value;
+      }
+      if (auto value = (*sync_table)["show_sync_status"].value<bool>()) {
+        auto_sync.show_sync_status = *value;
+      }
+    }
+    
     // Defaults
     if (auto value = config_data["defaults"]["notebook"].value<std::string>()) {
       default_notebook = *value;
@@ -253,6 +284,19 @@ Result<void> Config::save(const std::filesystem::path& config_path) const {
     if (!git_remote.empty()) config_data.insert_or_assign("git_remote", git_remote);
     if (!git_user_name.empty()) config_data.insert_or_assign("git_user_name", git_user_name);
     if (!git_user_email.empty()) config_data.insert_or_assign("git_user_email", git_user_email);
+    
+    // Auto-sync configuration
+    auto auto_sync_table = toml::table{};
+    auto_sync_table.insert_or_assign("enabled", auto_sync.enabled);
+    auto_sync_table.insert_or_assign("auto_pull_on_startup", auto_sync.auto_pull_on_startup);
+    auto_sync_table.insert_or_assign("auto_push_on_changes", auto_sync.auto_push_on_changes);
+    auto_sync_table.insert_or_assign("auto_push_delay_seconds", auto_sync.auto_push_delay_seconds);
+    auto_sync_table.insert_or_assign("sync_interval_seconds", auto_sync.sync_interval_seconds);
+    auto_sync_table.insert_or_assign("conflict_strategy", auto_sync.conflict_strategy);
+    auto_sync_table.insert_or_assign("max_auto_resolve_attempts", auto_sync.max_auto_resolve_attempts);
+    auto_sync_table.insert_or_assign("sync_on_shutdown", auto_sync.sync_on_shutdown);
+    auto_sync_table.insert_or_assign("show_sync_status", auto_sync.show_sync_status);
+    config_data.insert_or_assign("auto_sync", auto_sync_table);
     
     // Defaults
     auto defaults_table = toml::table{};

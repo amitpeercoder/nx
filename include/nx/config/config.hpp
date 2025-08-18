@@ -55,6 +55,20 @@ class Config {
   std::string git_user_name;
   std::string git_user_email;
   
+  // Auto-sync configuration
+  struct AutoSyncConfig {
+    bool enabled = false;                    // Enable automatic sync
+    bool auto_pull_on_startup = true;        // Pull on app startup
+    bool auto_push_on_changes = true;        // Push after changes
+    int auto_push_delay_seconds = 300;       // Delay before auto-push
+    int sync_interval_seconds = 1800;        // Background sync interval
+    std::string conflict_strategy = "manual"; // manual, ours, theirs, smart
+    int max_auto_resolve_attempts = 3;       // Max attempts before manual
+    bool sync_on_shutdown = true;            // Sync before app exit
+    bool show_sync_status = true;            // Show sync status in TUI
+  };
+  AutoSyncConfig auto_sync;
+  
   // Default values
   std::string default_notebook;
   std::vector<std::string> default_tags;

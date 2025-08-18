@@ -1,0 +1,51 @@
+# Example nx configuration with automatic Git synchronization
+# Save this as ~/.config/nx/config.toml
+
+# Basic configuration
+notes_dir = "~/Documents/notes"
+editor = "nvim"
+
+# Git synchronization
+sync = "git"
+git_remote = "git@github.com:yourusername/my-notes.git"
+git_user_name = "Your Name"
+git_user_email = "your.email@example.com"
+
+# Automatic sync configuration
+[auto_sync]
+# Enable automatic synchronization
+enabled = true
+
+# Pull remote changes when nx starts (any command)
+auto_pull_on_startup = true
+
+# Automatically push changes after note operations
+auto_push_on_changes = true
+
+# Wait 5 minutes after last change before pushing (batches changes)
+auto_push_delay_seconds = 300
+
+# Background sync every 30 minutes
+sync_interval_seconds = 1800
+
+# How to handle conflicts:
+# - "manual": Prompt user (default, most safe)
+# - "ours": Keep local changes
+# - "theirs": Accept remote changes  
+# - "smart": AI-assisted resolution (future)
+conflict_strategy = "manual"
+
+# Maximum auto-resolution attempts before falling back to manual
+max_auto_resolve_attempts = 3
+
+# Sync all changes before app shutdown
+sync_on_shutdown = true
+
+# Show sync status in TUI status bar
+show_sync_status = true
+
+# AI configuration (optional)
+[ai]
+provider = "openai"
+model = "gpt-4"
+api_key = "env:OPENAI_API_KEY"
