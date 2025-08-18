@@ -271,9 +271,10 @@ Component TUIApp::createMainComponent() {
 
 
 ViewMode TUIApp::calculateViewMode(int terminal_width) const {
-  if (terminal_width < 80) {
+  // Use more permissive thresholds to ensure panels are visible
+  if (terminal_width < 60) {
     return ViewMode::SinglePane;
-  } else if (terminal_width < 120) {
+  } else if (terminal_width < 100) {
     return ViewMode::TwoPane;
   } else {
     return ViewMode::ThreePane;
