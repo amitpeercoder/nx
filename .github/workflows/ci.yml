@@ -59,6 +59,7 @@ jobs:
         cmake -B build -G Ninja \
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
           -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,readability-*,performance-*,bugprone-*,modernize-*"
         cmake --build build --target nx
         
@@ -130,15 +131,18 @@ jobs:
           lcov \
           valgrind
           
-        # Install specific compiler versions
+        # Install specific compiler versions that support C++23
         if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
-          sudo apt-get install -y gcc-11 g++-11
-          echo "CC=gcc-11" >> $GITHUB_ENV
-          echo "CXX=g++-11" >> $GITHUB_ENV
+          sudo apt-get install -y gcc-13 g++-13
+          echo "CC=gcc-13" >> $GITHUB_ENV
+          echo "CXX=g++-13" >> $GITHUB_ENV
         elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
-          sudo apt-get install -y clang-15 libc++-15-dev libc++abi-15-dev
-          echo "CC=clang-15" >> $GITHUB_ENV
-          echo "CXX=clang++-15" >> $GITHUB_ENV
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 17
+          sudo apt-get install -y libc++-17-dev libc++abi-17-dev
+          echo "CC=clang-17" >> $GITHUB_ENV
+          echo "CXX=clang++-17" >> $GITHUB_ENV
         fi
         
     - name: Install Dependencies (macOS)
@@ -154,6 +158,8 @@ jobs:
     - name: Configure CMake
       run: |
         cmake_args="-B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}"
+        cmake_args="$cmake_args -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        cmake_args="$cmake_args -DVCPKG_FEATURE_FLAGS=versions"
         
         # Add sanitizer flags
         if [[ "${{ matrix.sanitizer }}" == "address" ]]; then
@@ -262,7 +268,8 @@ jobs:
       run: |
         cmake -B build -G Ninja \
           -DCMAKE_BUILD_TYPE=Debug \
-          -DCMAKE_CXX_FLAGS="-g -O1"
+          -DCMAKE_CXX_FLAGS="-g -O1" \
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
         cmake --build build
         
     - name: Run Valgrind Tests
@@ -311,7 +318,8 @@ jobs:
         
     - name: Build Release Packages
       run: |
-        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
         cmake --build build
         cd build
         cpack || true  # Don't fail if packaging isn't set up yet
@@ -363,7 +371,8 @@ jobs:
           
     - name: Build for Analysis
       run: |
-        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
         cmake --build build
         
     - name: Perform CodeQL Analysis
