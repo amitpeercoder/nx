@@ -12,6 +12,36 @@
 
 namespace nx::import_export {
 
+// Helper function to detect platform for better error messages
+std::string getPlatformSpecificInstructions(const std::string& tool) {
+#ifdef _WIN32
+  if (tool == "pandoc") {
+    return "Windows: winget install pandoc; winget install MiKTeX.MiKTeX";
+  } else if (tool == "weasyprint") {
+    return "Windows: pip3 install weasyprint";
+  } else if (tool == "wkhtmltopdf") {
+    return "Windows: Download from wkhtmltopdf.org";
+  }
+#elif __APPLE__
+  if (tool == "pandoc") {
+    return "macOS: brew install pandoc basictex";
+  } else if (tool == "weasyprint") {
+    return "macOS: pip3 install weasyprint";
+  } else if (tool == "wkhtmltopdf") {
+    return "macOS: brew install wkhtmltopdf";
+  }
+#else // Linux
+  if (tool == "pandoc") {
+    return "Linux: apt install pandoc texlive-latex-base (Ubuntu/Debian) or yum install pandoc texlive-latex (CentOS/RHEL)";
+  } else if (tool == "weasyprint") {
+    return "Linux: pip3 install weasyprint (may need: apt install libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0)";
+  } else if (tool == "wkhtmltopdf") {
+    return "Linux: apt install wkhtmltopdf (Ubuntu/Debian) or yum install wkhtmltopdf (CentOS/RHEL)";
+  }
+#endif
+  return "";
+}
+
 Result<std::unique_ptr<Exporter>> ExportManager::createExporter(ExportFormat format) {
   switch (format) {
     case ExportFormat::Markdown:
@@ -125,7 +155,7 @@ std::map<ExportFormat, std::string> ExportManager::getSupportedFormats() {
     {ExportFormat::Json, "JSON format with full metadata"},
     {ExportFormat::Zip, "ZIP archive containing exported files"},
     {ExportFormat::Html, "HTML files with styling"},
-    {ExportFormat::Pdf, "PDF files (requires external tools)"}
+    {ExportFormat::Pdf, "PDF files (requires pandoc+LaTeX, weasyprint, or wkhtmltopdf)"}
   };
 }
 
@@ -491,9 +521,32 @@ Result<void> PdfExporter::exportNotes(const std::vector<nx::core::Note>& notes,
   // Check if PDF tools are available
   std::string pdf_tool = findPdfTool();
   if (pdf_tool.empty()) {
-    return std::unexpected(makeError(ErrorCode::kExternalToolError,
-      "PDF generation requires either 'pandoc' or 'wkhtmltopdf' to be installed. "
-      "Please install one of these tools and ensure it's in your PATH."));
+    std::string platform_specific = getPlatformSpecificInstructions("weasyprint");
+    std::string error_msg = 
+      "PDF generation requires either 'pandoc', 'weasyprint', or 'wkhtmltopdf' to be installed.\n"
+      "Please install one of these tools and ensure it's in your PATH.\n\n";
+    
+    if (!platform_specific.empty()) {
+      error_msg += "Quick install for your platform:\n" + platform_specific + "\n\n";
+    }
+    
+    error_msg += 
+      "All platform installation options:\n"
+      "1. Weasyprint (Python-based, easiest):\n"
+      "   pip3 install weasyprint\n"
+      "   (May require system dependencies on Linux)\n\n"
+      "2. Pandoc + LaTeX (best markdown support):\n"
+      "   • Ubuntu/Debian: apt install pandoc texlive-latex-base\n"
+      "   • CentOS/RHEL: yum install pandoc texlive-latex\n"
+      "   • macOS: brew install pandoc basictex\n"
+      "   • Windows: winget install pandoc; winget install MiKTeX.MiKTeX\n\n"
+      "3. wkhtmltopdf (HTML to PDF):\n"
+      "   • Ubuntu/Debian: apt install wkhtmltopdf\n"
+      "   • CentOS/RHEL: yum install wkhtmltopdf\n"
+      "   • macOS: brew install wkhtmltopdf\n"
+      "   • Windows: Download from wkhtmltopdf.org";
+    
+    return std::unexpected(makeError(ErrorCode::kExternalToolError, error_msg));
   }
 
   // Create output directory
@@ -525,9 +578,6 @@ Result<void> PdfExporter::exportNotes(const std::vector<nx::core::Note>& notes,
     Result<void> result;
     
     if (pdf_tool == "pandoc") {
-      // Create markdown file first
-      std::filesystem::path md_path = temp_dir / (note.id().toString() + ".md");
-      
       // Generate markdown content with metadata
       MarkdownExporter md_exporter;
       ExportOptions md_options = options;
@@ -541,7 +591,34 @@ Result<void> PdfExporter::exportNotes(const std::vector<nx::core::Note>& notes,
         return std::unexpected(md_result.error());
       }
       
+      // Find the actual created markdown file (uses title-based naming)
+      std::string expected_filename = md_exporter.generateFilename(note, ".md");
+      std::filesystem::path md_path = temp_dir / expected_filename;
+      
+      // Verify the file exists before calling pandoc
+      if (!std::filesystem::exists(md_path)) {
+        std::filesystem::remove_all(temp_dir, ec);
+        return std::unexpected(makeError(ErrorCode::kFileError,
+                                        "Markdown file not found: " + md_path.string()));
+      }
+      
       result = convertWithPandoc(md_path, pdf_path);
+    } else if (pdf_tool == "weasyprint") {
+      // Create HTML file first and convert with weasyprint
+      HtmlExporter html_exporter;
+      std::string html_content = html_exporter.markdownToHtml(note.content());
+      std::string full_page = html_exporter.generateHtmlPage(note.title(), html_content, options.template_file);
+      
+      std::filesystem::path html_path = temp_dir / (note.id().toString() + ".html");
+      // Write temporary HTML file atomically
+      auto html_result = nx::util::FileSystem::writeFileAtomic(html_path, full_page);
+      if (!html_result.has_value()) {
+        std::filesystem::remove_all(temp_dir, ec);
+        return std::unexpected(makeError(ErrorCode::kFileWriteError,
+                                         "Failed to create HTML file: " + html_result.error().message()));
+      }
+      
+      result = convertWithWeasyprint(html_path, pdf_path);
     } else if (pdf_tool == "wkhtmltopdf") {
       // Create HTML file first
       HtmlExporter html_exporter;
@@ -576,14 +653,38 @@ Result<void> PdfExporter::exportNotes(const std::vector<nx::core::Note>& notes,
 }
 
 std::string PdfExporter::findPdfTool() const {
-  // Check for pandoc first (preferred)
+  // Check for pandoc first (preferred for markdown) - but verify it can actually work
   if (nx::util::SafeProcess::commandExists("pandoc")) {
-    return "pandoc";
+    // Test if pandoc has a working PDF engine by checking common ones across platforms
+    if (nx::util::SafeProcess::commandExists("pdflatex") || 
+        nx::util::SafeProcess::commandExists("xelatex") ||
+        nx::util::SafeProcess::commandExists("lualatex") ||
+        nx::util::SafeProcess::commandExists("latex") ||
+        nx::util::SafeProcess::commandExists("miktex") ||
+        nx::util::SafeProcess::commandExists("texlive")) {
+      return "pandoc";
+    }
   }
   
-  // Check for wkhtmltopdf as fallback
+  // Check for weasyprint (Python-based HTML to PDF, cross-platform)
+  if (nx::util::SafeProcess::commandExists("weasyprint")) {
+    return "weasyprint";
+  }
+  
+  // Check for wkhtmltopdf (available on most platforms)
   if (nx::util::SafeProcess::commandExists("wkhtmltopdf")) {
     return "wkhtmltopdf";
+  }
+  
+  // Additional Windows-specific checks
+  if (nx::util::SafeProcess::commandExists("wkhtmltopdf.exe")) {
+    return "wkhtmltopdf";
+  }
+  
+  // If pandoc exists but no PDF engines detected, still return it as a last resort
+  // The user might have a LaTeX distribution we didn't detect
+  if (nx::util::SafeProcess::commandExists("pandoc")) {
+    return "pandoc";
   }
   
   return "";
@@ -591,19 +692,24 @@ std::string PdfExporter::findPdfTool() const {
 
 Result<void> PdfExporter::convertWithPandoc(const std::filesystem::path& markdown_path,
                                            const std::filesystem::path& pdf_path) const {
-  // Use pandoc to convert markdown to PDF
+  // Try without specific PDF engine first (let pandoc choose the default)
   auto result = nx::util::SafeProcess::execute("pandoc", 
-    {markdown_path.string(), "-o", pdf_path.string(), "--pdf-engine=xelatex"});
+    {markdown_path.string(), "-o", pdf_path.string()});
   
   if (!result.has_value() || !result->success()) {
-    // Try without specific PDF engine
+    // Try with xelatex if the default failed
     result = nx::util::SafeProcess::execute("pandoc", 
-      {markdown_path.string(), "-o", pdf_path.string()});
+      {markdown_path.string(), "-o", pdf_path.string(), "--pdf-engine=xelatex"});
     
     if (!result.has_value() || !result->success()) {
       return std::unexpected(makeError(ErrorCode::kExternalToolError,
                                        "Failed to convert to PDF with pandoc: " + 
-                                       (result.has_value() ? result->stderr_output : "unknown error")));
+                                       (result.has_value() ? result->stderr_output : "unknown error") +
+                                       "\n\nTo fix this, install a LaTeX distribution:\n"
+                                       "• Ubuntu/Debian: apt install texlive-latex-base\n"
+                                       "• CentOS/RHEL: yum install texlive-latex\n"
+                                       "• macOS: brew install basictex\n"
+                                       "• Windows: winget install MiKTeX.MiKTeX or choco install miktex"));
     }
   }
 
@@ -620,6 +726,21 @@ Result<void> PdfExporter::convertWithWkhtmltopdf(const std::filesystem::path& ht
   if (!result.has_value() || !result->success()) {
     return std::unexpected(makeError(ErrorCode::kExternalToolError,
                                      "Failed to convert to PDF with wkhtmltopdf: " + 
+                                     (result.has_value() ? result->stderr_output : "unknown error")));
+  }
+
+  return {};
+}
+
+Result<void> PdfExporter::convertWithWeasyprint(const std::filesystem::path& html_path,
+                                               const std::filesystem::path& pdf_path) const {
+  // Use weasyprint to convert HTML to PDF
+  auto result = nx::util::SafeProcess::execute("weasyprint", 
+    {html_path.string(), pdf_path.string()});
+  
+  if (!result.has_value() || !result->success()) {
+    return std::unexpected(makeError(ErrorCode::kExternalToolError,
+                                     "Failed to convert to PDF with weasyprint: " + 
                                      (result.has_value() ? result->stderr_output : "unknown error")));
   }
 

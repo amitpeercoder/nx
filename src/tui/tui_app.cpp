@@ -146,8 +146,16 @@ int TUIApp::run() {
   loadNotebooks();
   buildNavigationItems();
   
-  // Set initial status
-  setStatusMessage("nx notes - Press ? for help, : for commands, q to quit");
+  // Calculate view mode based on terminal size
+  updateLayout();
+  
+  // Set initial focus to Navigation if there are notebooks/tags to show and we're in 3-pane mode
+  if (!state_.notebooks.empty() && state_.view_mode == ViewMode::ThreePane) {
+    state_.current_pane = ActivePane::Navigation;
+    setStatusMessage("nx notes - Press Enter on notebooks/tags to filter, ? for help, q to quit");
+  } else {
+    setStatusMessage("nx notes - Press ? for help, : for commands, q to quit");
+  }
   
   // Run the main loop
   screen_.Loop(main_component_);
@@ -1378,9 +1386,10 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
             static_cast<size_t>(state_.selected_nav_index) < state_.nav_items.size()) {
           const auto& nav_item = state_.nav_items[static_cast<size_t>(state_.selected_nav_index)];
           if (nav_item.type == NavItemType::Notebook) {
-            // Toggle notebook expansion/collapse
-            toggleNotebookExpansion(nav_item.name);
+            // Toggle notebook filter (to show only notes from this notebook)
+            onNotebookToggled(nav_item.name);
           } else if (nav_item.type == NavItemType::NotebookTag || nav_item.type == NavItemType::GlobalTag) {
+            // Toggle tag filter
             onTagToggled(nav_item.name);
           }
         }
@@ -4400,8 +4409,8 @@ int TUIApp::calculateVisibleNavigationItemsCount() const {
   int reserved_lines = 12;  // Increased to be more conservative
   int max_items = std::max(5, terminal_height - reserved_lines);
   
-  // Cap at a reasonable maximum to force scrolling for testing
-  max_items = std::min(max_items, 10);
+  // Allow full use of available space
+  // max_items = std::min(max_items, 10);  // Removed artificial limit
   
   return max_items;
 }
@@ -4424,8 +4433,9 @@ int TUIApp::calculateVisibleNotesCount() const {
   int reserved_lines = 11;
   int max_notes = std::max(4, terminal_height - reserved_lines);
   
-  // Cap at a reasonable maximum to force scrolling for testing
-  max_notes = std::min(max_notes, 6);  // Reduced from 8 to 6
+  // Allow full use of available space
+  // max_notes = std::min(max_notes, 6);  // Removed artificial limit
+  
   
   return max_notes;
 }
