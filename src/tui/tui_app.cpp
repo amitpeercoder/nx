@@ -193,7 +193,9 @@ Component TUIApp::createMainComponent() {
         
       case ViewMode::TwoPane:
         panes = {
-          renderNotesPanel() | size(WIDTH, EQUAL, sizing.notes_width + sizing.tags_width),
+          renderNavigationPanel() | size(WIDTH, EQUAL, sizing.tags_width),
+          separator(),
+          renderNotesPanel() | flex,
           separator(),
           renderPreviewPane() | size(WIDTH, EQUAL, sizing.preview_width)
         };
@@ -271,10 +273,10 @@ Component TUIApp::createMainComponent() {
 
 
 ViewMode TUIApp::calculateViewMode(int terminal_width) const {
-  // Use more permissive thresholds to ensure panels are visible
-  if (terminal_width < 60) {
+  // Very permissive thresholds to ensure all panels are visible
+  if (terminal_width < 40) {
     return ViewMode::SinglePane;
-  } else if (terminal_width < 100) {
+  } else if (terminal_width < 70) {
     return ViewMode::TwoPane;
   } else {
     return ViewMode::ThreePane;
