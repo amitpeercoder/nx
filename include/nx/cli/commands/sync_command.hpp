@@ -16,7 +16,22 @@ public:
   Result<int> execute(const GlobalOptions& options) override;
   
   std::string name() const override { return "sync"; }
-  std::string description() const override { return "Git synchronization operations"; }
+  std::string description() const override { 
+    return "Git synchronization operations\n\n"
+           "WORKFLOW:\n"
+           "  1. Setup:    nx sync init --remote https://github.com/user/notes.git\n"
+           "  2. Daily:    nx sync sync  # pull + push changes\n"
+           "  3. Status:   nx sync status\n\n"
+           "EXAMPLES:\n"
+           "  nx sync init                                    # Initialize Git repository\n"
+           "  nx sync clone https://github.com/user/notes.git # Clone existing notes\n"
+           "  nx sync pull                                    # Download remote changes\n"
+           "  nx sync push                                    # Upload local changes\n"
+           "  nx sync sync --message \"Daily update\"          # Bidirectional sync\n"
+           "  nx sync resolve --resolve-strategy ours        # Resolve conflicts\n\n"
+           "SETUP:\n"
+           "  nx sync init --remote URL --user-name \"Name\" --user-email \"email@example.com\"";
+  }
 
 private:
   Application& app_;

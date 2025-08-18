@@ -18,7 +18,18 @@ public:
   
   Result<int> execute(const GlobalOptions& options) override;
   std::string name() const override { return "new"; }
-  std::string description() const override { return "Create a new note"; }
+  std::string description() const override { 
+    return "Create a new note\n\n"
+           "EXAMPLES:\n"
+           "  nx new                                    # Create blank note, open in editor\n"
+           "  nx new \"Meeting Notes\"                   # Create note with title\n"
+           "  nx new \"Project Plan\" --tags work,important --nb projects\n"
+           "  nx new --template meeting                 # Create from template\n"
+           "  echo \"Content\" | nx new \"Quick Note\"   # Create with content from stdin\n\n"
+           "WORKFLOWS:\n"
+           "  Daily journal:  nx new \"$(date +%Y-%m-%d)\" --nb journal\n"
+           "  Meeting prep:   nx new --template meeting --tags \"$(date +%Y-%m-%d)\"";
+  }
   
   void setupCommand(CLI::App* cmd) override;
 

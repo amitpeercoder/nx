@@ -12,7 +12,7 @@ public:
   
   Result<int> execute(const GlobalOptions& options) override;
   std::string name() const override { return "attach"; }
-  std::string description() const override { return "Attach file to note"; }
+  std::string description() const override { return "Attach file to note\n\nEXAMPLES:\n  nx attach abc123 document.pdf\n  nx attach abc123 image.jpg --description \"Project diagram\"\n  nx ls --tag project | head -1 | nx attach {} file.txt"; }
   void setupCommand(CLI::App* cmd) override;
 
 private:

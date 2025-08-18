@@ -593,6 +593,326 @@ nx doctor
 # Check GitHub issues and discussions
 ```
 
+## Practical Workflows
+
+This section provides comprehensive examples and workflows for common use cases.
+
+### Getting Started Workflows
+
+#### First-Time Setup
+```bash
+# 1. Create your first note
+nx new "Welcome to nx" --tags getting-started --edit
+
+# 2. Launch the TUI to explore
+nx ui
+
+# 3. Set up Git sync (optional)
+nx sync init --remote https://github.com/yourusername/my-notes.git \
+  --user-name "Your Name" --user-email "you@example.com"
+
+# 4. Create a notebook structure
+nx notebook create "Personal" "Personal notes and thoughts"
+nx notebook create "Work" "Work-related notes and projects"
+nx notebook create "Learning" "Study notes and research"
+```
+
+#### Daily Note-Taking Workflow
+```bash
+# Morning: Create daily journal
+nx new "$(date +%Y-%m-%d)" --nb journal --tags daily \
+  --template daily-journal --edit
+
+# Quick capture throughout the day
+echo "Meeting insight: Focus on user needs" | \
+  nx new "Quick Capture $(date +%H:%M)" --tags inbox
+
+# Evening: Process inbox
+nx ls --tag inbox | head -5 | while read id; do
+  nx tag-suggest "$id" --apply
+  nx mv "$id" --nb appropriate-notebook
+done
+```
+
+### Content Creation Workflows
+
+#### Research and Study Notes
+```bash
+# 1. Create research note with AI outline
+nx outline "Machine Learning Fundamentals" --create
+note_id=$(nx ls --limit 1 | head -1 | awk '{print $1}')
+
+# 2. Attach research papers
+nx attach "$note_id" ~/Downloads/paper1.pdf --description "Core ML paper"
+nx attach "$note_id" ~/Downloads/paper2.pdf --description "Applications"
+
+# 3. Use AI to enhance learning
+nx summarize "$note_id" --style bullets --apply
+nx tag-suggest "$note_id" --apply
+nx suggest-links "$note_id" --apply
+```
+
+#### Meeting Notes Workflow
+```bash
+# Pre-meeting: Create from template
+nx new "Team Meeting $(date +%Y-%m-%d)" \
+  --template meeting --nb work --tags meeting,team
+
+# During meeting: Quick edits
+note_id=$(nx ls --tag meeting --limit 1 | head -1 | awk '{print $1}')
+nx edit "$note_id"
+
+# Post-meeting: Extract actions
+nx tasks "$note_id" --priority high
+nx title "$note_id" --apply  # Better title based on content
+```
+
+#### Project Documentation
+```bash
+# Create project structure
+nx notebook create "Project Alpha" "New product development"
+
+# Create project notes from templates
+nx new --template project-kickoff --nb "Project Alpha" \
+  --tags project,alpha,planning
+nx new --template technical-spec --nb "Project Alpha" \
+  --tags project,alpha,technical
+nx new --template meeting-notes --nb "Project Alpha" \
+  --tags project,alpha,meetings
+
+# Link related notes
+project_notes=$(nx ls --nb "Project Alpha")
+for note in $project_notes; do
+  nx suggest-links "$note" --apply --threshold 0.7
+done
+```
+
+### File Management Workflows
+
+#### Document Import and Organization
+```bash
+# Import existing documentation
+nx import dir ~/Documents/old-notes --nb imported --recursive
+nx import obsidian ~/ObsidianVault --preserve-structure
+
+# Bulk processing of imported notes
+nx ls --nb imported | while read id; do
+  # Auto-suggest better organization
+  nx tag-suggest "$id" --apply
+  
+  # Improve titles
+  nx title "$id" --apply
+  
+  # Find appropriate notebook
+  tags=$(nx view "$id" --json | jq -r '.tags[]' | head -3)
+  if echo "$tags" | grep -q "work"; then
+    nx mv "$id" --nb "Work"
+  elif echo "$tags" | grep -q "personal"; then
+    nx mv "$id" --nb "Personal"
+  fi
+done
+```
+
+#### Attachment Management
+```bash
+# Attach multiple files to a project note
+project_note=$(nx ls --tag project --limit 1 | head -1 | awk '{print $1}')
+
+# Attach different file types
+nx attach "$project_note" ~/Downloads/spec.pdf --description "Technical specification"
+nx attach "$project_note" ~/Downloads/design.sketch --description "UI mockups"
+nx attach "$project_note" ~/Downloads/data.csv --description "Analysis data"
+
+# Bulk attach from directory
+find ~/project-files -name "*.pdf" | while read file; do
+  nx attach "$project_note" "$file" --description "$(basename "$file")"
+done
+```
+
+### Search and Discovery Workflows
+
+#### Advanced Search Techniques
+```bash
+# Multi-criteria search
+nx grep "machine learning" --ignore-case | \
+  xargs -I {} nx view {} --json | \
+  jq -r 'select(.tags[] | contains("python")) | .id'
+
+# Find notes by content patterns
+nx grep "TODO|FIXME|HACK" --regex | \
+  xargs -I {} sh -c 'echo "Action needed in: $(nx view {} --json | jq -r .title)"'
+
+# Time-based discovery
+nx ls --since "2024-01-01" --tag work | \
+  head -10 | \
+  xargs -I {} nx summarize {} --style bullets
+
+# Find orphaned or under-tagged notes
+nx ls | while read id; do
+  tag_count=$(nx view "$id" --json | jq '.tags | length')
+  if [ "$tag_count" -lt 2 ]; then
+    echo "Under-tagged: $id"
+    nx tag-suggest "$id" --apply
+  fi
+done
+```
+
+#### Knowledge Discovery
+```bash
+# Find connections across notebooks
+nx ask "What are the common themes across my work notes?"
+nx ask "Which personal projects relate to my professional work?"
+
+# Rediscover forgotten notes
+old_notes=$(nx ls --since "2023-01-01" | tail -20)
+for note in $old_notes; do
+  echo "Rediscovered: $(nx view "$note" --json | jq -r .title)"
+  nx suggest-links "$note" --apply
+done
+```
+
+### Maintenance Workflows
+
+#### Weekly Maintenance
+```bash
+#!/bin/bash
+# weekly-maintenance.sh
+
+echo "🔧 Running weekly nx maintenance..."
+
+# 1. Health check
+nx doctor --fix --category storage,index
+
+# 2. Optimize search index
+nx reindex optimize
+
+# 3. Clean up storage
+nx gc cleanup --force
+
+# 4. Create backup
+backup_file="$HOME/backups/nx-weekly-$(date +%Y%m%d).tar.gz"
+nx backup create "$backup_file" --compress
+
+# 5. Sync changes
+nx sync sync --message "Weekly maintenance $(date +%Y-%m-%d)"
+
+# 6. Report statistics
+echo "📊 Statistics:"
+echo "Total notes: $(nx ls | wc -l)"
+echo "Total notebooks: $(nx notebook list | wc -l)"
+echo "Total tags: $(nx tags | wc -l)"
+
+echo "✅ Weekly maintenance complete!"
+```
+
+#### Data Migration
+```bash
+# Migrate from other note systems
+# From Obsidian
+nx import obsidian ~/ObsidianVault --recursive --preserve-structure
+nx ls --nb ObsidianVault | while read id; do
+  nx tag-suggest "$id" --apply
+  nx suggest-links "$id" --apply
+done
+
+# From Notion export
+nx import notion ~/notion-export --nb notion-import
+nx ls --nb notion-import | while read id; do
+  nx rewrite "$id" --tone crisp --apply  # Clean up formatting
+  nx title "$id" --apply  # Better titles
+done
+
+# Reorganize after import
+nx ls --nb imported | while read id; do
+  # Use AI to determine best notebook
+  summary=$(nx summarize "$id" --style bullets)
+  if echo "$summary" | grep -i "meeting\|standup\|team"; then
+    nx mv "$id" --nb "Work"
+  elif echo "$summary" | grep -i "personal\|journal\|diary"; then
+    nx mv "$id" --nb "Personal"
+  fi
+done
+```
+
+### Collaboration Workflows
+
+#### Team Note Sharing
+```bash
+# Set up team repository
+nx sync init --remote git@github.com:team/shared-notes.git
+
+# Daily team sync
+nx sync pull  # Get team updates
+# ... work on notes ...
+nx sync sync --message "Daily updates from $(whoami) - $(date +%Y-%m-%d)"
+
+# Share specific project notes
+nx export md --nb "Project Alpha" --to ~/shared/project-alpha-export/
+# Team members can then import: nx import dir ~/shared/project-alpha-export/
+```
+
+#### Review and Feedback
+```bash
+# Prepare notes for review
+review_notes=$(nx ls --tag "needs-review")
+for note in $review_notes; do
+  # Clean up for review
+  nx rewrite "$note" --tone professional --apply
+  nx title "$note" --apply
+  
+  # Export for sharing
+  nx export pdf --note "$note" --to ~/reviews/
+done
+```
+
+### Automation and Integration
+
+#### Automated Capture
+```bash
+# Add to .bashrc or .zshrc for quick capture
+note_quick() {
+  echo "$*" | nx new "Quick: $(date +%H:%M)" --tags inbox,quick
+}
+
+# Use: note_quick "Remember to follow up on the client proposal"
+```
+
+#### Integration with Other Tools
+```bash
+# Capture from clipboard with processing
+pbpaste | nx new "Clipboard $(date +%Y-%m-%d %H:%M)" --tags inbox | \
+  xargs -I {} nx tag-suggest {} --apply
+
+# Create note from URL
+url_to_note() {
+  local url="$1"
+  local title=$(curl -s "$url" | grep -o '<title>[^<]*' | sed 's/<title>//')
+  nx new "$title" --tags web,research --edit
+  echo "Source: $url" | nx attach "$(nx ls --limit 1 | head -1 | awk '{print $1}')" -
+}
+```
+
+### Performance Optimization Workflows
+
+#### Large Collection Management
+```bash
+# For collections with 10k+ notes
+# Optimize index regularly
+nx reindex rebuild  # Monthly
+nx reindex optimize  # Weekly
+
+# Archive old notes
+cutoff_date="2023-01-01"
+old_notes=$(nx ls --until "$cutoff_date")
+nx notebook create "Archive" "Archived notes"
+echo "$old_notes" | while read id; do
+  nx mv "$id" --nb "Archive"
+done
+
+# Compress archives
+nx export md --nb "Archive" --to ~/archives/notes-archive-$(date +%Y)/
+```
+
 ## Tips and Best Practices
 
 ### Organization

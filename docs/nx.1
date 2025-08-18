@@ -533,39 +533,135 @@ Network error (AI features, sync)
 .B 4
 Permission denied
 .SH EXAMPLES
+.SS "Getting Started"
 .TP
-Create a new note with tags:
-.B nx new "Meeting Notes" --tags work,meeting --nb projects
+Create your first note:
+.B nx new "My First Note"
 .TP
-List recent work notes:
-.B nx ls --tag work --since 2024-01-01
-.TP
-Search for algorithm-related content:
-.B nx grep "algorithm" --regex
-.TP
-Edit a note:
-.B nx edit 01ARZ3NDEKTSV4RRFFQ69G5FAV
-.TP
-Import Obsidian vault:
-.B nx import dir ~/Documents/ObsidianVault --format obsidian --recursive
-.TP
-Create backup:
-.B nx backup create ~/backups/notes-$(date +%Y%m%d).tar.gz --compress
-.TP
-Launch TUI:
+Launch the interactive TUI:
 .B nx ui
 .TP
-Ask AI about notes:
-.B nx ask "What did I learn about machine learning?"
+Create a note with organization:
+.B nx new "Meeting Notes" --tags work,meeting --nb projects
+
+.SS "Daily Workflows"
 .TP
-Generate summary:
-.B nx summarize 01ARZ3 --style bullets --apply
+Daily journal entry:
+.B nx new "$(date +%Y-%m-%d)" --nb journal --edit
 .TP
-Clean up storage:
-.B nx gc all --force
+Quick capture from clipboard:
+.B pbpaste | nx new "Quick Capture" --tags inbox
 .TP
-Run system health check:
-.B nx doctor --quick
+Meeting preparation:
+.B nx new --template meeting --tags "$(date +%Y-%m-%d),team"
+.TP
+Search for recent work notes:
+.B nx ls --tag work --since 2024-01-01 --limit 10
+
+.SS "File Management"
+.TP
+Attach document to note:
+.B nx attach abc123 ~/Documents/presentation.pdf --description "Project slides"
+.TP
+Import entire directory:
+.B nx import dir ~/Documents/notes --nb imported-docs --recursive
+.TP
+Import Obsidian vault:
+.B nx import obsidian ~/MyVault --preserve-structure
+.TP
+Export notes to PDF:
+.B nx export pdf --tag work --since 2024-01-01
+
+.SS "Search and Discovery"
+.TP
+Search note content:
+.B nx grep "machine learning" --ignore-case
+.TP
+Find todos with regex:
+.B nx grep "TODO|FIXME|HACK" --regex
+.TP
+Search by title and tags:
+.B nx ls --tag AI --tag python | grep -i neural
+.TP
+Find notes linking to specific note:
+.B nx backlinks abc123
+
+.SS "Git Synchronization"
+.TP
+Initial setup:
+.B nx sync init --remote https://github.com/user/notes.git --user-name "Your Name" --user-email "email@example.com"
+.TP
+Clone existing notes:
+.B nx sync clone https://github.com/user/notes.git
+.TP
+Daily sync workflow:
+.B nx sync sync --message "Daily update $(date +%Y-%m-%d)"
+.TP
+Resolve sync conflicts:
+.B nx sync resolve --resolve-strategy ours
+.TP
+Check sync status:
+.B nx sync status
+
+.SS "AI Integration"
+.TP
+Ask questions about your notes:
+.B nx ask "What did I learn about machine learning last month?"
+.TP
+Auto-generate tags:
+.B nx tag-suggest abc123 --apply
+.TP
+Improve note title:
+.B nx title abc123 --apply
+.TP
+Rewrite for clarity:
+.B nx rewrite abc123 --tone professional --apply
+.TP
+Extract action items:
+.B nx tasks abc123 --priority high
+.TP
+Generate content outline:
+.B nx outline "Deep Learning Fundamentals" --create
+
+.SS "Organization and Maintenance"
+.TP
+Create notebook structure:
+.B nx notebook create "Machine Learning" "AI research and experiments"
+.TP
+Move notes between notebooks:
+.B nx mv abc123 --nb "Machine Learning"
+.TP
+Bulk tag operations:
+.B nx ls --nb inbox | head -10 | xargs -I {} nx tag-suggest {} --apply
+.TP
+Template management:
+.B nx tpl add meeting-template --file ~/templates/meeting.md
+.TP
+Create backup with compression:
+.B nx backup create ~/backups/notes-$(date +%Y%m%d).tar.gz --compress
+.TP
+System maintenance:
+.B nx gc all && nx reindex rebuild && nx doctor
+.TP
+Health check with fixes:
+.B nx doctor --fix --category index,storage
+
+.SS "Advanced Workflows"
+.TP
+Pipeline processing:
+.B nx ls --tag todo | head -5 | xargs -I {} nx tasks {} --priority high
+.TP
+Automated daily capture:
+.B echo "Daily standup: $(date)" | nx new "Standup $(date +%Y-%m-%d)" --nb work --tags standup,$(date +%Y-%m-%d)
+.TP
+Find and link related notes:
+.B nx suggest-links abc123 --apply --threshold 0.8
+.TP
+Batch export by date:
+.B nx export md --since 2024-01-01 --to ~/exports/january-notes/
+.TP
+Monitor note growth:
+.B watch -n 300 'nx ls | wc -l'
 .SH FILES
 .TP
 .B ~/.config/nx/config.toml
