@@ -5,11 +5,62 @@
 notes_dir = "~/Documents/notes"
 editor = "nvim"
 
-# Git synchronization
+# ============================================================================
+# GIT SYNCHRONIZATION SETUP
+# ============================================================================
+
+# Enable Git sync (required for multi-device sync)
 sync = "git"
+
+# STEP 1: Create a private Git repository
+# - Go to GitHub/GitLab/Gitea and create a new PRIVATE repository
+# - Name it something like "my-notes" or "personal-notes"
+# - Copy the SSH or HTTPS URL
+
+# STEP 2: Set your Git remote URL
+# SSH (recommended - no password needed after setup):
 git_remote = "git@github.com:yourusername/my-notes.git"
-git_user_name = "Your Name"
+# OR HTTPS (requires username/password or token):
+# git_remote = "https://github.com/yourusername/my-notes.git"
+
+# STEP 3: Configure Git identity
+git_user_name = "Your Full Name"
 git_user_email = "your.email@example.com"
+
+# STEP 4: After saving this config, run ONE of these commands:
+# 
+# For NEW notes (create repo from existing notes):
+#   nx sync init
+#
+# For EXISTING repo (download existing notes):
+#   nx sync clone
+#
+# STEP 5: Test the setup:
+#   nx sync status    # Check sync status
+#   nx sync sync      # Manual sync test
+
+# ============================================================================
+# AUTHENTICATION SETUP (Important!)
+# ============================================================================
+
+# For SSH (git@github.com URLs):
+# 1. Generate SSH key: ssh-keygen -t ed25519 -C "your.email@example.com"
+# 2. Add to SSH agent: ssh-add ~/.ssh/id_ed25519
+# 3. Copy public key: cat ~/.ssh/id_ed25519.pub
+# 4. Add to GitHub: Settings > SSH and GPG keys > New SSH key
+# 5. Test: ssh -T git@github.com
+
+# For HTTPS (https://github.com URLs):
+# 1. Create Personal Access Token on GitHub
+# 2. Git will prompt for username (your GitHub username)
+# 3. Use token as password (not your GitHub password)
+# 4. Consider using git credential manager for convenience
+
+# TROUBLESHOOTING:
+# - Permission denied: Check SSH key setup
+# - Repository not found: Verify git_remote URL and repository exists
+# - Authentication failed: Check credentials or SSH key
+# - Run: nx doctor --category git  # For detailed diagnostics
 
 # Automatic sync configuration
 [auto_sync]

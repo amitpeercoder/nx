@@ -1,0 +1,62 @@
+# Amit's Optimized nx Configuration
+# Copy this to: /Users/amitpeer/.config/nx/config.toml
+
+# Core settings
+attachments_dir = '/Users/amitpeer/.local/share/nx/attachments'
+editor = 'code'
+encryption = 'none'
+index_file = '/Users/amitpeer/.local/share/nx/.nx/index.sqlite'
+indexer = 'fts'
+notes_dir = '/Users/amitpeer/.local/share/nx/notes'
+root = '/Users/amitpeer/.local/share/nx'
+trash_dir = '/Users/amitpeer/.local/share/nx/.nx/trash'
+
+# Git synchronization
+sync = 'git'
+git_remote = 'https://github.com/amitpeercoder/nx-notes.git'
+git_user_name = 'Amit Peer'
+git_user_email = 'your-real-email@gmail.com'  # ← UPDATE THIS!
+
+# AI configuration (Anthropic Claude)
+[ai]
+api_key = 'your-anthropic-api-key-here'
+provider = 'anthropic'
+model = 'claude-3-5-sonnet-20241022'  # Latest model
+daily_usd_budget = 5.0               # Increased budget
+max_tokens = 2000                    # More tokens
+temperature = 0.3                    # Balanced creativity
+rate_limit_qpm = 30                  # Higher rate limit
+enable_embeddings = true
+embedding_model = ''
+top_k = 6
+
+    [ai.redaction]
+    mask_numbers = true
+    strip_emails = true
+    strip_urls = false
+
+# Auto-sync (seamless cross-device sync)
+[auto_sync]
+enabled = true                       # Master switch
+auto_pull_on_startup = true          # Get updates when starting
+auto_push_on_changes = true          # Push after note operations
+auto_push_delay_seconds = 300        # Wait 5 min to batch changes
+sync_interval_seconds = 1800         # Background sync every 30 min
+conflict_strategy = 'manual'         # How to handle conflicts
+max_auto_resolve_attempts = 3        # Safety fallback
+sync_on_shutdown = true              # Never lose work
+show_sync_status = true              # Show sync status in TUI
+
+# Default values for new notes
+[defaults]
+notebook = "inbox"                   # Default notebook
+tags = ["personal"]                  # Default tags
+
+# Performance optimization
+[performance]
+cache_size_mb = 100                  # Increased cache (was 50)
+max_file_size_mb = 20                # Larger files (was 10)
+sqlite_cache_size = -30000           # More DB cache (was -20000)
+sqlite_journal_mode = 'WAL'
+sqlite_synchronous = 'NORMAL'
+sqlite_temp_store = 'MEMORY'
