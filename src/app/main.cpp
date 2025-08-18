@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
       auto& cli_app = **cli_app_result;
       
       // Create TUI app with initialized services
-      nx::tui::TUIApp tui_app(cli_app.config(), cli_app.noteStore(), cli_app.notebookManager(), cli_app.searchIndex());
+      nx::tui::TUIApp tui_app(cli_app.config(), cli_app.noteStore(), cli_app.notebookManager(), cli_app.searchIndex(), cli_app.templateManager());
       
       return tui_app.run();
     }

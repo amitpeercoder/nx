@@ -46,11 +46,13 @@ static void signalHandler(int signal) {
 TUIApp::TUIApp(nx::config::Config& config, 
                nx::store::NoteStore& note_store,
                nx::store::NotebookManager& notebook_manager,
-               nx::index::Index& search_index)
+               nx::index::Index& search_index,
+               nx::template_system::TemplateManager& template_manager)
     : config_(config)
     , note_store_(note_store)
     , notebook_manager_(notebook_manager)
     , search_index_(search_index)
+    , template_manager_(template_manager)
     , screen_(ScreenInteractive::Fullscreen()) {
   
   
@@ -250,6 +252,20 @@ Component TUIApp::createMainComponent() {
       main_view = dbox({
         main_view,
         renderMoveNoteModal() | center
+      });
+    }
+    
+    if (state_.template_browser_open) {
+      main_view = dbox({
+        main_view,
+        renderTemplateBrowser() | center
+      });
+    }
+    
+    if (state_.template_variables_modal_open) {
+      main_view = dbox({
+        main_view,
+        renderTemplateVariablesModal() | center
       });
     }
     
@@ -819,6 +835,66 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     return;
   }
   
+  // Template browser modal handling
+  if (state_.template_browser_open) {
+    if (event == ftxui::Event::Escape) {
+      closeTemplateBrowser();
+      return;
+    }
+    if (event == ftxui::Event::Return) {
+      handleTemplateSelection();
+      return;
+    }
+    if (event == ftxui::Event::Character('b') || event == ftxui::Event::Character('B')) {
+      // Create blank note
+      closeTemplateBrowser();
+      state_.new_note_modal_open = true;
+      state_.new_note_template_mode = false;
+      state_.new_note_title.clear();
+      setStatusMessage("Enter note title (Enter to create, Esc to cancel)");
+      return;
+    }
+    if (event == ftxui::Event::ArrowUp) {
+      if (state_.selected_template_index > 0) {
+        state_.selected_template_index--;
+      }
+      return;
+    }
+    if (event == ftxui::Event::ArrowDown) {
+      if (state_.selected_template_index < static_cast<int>(state_.available_templates.size()) - 1) {
+        state_.selected_template_index++;
+      }
+      return;
+    }
+    return;
+  }
+  
+  // Template variables modal handling
+  if (state_.template_variables_modal_open) {
+    if (event == ftxui::Event::Escape) {
+      closeTemplateVariablesModal();
+      return;
+    }
+    if (event == ftxui::Event::Return) {
+      processTemplateVariableInput();
+      return;
+    }
+    if (event == ftxui::Event::Backspace) {
+      if (!state_.template_variable_input.empty()) {
+        state_.template_variable_input.pop_back();
+      }
+      return;
+    }
+    if (event.is_character() && event.character().size() == 1) {
+      char c = event.character()[0];
+      if (c >= 32 && c <= 126) { // Printable ASCII
+        state_.template_variable_input += c;
+      }
+      return;
+    }
+    return;
+  }
+  
   if (state_.tag_edit_modal_open) {
     if (event == ftxui::Event::Escape) {
       state_.tag_edit_modal_open = false;
@@ -1076,9 +1152,19 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   
   // Note operations
   if (event == ftxui::Event::Character('n')) {
-    state_.new_note_modal_open = true;
-    state_.new_note_title.clear();
-    setStatusMessage("Enter note title (Enter to create, Esc to cancel)");
+    // Load available templates and show template browser
+    auto template_result = loadAvailableTemplates();
+    if (template_result && !state_.available_templates.empty()) {
+      state_.template_browser_open = true;
+      state_.selected_template_index = 0;
+      setStatusMessage("Select template (Enter) or 'b' for blank note (Esc to cancel)");
+    } else {
+      // No templates available, go directly to note creation
+      state_.new_note_modal_open = true;
+      state_.new_note_template_mode = false;
+      state_.new_note_title.clear();
+      setStatusMessage("Enter note title (Enter to create, Esc to cancel)");
+    }
     return;
   }
   
@@ -1103,6 +1189,20 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
         setStatusMessage("Error deleting note: " + result.error().message());
       }
     }
+    return;
+  }
+  
+  // Template browser
+  if (event == ftxui::Event::Character('T')) {
+    openTemplateBrowser();
+    return;
+  }
+  
+  // Create note from last used template with Shift+N
+  if (event == ftxui::Event::Character('N')) {
+    // For now, just open template browser since we don't track last used template yet
+    // In future, we could store the last used template in state
+    openTemplateBrowser();
     return;
   }
   
@@ -4352,6 +4452,132 @@ Element TUIApp::renderMoveNoteModal() const {
          color(Color::White);
 }
 
+Element TUIApp::renderTemplateBrowser() const {
+  if (!state_.template_browser_open) {
+    return text("");
+  }
+  
+  Elements modal_content;
+  
+  modal_content.push_back(text("Select Template") | bold | center);
+  modal_content.push_back(separator());
+  modal_content.push_back(text(""));
+  
+  if (state_.available_templates.empty()) {
+    modal_content.push_back(text("No templates available") | center | dim);
+    modal_content.push_back(text("Use 'nx tpl create <name>' to add templates") | center | dim);
+  } else {
+    modal_content.push_back(text("Available templates:") | bold);
+    modal_content.push_back(text(""));
+    
+    for (int i = 0; i < static_cast<int>(state_.available_templates.size()); ++i) {
+      const auto& template_info = state_.available_templates[static_cast<size_t>(i)];
+      
+      Elements template_line;
+      template_line.push_back(text("📄 "));
+      template_line.push_back(text(template_info.name) | (i == state_.selected_template_index ? bold : ftxui::nothing));
+      
+      if (!template_info.description.empty()) {
+        template_line.push_back(text(" - " + template_info.description) | dim);
+      }
+      
+      if (!template_info.category.empty() && template_info.category != "default") {
+        template_line.push_back(text(" [" + template_info.category + "]") | color(Color::Cyan));
+      }
+      
+      if (!template_info.variables.empty()) {
+        template_line.push_back(text(" (" + std::to_string(template_info.variables.size()) + " vars)") | color(Color::Yellow));
+      }
+      
+      auto template_element = hbox(template_line);
+      if (i == state_.selected_template_index) {
+        template_element = template_element | inverted;
+      }
+      
+      modal_content.push_back(template_element);
+    }
+  }
+  
+  modal_content.push_back(text(""));
+  modal_content.push_back(separator());
+  modal_content.push_back(text(""));
+  
+  modal_content.push_back(text("↑/↓ Navigate, Enter: Select, 'b': Blank note, Esc: Cancel") | center | dim);
+  
+  return vbox(modal_content) |
+         border |
+         size(WIDTH, GREATER_THAN, 50) |
+         size(WIDTH, LESS_THAN, 80) |
+         size(HEIGHT, GREATER_THAN, 10) |
+         size(HEIGHT, LESS_THAN, 20) |
+         bgcolor(Color::DarkBlue) |
+         color(Color::White);
+}
+
+Element TUIApp::renderTemplateVariablesModal() const {
+  if (!state_.template_variables_modal_open) {
+    return text("");
+  }
+  
+  Elements modal_content;
+  
+  modal_content.push_back(text("Template Variables") | bold | center);
+  modal_content.push_back(separator());
+  modal_content.push_back(text(""));
+  
+  modal_content.push_back(
+    hbox({
+      text("Template: "),
+      text(state_.selected_template_name) | bold
+    })
+  );
+  modal_content.push_back(text(""));
+  
+  // Show current variable being collected
+  if (!state_.current_variable_name.empty()) {
+    modal_content.push_back(
+      hbox({
+        text("Variable: "),
+        text(state_.current_variable_name) | bold
+      })
+    );
+    
+    std::string input_display = state_.template_variable_input.empty() ? 
+      "[Enter value]" : state_.template_variable_input;
+    modal_content.push_back(
+      hbox({
+        text("Value: "),
+        text(input_display) | 
+        (state_.template_variable_input.empty() ? dim : (bgcolor(Color::White) | color(Color::Black)))
+      })
+    );
+  }
+  
+  modal_content.push_back(text(""));
+  
+  // Show progress
+  int total_vars = static_cast<int>(state_.template_variables.size() + state_.pending_variables.size());
+  int completed_vars = static_cast<int>(state_.template_variables.size());
+  if (total_vars > 0) {
+    modal_content.push_back(
+      text("Progress: " + std::to_string(completed_vars) + "/" + std::to_string(total_vars)) | dim
+    );
+    modal_content.push_back(text(""));
+  }
+  
+  modal_content.push_back(separator());
+  modal_content.push_back(text("Enter: Continue, Esc: Cancel") | center | dim);
+  
+  return vbox(modal_content) |
+         border |
+         size(WIDTH, GREATER_THAN, 40) |
+         size(WIDTH, LESS_THAN, 70) |
+         size(HEIGHT, GREATER_THAN, 8) |
+         size(HEIGHT, LESS_THAN, 15) |
+         bgcolor(Color::DarkBlue) |
+         color(Color::White);
+}
+
 void TUIApp::resizeNotesPanel(int delta) {
   if (panel_sizing_.resizeNotes(delta)) {
     // Panel was successfully resized, provide user feedback
@@ -4444,6 +4670,156 @@ int TUIApp::calculateVisibleEditorLinesCount() const {
   
   // Don't cap the editor lines like other panels since it needs more space
   return max_lines;
+}
+
+// Template operations implementation
+void TUIApp::openTemplateBrowser() {
+  auto result = loadAvailableTemplates();
+  if (result && !state_.available_templates.empty()) {
+    state_.template_browser_open = true;
+    state_.selected_template_index = 0;
+    setStatusMessage("Select template (Enter) or 'b' for blank note (Esc to cancel)");
+  } else {
+    setStatusMessage("No templates available. Use 'nx tpl create' to add templates.");
+  }
+}
+
+void TUIApp::closeTemplateBrowser() {
+  state_.template_browser_open = false;
+  state_.selected_template_index = 0;
+  state_.available_templates.clear();
+}
+
+void TUIApp::openTemplateVariablesModal(const std::string& template_name) {
+  state_.template_variables_modal_open = true;
+  state_.selected_template_name = template_name;
+  state_.template_variables.clear();
+  state_.template_variable_input.clear();
+  state_.pending_variables.clear();
+  
+  // Extract variables from template
+  auto template_result = template_manager_.getTemplate(template_name);
+  if (template_result) {
+    auto variables = template_manager_.extractVariables(*template_result);
+    state_.pending_variables = variables;
+    
+    if (!variables.empty()) {
+      state_.current_variable_name = variables[0];
+      setStatusMessage("Enter value for '" + state_.current_variable_name + "' (Enter to continue)");
+    } else {
+      // No variables, create note directly
+      closeTemplateVariablesModal();
+      auto note_result = createNoteFromTemplate(template_name, {});
+      if (!note_result) {
+        setStatusMessage("Error creating note from template: " + note_result.error().message());
+      }
+    }
+  } else {
+    setStatusMessage("Error loading template: " + template_result.error().message());
+  }
+}
+
+void TUIApp::closeTemplateVariablesModal() {
+  state_.template_variables_modal_open = false;
+  state_.selected_template_name.clear();
+  state_.template_variables.clear();
+  state_.template_variable_input.clear();
+  state_.current_variable_name.clear();
+  state_.pending_variables.clear();
+}
+
+void TUIApp::processTemplateVariableInput() {
+  if (!state_.current_variable_name.empty()) {
+    // Store the current variable value
+    state_.template_variables[state_.current_variable_name] = state_.template_variable_input;
+    state_.template_variable_input.clear();
+    
+    // Remove current variable from pending list
+    auto it = std::find(state_.pending_variables.begin(), state_.pending_variables.end(), state_.current_variable_name);
+    if (it != state_.pending_variables.end()) {
+      state_.pending_variables.erase(it);
+    }
+    
+    // Move to next variable or create note
+    if (!state_.pending_variables.empty()) {
+      state_.current_variable_name = state_.pending_variables[0];
+      setStatusMessage("Enter value for '" + state_.current_variable_name + "' (Enter to continue)");
+    } else {
+      // All variables collected, create note
+      closeTemplateVariablesModal();
+      auto result = createNoteFromTemplate(state_.selected_template_name, state_.template_variables);
+      if (!result) {
+        setStatusMessage("Error creating note from template: " + result.error().message());
+      }
+    }
+  }
+}
+
+void TUIApp::handleTemplateSelection() {
+  if (state_.selected_template_index >= 0 && 
+      state_.selected_template_index < static_cast<int>(state_.available_templates.size())) {
+    const auto& template_info = state_.available_templates[state_.selected_template_index];
+    closeTemplateBrowser();
+    
+    // Check if template has variables
+    if (!template_info.variables.empty()) {
+      openTemplateVariablesModal(template_info.name);
+    } else {
+      // No variables, create note directly
+      auto result = createNoteFromTemplate(template_info.name, {});
+      if (!result) {
+        setStatusMessage("Error creating note from template: " + result.error().message());
+      }
+    }
+  }
+}
+
+Result<void> TUIApp::createNoteFromTemplate(const std::string& template_name, 
+                                           const std::map<std::string, std::string>& variables) {
+  try {
+    auto note_result = template_manager_.createNoteFromTemplate(template_name, variables);
+    if (!note_result) {
+      return std::unexpected(note_result.error());
+    }
+    
+    // Store the note
+    auto store_result = note_store_.store(*note_result);
+    if (!store_result) {
+      return std::unexpected(store_result.error());
+    }
+    
+    // Refresh data and select the new note
+    refreshData();
+    
+    // Find and select the newly created note
+    for (size_t i = 0; i < state_.notes.size(); ++i) {
+      if (state_.notes[i].id() == note_result->id()) {
+        state_.selected_note_index = static_cast<int>(i);
+        break;
+      }
+    }
+    
+    setStatusMessage("Note created from template '" + template_name + "'");
+    return {};
+    
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kFileError, "Failed to create note from template: " + std::string(e.what())));
+  }
+}
+
+Result<void> TUIApp::loadAvailableTemplates() {
+  try {
+    auto templates_result = template_manager_.listTemplates();
+    if (!templates_result) {
+      return std::unexpected(templates_result.error());
+    }
+    
+    state_.available_templates = *templates_result;
+    return {};
+    
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kFileError, "Failed to load templates: " + std::string(e.what())));
+  }
 }
 
 } // namespace nx::tui

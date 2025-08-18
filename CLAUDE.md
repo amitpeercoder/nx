@@ -159,6 +159,14 @@ nx ui                                            # Launch 3-pane terminal interf
 nx                                               # Auto-launch TUI if notes exist
 ```
 
+**TUI Template Integration** (NEW):
+- **'n' key**: Enhanced note creation with template selection
+- **'T' key**: Direct template browser access
+- **'N' key**: Quick template access (Shift+N)
+- **Template Browser**: Visual template selection with metadata
+- **Variable Input**: Progressive template variable collection
+- **Seamless Workflow**: Templates integrated into note creation flow
+
 ### ✅ MVP2 Phase 1 Commands (Complete)
 ```bash
 # File Attachments
@@ -245,6 +253,7 @@ Shell completions for bash/zsh
 - **File Attachment System**: Complete `nx attach` with TUI integration and file management
 - **Directory Import System**: `nx import dir` with support for Obsidian, Notion, and generic Markdown
 - **Template Management**: `nx tpl` for creating, managing, and using note templates
+- **TUI Template Integration**: Full template browser and variable input system within TUI
 - **Metadata Management**: `nx meta` for flexible key-value metadata operations
 - **System Maintenance Suite**: Complete set of maintenance and diagnostic commands
   - **Search Index Management**: `nx reindex` with rebuild, optimize, validate, stats operations

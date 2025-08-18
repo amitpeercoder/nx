@@ -27,6 +27,7 @@
 #include "nx/tui/editor_dialogs.hpp"
 #include "nx/tui/viewport_manager.hpp"
 #include "nx/tui/markdown_highlighter.hpp"
+#include "nx/template/template_manager.hpp"
 
 namespace nx::tui {
 
@@ -156,6 +157,18 @@ struct AppState {
   int move_note_selected_index = 0;               // Selected notebook index
   nx::core::NoteId move_note_target_id;           // Note to move
   
+  // Template modal state
+  bool template_browser_open = false;
+  bool template_variables_modal_open = false;
+  bool new_note_template_mode = false;  // true = using template, false = blank note
+  std::vector<nx::template_system::TemplateInfo> available_templates;
+  int selected_template_index = 0;
+  std::string selected_template_name;
+  std::map<std::string, std::string> template_variables;
+  std::string template_variable_input;
+  std::string current_variable_name;
+  std::vector<std::string> pending_variables;  // Variables still needing input
+  
   // Edit mode state - Enhanced security architecture
   std::unique_ptr<EditorBuffer> editor_buffer;
   std::unique_ptr<EditorInputValidator> input_validator;
@@ -249,11 +262,13 @@ public:
    * @param note_store Note storage interface
    * @param notebook_manager Notebook management interface
    * @param search_index Search index interface
+   * @param template_manager Template management interface
    */
   TUIApp(nx::config::Config& config, 
          nx::store::NoteStore& note_store,
          nx::store::NotebookManager& notebook_manager,
-         nx::index::Index& search_index);
+         nx::index::Index& search_index,
+         nx::template_system::TemplateManager& template_manager);
   
   ~TUIApp();
 
@@ -277,6 +292,7 @@ private:
   nx::store::NoteStore& note_store_;
   nx::store::NotebookManager& notebook_manager_;
   nx::index::Index& search_index_;
+  nx::template_system::TemplateManager& template_manager_;
   
   // Application state
   AppState state_;
@@ -339,6 +355,17 @@ private:
   void openNotebookModal(AppState::NotebookModalMode mode, const std::string& target_notebook = "");
   void openMoveNoteModal();
   
+  // Template operations
+  void openTemplateBrowser();
+  void openTemplateVariablesModal(const std::string& template_name);
+  void closeTemplateBrowser();
+  void closeTemplateVariablesModal();
+  Result<void> createNoteFromTemplate(const std::string& template_name, 
+                                      const std::map<std::string, std::string>& variables);
+  Result<void> loadAvailableTemplates();
+  void processTemplateVariableInput();
+  void handleTemplateSelection();
+  
   // AI operations
   void suggestTagsForAllNotes();
   void aiAutoTagSelectedNote();
@@ -366,6 +393,8 @@ private:
   ftxui::Element renderTagEditModal() const;
   ftxui::Element renderNotebookModal() const;
   ftxui::Element renderMoveNoteModal() const;
+  ftxui::Element renderTemplateBrowser() const;
+  ftxui::Element renderTemplateVariablesModal() const;
   ftxui::Element renderEditor() const;
   
   // Helper functions for markdown highlighting
