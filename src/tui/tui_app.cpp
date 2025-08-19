@@ -507,35 +507,44 @@ void TUIApp::applyFilters() {
   // Start with all notes (unfiltered)
   std::vector<nx::core::Metadata> filtered_notes = state_.all_notes;
   
-  // Apply search query filter
+  // Apply search query filter (title + content via search index)
   if (!state_.search_query.empty()) {
+    // Get content search results from search index
+    std::set<nx::core::NoteId> content_matches;
+    nx::index::SearchQuery search_query;
+    search_query.text = state_.search_query;
+    search_query.limit = 1000; // Large limit to get all matches
+    
+    auto search_result = search_index_.search(search_query);
+    if (search_result) {
+      for (const auto& result : *search_result) {
+        content_matches.insert(result.id);
+      }
+    }
+    
+    // Filter notes: include if found in title OR in content (via search index)
     filtered_notes.erase(
       std::remove_if(filtered_notes.begin(), filtered_notes.end(),
-        [this](const nx::core::Metadata& metadata) {
-          // Search in title and content
+        [this, &content_matches](const nx::core::Metadata& metadata) {
+          // Search in title
           std::string query_lower = state_.search_query;
           std::transform(query_lower.begin(), query_lower.end(), query_lower.begin(), ::tolower);
           
-          // Search in title
           std::string title_lower = metadata.title();
           std::transform(title_lower.begin(), title_lower.end(), title_lower.begin(), ::tolower);
           
+          // Include if found in title
           if (title_lower.find(query_lower) != std::string::npos) {
-            return false; // Found in title, include this note
+            return false; // Keep this note
           }
           
-          // Search in content
-          auto note_result = note_store_.load(metadata.id());
-          if (note_result) {
-            std::string content_lower = note_result->content();
-            std::transform(content_lower.begin(), content_lower.end(), content_lower.begin(), ::tolower);
-            
-            if (content_lower.find(query_lower) != std::string::npos) {
-              return false; // Found in content, include this note
-            }
+          // Include if found in content (via search index)
+          if (content_matches.count(metadata.id()) > 0) {
+            return false; // Keep this note
           }
           
-          return true; // Not found in title or content, exclude this note
+          // Not found in title or content, exclude
+          return true;
         }),
       filtered_notes.end());
   }
