@@ -18,7 +18,8 @@ TEST_F(NoteTest, CreateNote) {
   
   auto note = Note::create(title, content);
   
-  EXPECT_EQ(note.title(), title);
+  // Title is now derived from first line of content
+  EXPECT_EQ(note.title(), "This is test content.");
   EXPECT_EQ(note.content(), content);
   EXPECT_TRUE(note.id().isValid());
   EXPECT_TRUE(note.tags().empty());
@@ -45,9 +46,12 @@ TEST_F(NoteTest, ContentOperations) {
 TEST_F(NoteTest, MetadataConvenience) {
   auto note = Note::create("Original Title", "Content");
   
-  // Title operations
+  // Title is now derived from content, not set directly
+  EXPECT_EQ(note.title(), "Content");  // First line of content
+  
+  // Setting title no longer affects the displayed title
   note.setTitle("New Title");
-  EXPECT_EQ(note.title(), "New Title");
+  EXPECT_EQ(note.title(), "Content");  // Still shows content-derived title
   
   // Tag operations
   note.addTag("work");
@@ -80,7 +84,8 @@ TEST_F(NoteTest, FileFormatSerialization) {
   
   // Should contain metadata
   EXPECT_NE(file_format.find("id:"), std::string::npos);
-  EXPECT_NE(file_format.find("title:"), std::string::npos);
+  // Title is no longer saved to YAML since it's derived from content
+  // EXPECT_NE(file_format.find("title:"), std::string::npos);
   EXPECT_NE(file_format.find("tags:"), std::string::npos);
   EXPECT_NE(file_format.find("notebook:"), std::string::npos);
   
@@ -114,6 +119,7 @@ It has multiple paragraphs and some **markdown** formatting.
   ASSERT_OK(result);
   
   auto note = *result;
+  // Title is now derived from first line of content (markdown heading)
   EXPECT_EQ(note.title(), "Sample Note");
   EXPECT_TRUE(note.metadata().hasTag("example"));
   EXPECT_TRUE(note.metadata().hasTag("test"));
@@ -147,19 +153,19 @@ TEST_F(NoteTest, FilenameGeneration) {
   // Should contain ULID
   EXPECT_NE(filename.find(note.id().toString()), std::string::npos);
   
-  // Should contain slug
-  EXPECT_NE(filename.find("test-note-title"), std::string::npos);
+  // Should contain slug derived from content (not from title parameter)
+  EXPECT_NE(filename.find("content"), std::string::npos);
   
   // Should end with .md
   EXPECT_EQ(filename.substr(filename.length() - 3), ".md");
 }
 
 TEST_F(NoteTest, FilenameSpecialCharacters) {
-  auto note = Note::create("Special!@# Characters & Spaces", "Content");
+  auto note = Note::create("Special!@# Characters & Spaces", "Special!@# Characters & Spaces Content");
   std::string filename = note.filename();
   
-  // Should contain sanitized slug
-  EXPECT_NE(filename.find("special-characters-spaces"), std::string::npos);
+  // Should contain sanitized slug from content
+  EXPECT_NE(filename.find("special-characters-spaces-content"), std::string::npos);
   
   // Should not contain special characters
   EXPECT_EQ(filename.find("!"), std::string::npos);
@@ -214,9 +220,9 @@ TEST_F(NoteTest, TextSearch) {
   EXPECT_TRUE(note.containsText("Sample", false));
   EXPECT_TRUE(note.containsText("search", false));
   
-  // Search in title
-  EXPECT_TRUE(note.containsText("Search", true));
-  EXPECT_TRUE(note.containsText("test", false));
+  // Search in title (now derived from content)
+  EXPECT_TRUE(note.containsText("This", true));  // From content first line
+  EXPECT_TRUE(note.containsText("sample", false));
 }
 
 TEST_F(NoteTest, TextPositions) {
@@ -237,9 +243,9 @@ TEST_F(NoteTest, Validation) {
   auto note = Note::create("Valid Note", "Valid content");
   EXPECT_OK(note.validate());
   
-  // Invalid title should fail
+  // Empty title no longer fails validation since title is derived from content
   note.setTitle("");
-  EXPECT_ERROR(note.validate(), ErrorCode::kValidationError);
+  EXPECT_OK(note.validate());  // This should now pass
   
   // Reset to valid
   note.setTitle("Valid Title");

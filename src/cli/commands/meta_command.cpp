@@ -200,14 +200,27 @@ Result<int> MetaCommand::executeSet() {
   auto note = note_result.value();
   auto& metadata = note.metadata();
 
-  auto set_result = setMetadataField(metadata, key_, value_);
-  if (!set_result.has_value()) {
-    if (app_.globalOptions().json) {
-      std::cout << R"({"error": ")" << set_result.error().message() << R"("}))" << std::endl;
-    } else {
-      std::cout << "Error: " << set_result.error().message() << std::endl;
+  // Special handling for title - update content instead of metadata
+  if (key_ == "title") {
+    auto title_result = setNoteTitle(note, value_);
+    if (!title_result.has_value()) {
+      if (app_.globalOptions().json) {
+        std::cout << R"({"error": ")" << title_result.error().message() << R"("}))" << std::endl;
+      } else {
+        std::cout << "Error: " << title_result.error().message() << std::endl;
+      }
+      return 1;
     }
-    return 1;
+  } else {
+    auto set_result = setMetadataField(metadata, key_, value_);
+    if (!set_result.has_value()) {
+      if (app_.globalOptions().json) {
+        std::cout << R"({"error": ")" << set_result.error().message() << R"("}))" << std::endl;
+      } else {
+        std::cout << "Error: " << set_result.error().message() << std::endl;
+      }
+      return 1;
+    }
   }
 
   // Save the note
@@ -401,14 +414,27 @@ Result<int> MetaCommand::executeUpdate() {
 
   std::vector<std::string> updated_keys;
   for (const auto& [key, value] : key_values) {
-    auto set_result = setMetadataField(metadata, key, value);
-    if (!set_result.has_value()) {
-      if (app_.globalOptions().json) {
-        std::cout << R"({"error": "Error setting )" << key << R"(: )" << set_result.error().message() << R"("}))" << std::endl;
-      } else {
-        std::cout << "Error setting " << key << ": " << set_result.error().message() << std::endl;
+    // Special handling for title - update content instead of metadata
+    if (key == "title") {
+      auto title_result = setNoteTitle(note, value);
+      if (!title_result.has_value()) {
+        if (app_.globalOptions().json) {
+          std::cout << R"({"error": "Error setting )" << key << R"(: )" << title_result.error().message() << R"("}))" << std::endl;
+        } else {
+          std::cout << "Error setting " << key << ": " << title_result.error().message() << std::endl;
+        }
+        return 1;
       }
-      return 1;
+    } else {
+      auto set_result = setMetadataField(metadata, key, value);
+      if (!set_result.has_value()) {
+        if (app_.globalOptions().json) {
+          std::cout << R"({"error": "Error setting )" << key << R"(: )" << set_result.error().message() << R"("}))" << std::endl;
+        } else {
+          std::cout << "Error setting " << key << ": " << set_result.error().message() << std::endl;
+        }
+        return 1;
+      }
     }
     updated_keys.push_back(key);
   }
@@ -546,9 +572,29 @@ Result<std::string> MetaCommand::getMetadataField(const nx::core::Metadata& meta
   }
 }
 
+Result<void> MetaCommand::setNoteTitle(nx::core::Note& note, const std::string& new_title) {
+  // Update content first line to change the title
+  std::string updated_content = note.content();
+  if (updated_content.starts_with("# ")) {
+    // Replace the first line (title heading)
+    size_t first_newline = updated_content.find('\n');
+    if (first_newline != std::string::npos) {
+      updated_content = "# " + new_title + updated_content.substr(first_newline);
+    } else {
+      updated_content = "# " + new_title;
+    }
+  } else {
+    // Content doesn't start with heading, prepend one
+    updated_content = "# " + new_title + "\n\n" + updated_content;
+  }
+  
+  note.setContent(updated_content);
+  return {};
+}
+
 Result<void> MetaCommand::setMetadataField(nx::core::Metadata& metadata, const std::string& key, const std::string& value) {
   if (key == "title") {
-    metadata.setTitle(value);
+    return std::unexpected(makeError(ErrorCode::kValidationError, "Use setNoteTitle() to set title - it updates content instead of metadata"));
   } else if (key == "tags") {
     // Parse comma-separated tags
     std::vector<std::string> tags;

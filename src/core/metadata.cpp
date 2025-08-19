@@ -126,10 +126,10 @@ Result<void> Metadata::validate() const {
     return std::unexpected(makeError(ErrorCode::kValidationError, "Invalid note ID"));
   }
   
-  // Validate title
-  if (title_.empty()) {
-    return std::unexpected(makeError(ErrorCode::kValidationError, "Title cannot be empty"));
-  }
+  // Title can be empty now since it's derived from content
+  // if (title_.empty()) {
+  //   return std::unexpected(makeError(ErrorCode::kValidationError, "Title cannot be empty"));
+  // }
   
   if (title_.size() > 200) {
     return std::unexpected(makeError(ErrorCode::kValidationError, "Title too long (max 200 characters)"));
@@ -173,7 +173,10 @@ std::string Metadata::toYaml() const {
   YAML::Node node;
   
   node["id"] = id_.toString();
-  node["title"] = title_;
+  // Don't save empty title to YAML - title is now derived from content
+  if (!title_.empty()) {
+    node["title"] = title_;
+  }
   node["created"] = nx::util::Time::toRfc3339(created_);
   node["updated"] = nx::util::Time::toRfc3339(updated_);
   
@@ -206,9 +209,9 @@ Result<Metadata> Metadata::fromYaml(const std::string& yaml) {
   try {
     YAML::Node node = YAML::Load(yaml);
     
-    // Parse required fields
-    if (!node["id"] || !node["title"]) {
-      return std::unexpected(makeError(ErrorCode::kParseError, "Missing required fields: id or title"));
+    // Parse required fields - only id is required now
+    if (!node["id"]) {
+      return std::unexpected(makeError(ErrorCode::kParseError, "Missing required field: id"));
     }
     
     auto id_result = NoteId::fromString(node["id"].as<std::string>());
@@ -216,7 +219,9 @@ Result<Metadata> Metadata::fromYaml(const std::string& yaml) {
       return std::unexpected(id_result.error());
     }
     
-    Metadata metadata(*id_result, node["title"].as<std::string>());
+    // Title is optional now - it will be derived from content
+    std::string title = node["title"] ? node["title"].as<std::string>() : "";
+    Metadata metadata(*id_result, title);
     
     // Parse timestamps
     if (node["created"]) {

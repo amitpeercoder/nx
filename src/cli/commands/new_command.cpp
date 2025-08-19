@@ -27,8 +27,8 @@ Result<int> NewCommand::execute(const GlobalOptions& options) {
     // Generate new note ID
     auto note_id = nx::core::NoteId::generate();
     
-    // Create metadata (title will be updated after AI processing if needed)
-    nx::core::Metadata metadata(note_id, title_.empty() ? "Untitled" : title_);
+    // Create metadata with empty title (will be derived from content)
+    nx::core::Metadata metadata(note_id, "");
     
     // Set notebook
     if (!notebook_.empty()) {
@@ -98,10 +98,7 @@ Result<int> NewCommand::execute(const GlobalOptions& options) {
       }
     }
     
-    // Update metadata title if AI generated one
-    if (!title_.empty()) {
-      metadata.setTitle(title_);
-    }
+    // Don't set title in metadata - it will be derived from content first line
     
     // Process tags after potential AI generation
     for (const auto& tag_string : tags_) {
@@ -118,18 +115,17 @@ Result<int> NewCommand::execute(const GlobalOptions& options) {
       }
     }
     
-    // Create final content with title header
-    if (title_.empty()) {
-      if (body_content.empty()) {
-        content = "# Untitled\n\n";
-      } else {
-        content = "# Untitled\n\n" + body_content;
-      }
+    // Create final content with title as first line (for title derivation)
+    std::string final_title = title_.empty() ? "Untitled" : title_;
+    
+    if (body_content.empty()) {
+      content = "# " + final_title + "\n\n";
     } else {
-      if (body_content.empty()) {
-        content = "# " + title_ + "\n\n";
+      // If body_content already starts with a heading, use it as-is
+      if (body_content.starts_with("# ")) {
+        content = body_content;
       } else {
-        content = "# " + title_ + "\n\n" + body_content;
+        content = "# " + final_title + "\n\n" + body_content;
       }
     }
     

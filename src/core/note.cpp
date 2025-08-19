@@ -11,7 +11,8 @@ Note::Note(Metadata metadata, std::string content)
 
 Note Note::create(const std::string& title, const std::string& content) {
   auto id = NoteId::generate();
-  Metadata metadata(id, title);
+  // Title parameter is now ignored - title will be derived from content
+  Metadata metadata(id, "");  // Empty title - will be derived from content
   return Note(std::move(metadata), content);
 }
 
@@ -41,7 +42,16 @@ void Note::prependContent(const std::string& content) {
   metadata_.touch();
 }
 
+const std::string& Note::title() const noexcept {
+  // Return title derived from first line of content
+  static thread_local std::string cached_title;
+  cached_title = extractTitleFromContent();
+  return cached_title;
+}
+
 void Note::setTitle(const std::string& title) {
+  // Setting title directly is now deprecated - title is derived from content
+  // But we'll keep this for backward compatibility during transition
   metadata_.setTitle(title);
 }
 
@@ -138,7 +148,7 @@ Result<Note> Note::fromFileFormat(const std::string& content) {
 }
 
 std::string Note::filename() const {
-  std::string slug = generateSlug(metadata_.title());
+  std::string slug = generateSlug(title());  // Use derived title
   return metadata_.id().toString() + "-" + slug + ".md";
 }
 
@@ -241,6 +251,56 @@ std::string Note::generateSlug(const std::string& title) noexcept {
   }
   
   return slug;
+}
+
+std::string Note::extractTitleFromContent() const noexcept {
+  if (content_.empty()) {
+    return "Untitled";
+  }
+  
+  // Find the first line
+  size_t end_of_line = content_.find('\n');
+  std::string first_line = content_.substr(0, end_of_line);
+  
+  // Remove leading/trailing whitespace
+  auto start = first_line.find_first_not_of(" \t\r");
+  if (start == std::string::npos) {
+    return "Untitled";
+  }
+  
+  auto end = first_line.find_last_not_of(" \t\r");
+  first_line = first_line.substr(start, end - start + 1);
+  
+  // Remove markdown heading markers if present
+  if (first_line.starts_with("# ")) {
+    first_line = first_line.substr(2);
+  } else if (first_line.starts_with("## ")) {
+    first_line = first_line.substr(3);
+  } else if (first_line.starts_with("### ")) {
+    first_line = first_line.substr(4);
+  } else if (first_line.starts_with("#### ")) {
+    first_line = first_line.substr(5);
+  } else if (first_line.starts_with("##### ")) {
+    first_line = first_line.substr(6);
+  } else if (first_line.starts_with("###### ")) {
+    first_line = first_line.substr(7);
+  }
+  
+  // Remove leading/trailing whitespace again after removing markdown
+  start = first_line.find_first_not_of(" \t\r");
+  if (start == std::string::npos) {
+    return "Untitled";
+  }
+  
+  end = first_line.find_last_not_of(" \t\r");
+  first_line = first_line.substr(start, end - start + 1);
+  
+  // Limit length to reasonable size
+  if (first_line.length() > 200) {
+    first_line = first_line.substr(0, 200);
+  }
+  
+  return first_line.empty() ? "Untitled" : first_line;
 }
 
 }  // namespace nx::core

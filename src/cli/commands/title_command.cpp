@@ -287,12 +287,11 @@ Result<void> TitleCommand::applyTitle(const std::string& new_title) {
   
   auto note = note_result.value();
   
-  // Update note metadata with new title
+  // Don't update metadata title - it will be derived from content
   auto updated_metadata = note.metadata();
-  updated_metadata.setTitle(new_title);
   updated_metadata.touch();  // Update modified time
   
-  // Update content if it starts with a title heading
+  // Update content first line to change the title
   std::string updated_content = note.content();
   if (updated_content.starts_with("# ")) {
     // Replace the first line (title heading)
@@ -302,6 +301,9 @@ Result<void> TitleCommand::applyTitle(const std::string& new_title) {
     } else {
       updated_content = "# " + new_title;
     }
+  } else {
+    // Content doesn't start with heading, prepend one
+    updated_content = "# " + new_title + "\n\n" + updated_content;
   }
   
   // Create updated note

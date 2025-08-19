@@ -47,6 +47,7 @@ private:
   // Metadata field helpers
   Result<std::string> getMetadataField(const nx::core::Metadata& metadata, const std::string& key);
   Result<void> setMetadataField(nx::core::Metadata& metadata, const std::string& key, const std::string& value);
+  Result<void> setNoteTitle(nx::core::Note& note, const std::string& new_title);
   std::vector<std::pair<std::string, std::string>> getAllMetadataFields(const nx::core::Metadata& metadata);
 };
 

@@ -33,7 +33,7 @@ class Note {
   void prependContent(const std::string& content);
 
   // Convenience metadata accessors
-  const std::string& title() const noexcept { return metadata_.title(); }
+  const std::string& title() const noexcept;
   void setTitle(const std::string& title);
 
   const std::vector<std::string>& tags() const noexcept { return metadata_.tags(); }
@@ -72,6 +72,9 @@ class Note {
 
   // Generate filename slug from title
   static std::string generateSlug(const std::string& title) noexcept;
+  
+  // Extract title from first line of content
+  std::string extractTitleFromContent() const noexcept;
 };
 
 }  // namespace nx::core

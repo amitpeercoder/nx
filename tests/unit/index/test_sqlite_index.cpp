@@ -69,7 +69,8 @@ TEST_F(SqliteIndexTest, AddAndSearchNote) {
   
   const auto& result = search_result->front();
   EXPECT_EQ(result.id, note.id());
-  EXPECT_EQ(result.title, "Test Note");
+  // Title is now derived from content first line
+  EXPECT_EQ(result.title, "This is test content with keywords");
   EXPECT_FALSE(result.snippet.empty());
   EXPECT_GT(result.score, 0.0);
 }
@@ -207,7 +208,8 @@ TEST_F(SqliteIndexTest, UpdateNote) {
   search_result = index_->search(query);
   ASSERT_OK(search_result);
   ASSERT_EQ(search_result->size(), 1);
-  EXPECT_EQ(search_result->front().title, "Updated Title");
+  // Title is now derived from content
+  EXPECT_EQ(search_result->front().title, "Updated content");
   
   // Original content should not be found
   query.text = "Original";
