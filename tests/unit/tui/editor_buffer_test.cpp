@@ -430,10 +430,12 @@ TEST_F(EditorBufferTest, EdgeCase_SingleCharacterLines) {
 }
 
 TEST_F(EditorBufferTest, EdgeCase_EmptyDocument) {
-    EXPECT_EQ(editor_buffer_->getLineCount(), 0);
+    // Empty documents should have one empty line for editing
+    EXPECT_EQ(editor_buffer_->getLineCount(), 1);
     
     auto result = editor_buffer_->getLine(0);
-    EXPECT_FALSE(result.has_value());
+    EXPECT_TRUE(result.has_value());
+    EXPECT_EQ(result.value(), "");
 }
 
 // Stress Tests

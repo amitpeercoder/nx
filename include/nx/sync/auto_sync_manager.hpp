@@ -6,6 +6,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <functional>
 
 #include "nx/common.hpp"
 #include "nx/config/config.hpp"

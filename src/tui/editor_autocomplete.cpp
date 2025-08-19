@@ -155,26 +155,26 @@ Result<std::vector<CompletionItem>> MarkdownSnippetProvider::getCompletions(cons
 
 void MarkdownSnippetProvider::initializeSnippets() {
     snippets_ = {
-        {"bold", "**bold text**", "Make text bold", "formatting"},
-        {"italic", "*italic text*", "Make text italic", "formatting"},
-        {"code", "`inline code`", "Inline code", "formatting"},
-        {"codeblock", "```\ncode block\n```", "Code block", "formatting"},
-        {"link", "[link text](url)", "Create link", "formatting"},
-        {"image", "![alt text](image-url)", "Insert image", "formatting"},
-        {"h1", "# Heading 1", "Level 1 heading", "heading"},
-        {"h2", "## Heading 2", "Level 2 heading", "heading"},
-        {"h3", "### Heading 3", "Level 3 heading", "heading"},
-        {"list", "- list item", "Bullet list item", "list"},
-        {"numlist", "1. numbered item", "Numbered list item", "list"},
-        {"checkbox", "- [ ] task item", "Checkbox/task item", "list"},
-        {"quote", "> blockquote", "Block quote", "formatting"},
-        {"hr", "---", "Horizontal rule", "formatting"},
-        {"table", "| Column 1 | Column 2 |\n|----------|----------|\n| Cell 1   | Cell 2   |", "Table", "formatting"},
-        {"todo", "- [ ] TODO: ", "TODO item", "task"},
-        {"note", "> **Note**: ", "Note callout", "callout"},
-        {"warning", "> **Warning**: ", "Warning callout", "callout"},
-        {"date", "", "Current date", "utility"}, // Will be filled with actual date
-        {"time", "", "Current time", "utility"}  // Will be filled with actual time
+        {"bold", "**bold text**", "Make text bold", "formatting", 1.0, "", 0},
+        {"italic", "*italic text*", "Make text italic", "formatting", 1.0, "", 0},
+        {"code", "`inline code`", "Inline code", "formatting", 1.0, "", 0},
+        {"codeblock", "```\ncode block\n```", "Code block", "formatting", 1.0, "", 0},
+        {"link", "[link text](url)", "Create link", "formatting", 1.0, "", 0},
+        {"image", "![alt text](image-url)", "Insert image", "formatting", 1.0, "", 0},
+        {"h1", "# Heading 1", "Level 1 heading", "heading", 1.0, "", 0},
+        {"h2", "## Heading 2", "Level 2 heading", "heading", 1.0, "", 0},
+        {"h3", "### Heading 3", "Level 3 heading", "heading", 1.0, "", 0},
+        {"list", "- list item", "Bullet list item", "list", 1.0, "", 0},
+        {"numlist", "1. numbered item", "Numbered list item", "list", 1.0, "", 0},
+        {"checkbox", "- [ ] task item", "Checkbox/task item", "list", 1.0, "", 0},
+        {"quote", "> blockquote", "Block quote", "formatting", 1.0, "", 0},
+        {"hr", "---", "Horizontal rule", "formatting", 1.0, "", 0},
+        {"table", "| Column 1 | Column 2 |\n|----------|----------|\n| Cell 1   | Cell 2   |", "Table", "formatting", 1.0, "", 0},
+        {"todo", "- [ ] TODO: ", "TODO item", "task", 1.0, "", 0},
+        {"note", "> **Note**: ", "Note callout", "callout", 1.0, "", 0},
+        {"warning", "> **Warning**: ", "Warning callout", "callout", 1.0, "", 0},
+        {"date", "", "Current date", "utility", 1.0, "", 0}, // Will be filled with actual date
+        {"time", "", "Current time", "utility", 1.0, "", 0}  // Will be filled with actual time
     };
     
     // Fill in dynamic content

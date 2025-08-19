@@ -623,16 +623,14 @@ void EditorBuffer::rebuildLineCache() const {
 
     line_starts_.clear();
     
-    // Only add first line if buffer has content
-    if (gap_buffer_->size() > 0) {
-        line_starts_.push_back(0); // First line starts at 0
-        
-        // Find all newline positions
-        for (size_t i = 0; i < gap_buffer_->size(); ++i) {
-            auto char_result = gap_buffer_->getCharAt(i);
-            if (char_result && char_result.value() == '\n') {
-                line_starts_.push_back(i + 1);
-            }
+    // Always have at least one line, even for empty buffers
+    line_starts_.push_back(0); // First line starts at 0
+    
+    // Find all newline positions
+    for (size_t i = 0; i < gap_buffer_->size(); ++i) {
+        auto char_result = gap_buffer_->getCharAt(i);
+        if (char_result && char_result.value() == '\n') {
+            line_starts_.push_back(i + 1);
         }
     }
 

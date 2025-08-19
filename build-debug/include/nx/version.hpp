@@ -14,13 +14,13 @@ struct GitVersionInfo {
     static constexpr int patch = 0;
     static constexpr std::string_view prerelease = "";
     static constexpr std::string_view build = "";
-    static constexpr std::string_view full = "1.0.0-debug.5ac76f8+dirty";
-    static constexpr std::string_view commit_hash = "5ac76f8";
+    static constexpr std::string_view full = "1.0.0-debug.c472c24+dirty";
+    static constexpr std::string_view commit_hash = "c472c24";
     static constexpr bool is_dirty = true;
     static constexpr std::string_view version_type = "debug";
     
     // Commits since last tag (0 if on tag, empty string if no tags)
-    static constexpr std::string_view commits_since_tag = "1";
+    static constexpr std::string_view commits_since_tag = "14";
     
     // Convenience methods
     static std::string getVersionString() {
