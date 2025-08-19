@@ -516,10 +516,26 @@ void TUIApp::applyFilters() {
           std::string query_lower = state_.search_query;
           std::transform(query_lower.begin(), query_lower.end(), query_lower.begin(), ::tolower);
           
+          // Search in title
           std::string title_lower = metadata.title();
           std::transform(title_lower.begin(), title_lower.end(), title_lower.begin(), ::tolower);
           
-          return title_lower.find(query_lower) == std::string::npos;
+          if (title_lower.find(query_lower) != std::string::npos) {
+            return false; // Found in title, include this note
+          }
+          
+          // Search in content
+          auto note_result = note_store_.load(metadata.id());
+          if (note_result) {
+            std::string content_lower = note_result->content();
+            std::transform(content_lower.begin(), content_lower.end(), content_lower.begin(), ::tolower);
+            
+            if (content_lower.find(query_lower) != std::string::npos) {
+              return false; // Found in content, include this note
+            }
+          }
+          
+          return true; // Not found in title or content, exclude this note
         }),
       filtered_notes.end());
   }
@@ -1859,8 +1875,18 @@ Element TUIApp::renderNoteMetadata(const nx::core::Metadata& metadata, bool sele
   Elements content;
   
   // Primary: Note title with selection indicator
-  std::string title_str = selected ? "▶ " + metadata.title() : "  " + metadata.title();
-  auto title_element = text(title_str);
+  std::string prefix = selected ? "▶ " : "  ";
+  Element title_element;
+  
+  // Apply search highlighting to title if search is active
+  if (!state_.search_query.empty()) {
+    auto highlighted_title = highlightSearchInLine(metadata.title(), state_.search_query);
+    title_element = hbox({text(prefix), highlighted_title});
+  } else {
+    std::string title_str = prefix + metadata.title();
+    title_element = text(title_str);
+  }
+  
   if (selected) {
     title_element = title_element | inverted;
   }
