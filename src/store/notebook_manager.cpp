@@ -49,7 +49,7 @@ Result<void> NotebookManager::createNotebook(const std::string& name) {
   
   auto placeholder_note = nx::core::Note::create(
     ".notebook_" + name,
-    "# " + name + "\n\nNotebook created on " + std::ctime(&time_t)
+    "# .notebook_" + name + "\n\nNotebook created on " + std::ctime(&time_t)
   );
   placeholder_note.setNotebook(name);
   
@@ -160,9 +160,11 @@ Result<void> NotebookManager::renameNotebook(const std::string& old_name, const 
     note.setNotebook(new_name);
     note.touch();  // Update modified timestamp
     
-    // Update placeholder note title if it exists
+    // Update placeholder note content if it exists (title is now derived from content)
     if (note.title().starts_with(".notebook_")) {
-      note.setTitle(".notebook_" + new_name);
+      auto now = std::chrono::system_clock::now();
+      auto time_t = std::chrono::system_clock::to_time_t(now);
+      note.setContent("# .notebook_" + new_name + "\n\nNotebook renamed on " + std::ctime(&time_t));
     }
     
     auto store_result = note_store_.store(note);

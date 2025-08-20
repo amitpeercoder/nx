@@ -581,13 +581,22 @@ UChar32 UnicodeHandler::Utf8Iterator::next() {
     int32_t len = static_cast<int32_t>(length_);
     
     U8_NEXT(text_.c_str(), idx, len, codepoint);
-    index_ = static_cast<size_t>(idx);
     
-    if (codepoint == U_SENTINEL) {
-        // Skip invalid byte
-        index_++;
+    // If ICU failed, try simple ASCII fallback
+    if (codepoint == U_SENTINEL && index_ < length_) {
+        uint8_t byte = static_cast<uint8_t>(text_[index_]);
+        if (byte < 0x80) {  // ASCII
+            codepoint = static_cast<UChar32>(byte);
+            index_++;
+            return codepoint;
+        } else {
+            // Skip invalid byte
+            index_++;
+            return U_SENTINEL;
+        }
     }
     
+    index_ = static_cast<size_t>(idx);
     return codepoint;
 }
 

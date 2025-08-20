@@ -1,11 +1,18 @@
 #include "nx/util/filesystem.hpp"
 
+#include <fstream>
+#include <random>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#else
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
-
-#include <fstream>
-#include <random>
+#endif
 
 namespace nx::util {
 
@@ -76,11 +83,19 @@ Result<void> AtomicFileWriter::commit() {
   }
   
   // Sync the temporary file
+#ifdef _WIN32
+  int fd = _open(temp_path_.string().c_str(), _O_RDONLY);
+  if (fd >= 0) {
+    _commit(fd);
+    _close(fd);
+  }
+#else
   int fd = open(temp_path_.c_str(), O_RDONLY);
   if (fd >= 0) {
     fsync(fd);
     close(fd);
   }
+#endif
   
   // Atomic rename
   std::error_code ec;
@@ -92,6 +107,15 @@ Result<void> AtomicFileWriter::commit() {
   }
   
   // Sync parent directory to ensure rename is persistent
+#ifdef _WIN32
+  if (!parent.empty()) {
+    int dir_fd = _open(parent.string().c_str(), _O_RDONLY);
+    if (dir_fd >= 0) {
+      _commit(dir_fd);
+      _close(dir_fd);
+    }
+  }
+#else
   if (!parent.empty()) {
     int dir_fd = open(parent.c_str(), O_RDONLY);
     if (dir_fd >= 0) {
@@ -99,6 +123,7 @@ Result<void> AtomicFileWriter::commit() {
       close(dir_fd);
     }
   }
+#endif
   
   committed_ = true;
   return {};
@@ -122,7 +147,7 @@ Result<SecureTempFile> SecureTempFile::create(const std::filesystem::path& dir) 
   std::filesystem::path temp_dir = dir.empty() ? std::filesystem::temp_directory_path() : dir;
   
   // Try O_TMPFILE first (Linux-specific)
-#ifdef O_TMPFILE
+#if defined(O_TMPFILE) && !defined(_WIN32)
   int fd = open(temp_dir.c_str(), O_TMPFILE | O_RDWR, S_IRUSR | S_IWUSR);
   if (fd >= 0) {
     return SecureTempFile(fd, temp_dir / "<anonymous>");
@@ -136,7 +161,11 @@ Result<SecureTempFile> SecureTempFile::create(const std::filesystem::path& dir) 
   
   std::filesystem::path temp_path = temp_dir / ("nx_temp." + std::to_string(dis(gen)));
   
+#ifdef _WIN32
+  int fd = _open(temp_path.string().c_str(), _O_CREAT | _O_RDWR | _O_EXCL, _S_IREAD | _S_IWRITE);
+#else
   int fd = open(temp_path.c_str(), O_CREAT | O_RDWR | O_EXCL, S_IRUSR | S_IWUSR);
+#endif
   if (fd < 0) {
     return std::unexpected(makeError(ErrorCode::kFileWriteError, 
                                      "Cannot create secure temporary file"));
@@ -157,6 +186,16 @@ Result<void> SecureTempFile::write(const std::string& content) {
     return std::unexpected(makeError(ErrorCode::kFileWriteError, "File not open"));
   }
   
+#ifdef _WIN32
+  int written = _write(fd_, content.data(), static_cast<unsigned int>(content.size()));
+  if (written < 0 || static_cast<size_t>(written) != content.size()) {
+    return std::unexpected(makeError(ErrorCode::kFileWriteError, "Write failed"));
+  }
+  
+  if (_commit(fd_) < 0) {
+    return std::unexpected(makeError(ErrorCode::kFileWriteError, "Sync failed"));
+  }
+#else
   ssize_t written = ::write(fd_, content.data(), content.size());
   if (written < 0 || static_cast<size_t>(written) != content.size()) {
     return std::unexpected(makeError(ErrorCode::kFileWriteError, "Write failed"));
@@ -165,6 +204,7 @@ Result<void> SecureTempFile::write(const std::string& content) {
   if (fsync(fd_) < 0) {
     return std::unexpected(makeError(ErrorCode::kFileWriteError, "Sync failed"));
   }
+#endif
   
   return {};
 }
@@ -175,6 +215,21 @@ Result<std::string> SecureTempFile::read() const {
   }
   
   // Get file size
+#ifdef _WIN32
+  long size = _lseek(fd_, 0, SEEK_END);
+  if (size < 0) {
+    return std::unexpected(makeError(ErrorCode::kFileReadError, "Cannot get file size"));
+  }
+  
+  if (_lseek(fd_, 0, SEEK_SET) < 0) {
+    return std::unexpected(makeError(ErrorCode::kFileReadError, "Cannot seek to beginning"));
+  }
+  
+  std::string content(size, '\0');
+  int bytes_read = _read(fd_, content.data(), static_cast<unsigned int>(size));
+  if (bytes_read != size) {
+    return std::unexpected(makeError(ErrorCode::kFileReadError, "Read failed"));
+#else
   off_t size = lseek(fd_, 0, SEEK_END);
   if (size < 0) {
     return std::unexpected(makeError(ErrorCode::kFileReadError, "Cannot get file size"));
@@ -188,6 +243,7 @@ Result<std::string> SecureTempFile::read() const {
   ssize_t bytes_read = ::read(fd_, content.data(), size);
   if (bytes_read != size) {
     return std::unexpected(makeError(ErrorCode::kFileReadError, "Read failed"));
+#endif
   }
   
   return content;
@@ -195,7 +251,11 @@ Result<std::string> SecureTempFile::read() const {
 
 void SecureTempFile::cleanup() {
   if (fd_ >= 0) {
+#ifdef _WIN32
+    _close(fd_);
+#else
     close(fd_);
+#endif
     fd_ = -1;
   }
   
@@ -390,22 +450,36 @@ Result<std::uintmax_t> FileSystem::availableSpace(const std::filesystem::path& p
 }
 
 Result<void> FileSystem::syncDirectory(const std::filesystem::path& path) {
+#ifdef _WIN32
+  int fd = _open(path.string().c_str(), _O_RDONLY);
+#else
   int fd = open(path.c_str(), O_RDONLY);
+#endif
   if (fd < 0) {
     return std::unexpected(makeError(ErrorCode::kFileReadError, 
                                      "Cannot open directory for sync"));
   }
   
   auto result = fsyncFile(fd);
+#ifdef _WIN32
+  _close(fd);
+#else
   close(fd);
+#endif
   
   return result;
 }
 
 Result<void> FileSystem::fsyncFile(int fd) {
+#ifdef _WIN32
+  if (_commit(fd) < 0) {
+    return std::unexpected(makeError(ErrorCode::kFileWriteError, "Sync failed"));
+  }
+#else
   if (fsync(fd) < 0) {
     return std::unexpected(makeError(ErrorCode::kFileWriteError, "Sync failed"));
   }
+#endif
   return {};
 }
 

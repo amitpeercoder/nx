@@ -1,25 +1,37 @@
 #include "nx/util/safe_process.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <process.h>
+#include <io.h>
+#include <fcntl.h>
+#else
 #include <unistd.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 #include <spawn.h>
 #include <signal.h>
 #include <termios.h>
+#endif
+
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
 #include <sstream>
 
+#ifndef _WIN32
 extern char **environ;
+#endif
 
 namespace nx::util {
 
 namespace {
+#ifndef _WIN32
   // Saved terminal settings for restoration
   static struct termios saved_termios;
   static bool termios_saved = false;
+#endif
 
 
   /**
@@ -159,6 +171,11 @@ Result<pid_t> SafeProcess::executeAsync(
     const std::string& command,
     const std::vector<std::string>& args,
     const std::optional<std::string>& working_dir) {
+#ifdef _WIN32
+  // Windows stub implementation
+  return std::unexpected(makeError(ErrorCode::kProcessError, 
+                                   "Async process execution not implemented on Windows"));
+#else
   
   // Validate inputs
   if (!SafeProcess::isValidCommand(command)) {
@@ -217,6 +234,7 @@ Result<pid_t> SafeProcess::executeAsync(
   }
   
   return pid;
+#endif
 }
 
 bool SafeProcess::isArgumentSafe(const std::string& arg) {
@@ -288,6 +306,14 @@ Result<SafeProcess::ProcessResult> SafeProcess::executeInternal(
     const std::vector<std::string>& args,
     const std::optional<std::string>& working_dir,
     bool capture_output) {
+#ifdef _WIN32
+  // Windows stub implementation
+  ProcessResult result;
+  result.exit_code = -1;
+  result.stdout_output = "";
+  result.stderr_output = "Process execution not implemented on Windows";
+  return result;
+#else
   
   // Validate inputs
   if (!SafeProcess::isValidCommand(command)) {
@@ -417,20 +443,30 @@ Result<SafeProcess::ProcessResult> SafeProcess::executeInternal(
   }
   
   return result;
+#endif
 }
 
 // Terminal Control Implementation
 
 Result<void> TerminalControl::saveSettings() {
+#ifdef _WIN32
+  // Windows stub
+  return {};
+#else
   if (tcgetattr(STDIN_FILENO, &saved_termios) != 0) {
     return std::unexpected(makeError(ErrorCode::kSystemError,
                                      "Failed to get terminal attributes: " + std::string(strerror(errno))));
   }
   termios_saved = true;
   return {};
+#endif
 }
 
 Result<void> TerminalControl::restoreSaneState() {
+#ifdef _WIN32
+  // Windows stub
+  return {};
+#else
   struct termios sane_termios;
   
   // Get current settings
@@ -477,9 +513,14 @@ Result<void> TerminalControl::restoreSaneState() {
   }
   
   return {};
+#endif
 }
 
 Result<void> TerminalControl::restoreSettings() {
+#ifdef _WIN32
+  // Windows stub
+  return {};
+#else
   if (!termios_saved) {
     return std::unexpected(makeError(ErrorCode::kInvalidState,
                                      "No terminal settings saved"));
@@ -491,9 +532,14 @@ Result<void> TerminalControl::restoreSettings() {
   }
   
   return {};
+#endif
 }
 
 bool TerminalControl::isRawMode() {
+#ifdef _WIN32
+  // Windows stub
+  return false;
+#else
   struct termios current_termios;
   if (tcgetattr(STDIN_FILENO, &current_termios) != 0) {
     return false;
@@ -501,6 +547,7 @@ bool TerminalControl::isRawMode() {
   
   // Check if canonical mode is disabled (raw mode characteristic)
   return !(current_termios.c_lflag & ICANON);
+#endif
 }
 
 } // namespace nx::util

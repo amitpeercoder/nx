@@ -145,14 +145,14 @@ TEST_F(NotebookManagerTest, RenameNonExistentNotebook) {
 // Test notebook deletion
 TEST_F(NotebookManagerTest, DeleteNotebook) {
     // Create notebook (using non-reserved name)
-    ASSERT_TRUE(notebook_manager_->createNotebook("temporary").has_value());
+    ASSERT_TRUE(notebook_manager_->createNotebook("empty_notebook").has_value());
     
     // Delete notebook (only placeholder notes, should work without force)
-    auto result = notebook_manager_->deleteNotebook("temporary", false);
+    auto result = notebook_manager_->deleteNotebook("empty_notebook", false);
     ASSERT_TRUE(result.has_value()) << "Failed to delete notebook: " << result.error().message();
     
     // Verify notebook is gone
-    auto info = notebook_manager_->getNotebookInfo("temporary");
+    auto info = notebook_manager_->getNotebookInfo("empty_notebook");
     EXPECT_FALSE(info.has_value());
 }
 
@@ -226,19 +226,19 @@ TEST_F(NotebookManagerTest, GetNonExistentNotebookInfo) {
 // Test listing notebooks by notebook
 TEST_F(NotebookManagerTest, ListNotesByNotebook) {
     // Create notebooks and notes
-    ASSERT_TRUE(notebook_manager_->createNotebook("work").has_value());
-    ASSERT_TRUE(notebook_manager_->createNotebook("personal").has_value());
+    ASSERT_TRUE(notebook_manager_->createNotebook("list_test_work").has_value());
+    ASSERT_TRUE(notebook_manager_->createNotebook("list_test_personal").has_value());
     
-    auto work_note1 = createTestNote("Work Note 1", "Content 1", "work");
-    auto work_note2 = createTestNote("Work Note 2", "Content 2", "work");
-    auto personal_note = createTestNote("Personal Note", "Personal content", "personal");
+    auto work_note1 = createTestNote("Work Note 1", "Content 1", "list_test_work");
+    auto work_note2 = createTestNote("Work Note 2", "Content 2", "list_test_work");
+    auto personal_note = createTestNote("Personal Note", "Personal content", "list_test_personal");
     
     ASSERT_TRUE(store_->store(work_note1).has_value());
     ASSERT_TRUE(store_->store(work_note2).has_value());
     ASSERT_TRUE(store_->store(personal_note).has_value());
     
     // List notes by notebook
-    auto work_note_ids = notebook_manager_->getNotesInNotebook("work");
+    auto work_note_ids = notebook_manager_->getNotesInNotebook("list_test_work");
     ASSERT_TRUE(work_note_ids.has_value());
     
     // Count non-placeholder notes
@@ -252,7 +252,7 @@ TEST_F(NotebookManagerTest, ListNotesByNotebook) {
     
     EXPECT_EQ(real_work_notes, 2);
     
-    auto personal_note_ids = notebook_manager_->getNotesInNotebook("personal");
+    auto personal_note_ids = notebook_manager_->getNotesInNotebook("list_test_personal");
     ASSERT_TRUE(personal_note_ids.has_value());
     
     int real_personal_notes = 0;

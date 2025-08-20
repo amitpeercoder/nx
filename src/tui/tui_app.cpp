@@ -13,12 +13,14 @@
 #include <cctype>
 #include <atomic>
 #include <thread>
+#ifndef _WIN32
 #include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#endif
 
 #include <nlohmann/json.hpp>
 #include "nx/util/http_client.hpp"
-#include <sys/wait.h>
-#include <fcntl.h>
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>

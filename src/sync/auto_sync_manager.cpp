@@ -14,9 +14,9 @@ AutoSyncManager::AutoSyncManager(const nx::config::Config& config)
         config_.auto_sync.enabled) {
         
         GitConfig git_config{
+            .remote_url = config_.git_remote,
             .user_name = config_.git_user_name,
-            .user_email = config_.git_user_email,
-            .remote_url = config_.git_remote
+            .user_email = config_.git_user_email
         };
         
         auto sync_result = GitSync::initialize(config_.notes_dir, git_config);

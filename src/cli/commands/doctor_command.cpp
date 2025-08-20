@@ -6,8 +6,10 @@
 #include <sstream>
 #include <algorithm>
 #include <sys/stat.h>
+#ifndef _WIN32
 #include <sys/statvfs.h>
 #include <unistd.h>
+#endif
 #include <nlohmann/json.hpp>
 
 #include "nx/util/safe_process.hpp"
@@ -789,7 +791,11 @@ double DoctorCommand::endTimer(const std::chrono::high_resolution_clock::time_po
 
 bool DoctorCommand::checkFilePermissions(const std::filesystem::path& path, int required_perms) {
   struct stat file_stat;
+#ifdef _WIN32
+  if (stat(path.string().c_str(), &file_stat) != 0) {
+#else
   if (stat(path.c_str(), &file_stat) != 0) {
+#endif
     return false;
   }
   
@@ -826,6 +832,16 @@ Result<uint64_t> DoctorCommand::getDirectorySize(const std::filesystem::path& pa
 
 Result<uint64_t> DoctorCommand::getAvailableSpace(const std::filesystem::path& path) {
   try {
+#ifdef _WIN32
+    // Windows implementation using std::filesystem
+    std::error_code ec;
+    auto space_info = std::filesystem::space(path, ec);
+    if (ec) {
+      return std::unexpected(makeError(ErrorCode::kSystemError,
+                                       "Failed to get filesystem statistics: " + ec.message()));
+    }
+    return space_info.available;
+#else
     struct statvfs stat;
     if (statvfs(path.c_str(), &stat) != 0) {
       return std::unexpected(makeError(ErrorCode::kSystemError,
@@ -833,6 +849,7 @@ Result<uint64_t> DoctorCommand::getAvailableSpace(const std::filesystem::path& p
     }
     
     return static_cast<uint64_t>(stat.f_bavail) * stat.f_frsize;
+#endif
   } catch (const std::exception& e) {
     return std::unexpected(makeError(ErrorCode::kSystemError,
                                      "Failed to get available space: " + std::string(e.what())));

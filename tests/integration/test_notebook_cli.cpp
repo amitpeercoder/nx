@@ -22,7 +22,11 @@ protected:
         app_ = std::make_unique<Application>();
         
         // Override notes directory
+#ifdef _WIN32
+        _putenv_s("NX_NOTES_DIR", notes_dir_.string().c_str());
+#else
         setenv("NX_NOTES_DIR", notes_dir_.string().c_str(), 1);
+#endif
         
         // Generate unique test suffix for this test run
         test_suffix_ = std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
@@ -30,7 +34,11 @@ protected:
     }
 
     void TearDown() override {
+#ifdef _WIN32
+        _putenv_s("NX_NOTES_DIR", "");
+#else
         unsetenv("NX_NOTES_DIR");
+#endif
         app_.reset();
         temp_dir_.reset();
     }

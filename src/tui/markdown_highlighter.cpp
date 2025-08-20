@@ -423,10 +423,23 @@ void MarkdownHighlighter::highlightLinks(const std::string& text, HighlightResul
 }
 
 void MarkdownHighlighter::highlightLists(const std::string& text, HighlightResult& result) const {
-    // Unordered lists: -, *, +
-    std::regex unordered_list_regex(R"(^(\s*)([-*+])(\s+))");
     std::smatch match;
     
+    // Task lists: - [ ] or - [x] (check this first, as it's more specific)
+    std::regex task_list_regex(R"(^(\s*)([-*+])(\s+)(\[[ xX]\])(\s+))");
+    if (std::regex_search(text, match, task_list_regex)) {
+        size_t marker_start = match[1].length();
+        size_t marker_end = marker_start + match[2].length();
+        size_t checkbox_start = marker_end + match[3].length();
+        size_t checkbox_end = checkbox_start + match[4].length();
+        
+        result.addSegment(marker_start, marker_end, config_.list_marker_style, "task_list_marker");
+        result.addSegment(checkbox_start, checkbox_end, config_.list_marker_style, "task_checkbox");
+        return; // Don't process as regular list
+    }
+    
+    // Unordered lists: -, *, +
+    std::regex unordered_list_regex(R"(^(\s*)([-*+])(\s+))");
     if (std::regex_search(text, match, unordered_list_regex)) {
         size_t marker_start = match[1].length();
         size_t marker_end = marker_start + match[2].length();
@@ -442,18 +455,6 @@ void MarkdownHighlighter::highlightLists(const std::string& text, HighlightResul
         size_t dot_end = number_end + match[3].length();
         
         result.addSegment(number_start, dot_end, config_.list_marker_style, "ordered_list_marker");
-    }
-    
-    // Task lists: - [ ] or - [x]
-    std::regex task_list_regex(R"(^(\s*)([-*+])(\s+)(\[[ xX]\])(\s+))");
-    if (std::regex_search(text, match, task_list_regex)) {
-        size_t marker_start = match[1].length();
-        size_t marker_end = marker_start + match[2].length();
-        size_t checkbox_start = marker_end + match[3].length();
-        size_t checkbox_end = checkbox_start + match[4].length();
-        
-        result.addSegment(marker_start, marker_end, config_.list_marker_style, "task_list_marker");
-        result.addSegment(checkbox_start, checkbox_end, config_.list_marker_style, "task_checkbox");
     }
 }
 

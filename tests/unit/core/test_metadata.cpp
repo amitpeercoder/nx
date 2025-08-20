@@ -159,9 +159,9 @@ TEST_F(MetadataTest, Validation) {
   // Valid metadata should pass
   EXPECT_OK(metadata.validate());
   
-  // Empty title should fail
+  // Empty title is now allowed (title derived from content)
   metadata.setTitle("");
-  EXPECT_ERROR(metadata.validate(), ErrorCode::kValidationError);
+  EXPECT_OK(metadata.validate());
   
   // Reset to valid title
   metadata.setTitle("Valid Title");

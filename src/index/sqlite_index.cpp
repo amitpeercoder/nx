@@ -83,7 +83,7 @@ Result<void> SqliteIndex::initialize() {
   }
   
   // Open database
-  int result = sqlite3_open(db_path_.c_str(), &db_);
+  int result = sqlite3_open(db_path_.string().c_str(), &db_);
   if (result != SQLITE_OK) {
     return std::unexpected(makeSqliteError("Failed to open database"));
   }

@@ -202,6 +202,11 @@ std::vector<SearchMatch> SearchState::searchLiteral(
     
     std::vector<SearchMatch> matches;
     
+    // Early return for empty queries to avoid infinite loop
+    if (query.empty()) {
+        return matches;
+    }
+    
     // Prepare query for case-insensitive search
     std::string search_query = query;
     if (!options.case_sensitive) {

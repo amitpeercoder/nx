@@ -9,6 +9,9 @@
 #include <Security/SecRandom.h>
 #elif defined(__linux__)
 #include <sys/random.h>
+#elif defined(_WIN32)
+#include <windows.h>
+#include <wincrypt.h>
 #endif
 
 namespace nx::util {
@@ -73,7 +76,7 @@ void Security::secureZero(void* data, size_t size) {
     return;
   }
   
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_MSC_VER)
   SecureZeroMemory(data, size);
 #else
   // Use volatile to prevent compiler optimization
@@ -83,7 +86,11 @@ void Security::secureZero(void* data, size_t size) {
   }
   
   // Memory barrier to prevent reordering
+#ifdef _WIN32
+  MemoryBarrier();
+#else
   __asm__ __volatile__("" : : "r"(ptr) : "memory");
+#endif
 #endif
 }
 

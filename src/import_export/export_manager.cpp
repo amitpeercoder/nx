@@ -5,6 +5,7 @@
 #include <regex>
 #include <sstream>
 #include <ctime>
+#include <iomanip>
 #include <iostream>
 
 #include "nx/util/safe_process.hpp"
@@ -497,7 +498,17 @@ ExportManager::parseIsoDate(const std::string& date_str) {
   
   // Try parsing YYYY-MM-DD format first
   if (date_str.length() >= 10) {
+#ifdef _WIN32
+    // Windows doesn't have strptime, use alternative parsing
+    std::istringstream ss(date_str);
+    ss >> std::get_time(&tm, "%Y-%m-%d");
+    if (ss.fail()) {
+      return std::nullopt;
+    }
+    char* end = const_cast<char*>(date_str.c_str() + 10); // Assuming 10 char date
+#else
     char* end = strptime(date_str.c_str(), "%Y-%m-%d", &tm);
+#endif
     if (end != nullptr) {
       // Successfully parsed date part
       auto time_t = std::mktime(&tm);
