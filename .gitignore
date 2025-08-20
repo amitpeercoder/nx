@@ -3,6 +3,10 @@ build/
 install/
 out/
 
+# Package managers
+vcpkg/
+toolsvcpkg/
+
 # IDEs
 .vscode/
 .idea/
