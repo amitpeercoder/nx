@@ -27,6 +27,7 @@
 #include "nx/tui/editor_dialogs.hpp"
 #include "nx/tui/viewport_manager.hpp"
 #include "nx/tui/markdown_highlighter.hpp"
+#include "nx/tui/ai_explanation.hpp"
 #include "nx/template/template_manager.hpp"
 
 namespace nx::tui {
@@ -103,8 +104,8 @@ struct AppState {
   ViewMode view_mode = ViewMode::ThreePane;
   
   // Data state
-  std::vector<nx::core::Metadata> all_notes;     // Complete unfiltered list
-  std::vector<nx::core::Metadata> notes;        // Filtered/displayed list
+  std::vector<nx::core::Note> all_notes;     // Complete unfiltered list
+  std::vector<nx::core::Note> notes;        // Filtered/displayed list
   std::vector<std::string> tags;
   std::map<std::string, int> tag_counts;
   nx::core::NoteId selected_note_id;
@@ -128,7 +129,6 @@ struct AppState {
   bool show_help = false;
   bool command_palette_open = false;
   bool new_note_modal_open = false;
-  bool rename_mode_active = false;
   bool search_mode_active = false;
   bool edit_mode_active = false;
   bool tag_edit_modal_open = false;
@@ -136,7 +136,6 @@ struct AppState {
   bool move_note_modal_open = false;
   std::string status_message;
   std::string tag_search_query;
-  std::string new_note_title;
   std::string command_palette_query;
   std::string tag_edit_input;
   nx::core::NoteId tag_edit_note_id;
@@ -189,6 +188,16 @@ struct AppState {
   bool search_dialog_open = false;
   bool goto_line_dialog_open = false;
   bool replace_dialog_open = false;
+  
+  // AI Explanation state
+  bool explanation_pending = false;               // AI request in progress
+  bool has_pending_expansion = false;             // Has brief explanation that can be expanded
+  size_t explanation_start_line = 0;              // Line where explanation starts
+  size_t explanation_start_col = 0;               // Column where explanation starts
+  size_t explanation_end_col = 0;                 // Column where explanation ends
+  std::string original_term;                      // Original term being explained
+  std::string brief_explanation;                  // Current brief explanation
+  std::string expanded_explanation;               // Cached expanded explanation
   
   // Navigation state
   int selected_note_index = 0;
@@ -294,6 +303,9 @@ private:
   nx::index::Index& search_index_;
   nx::template_system::TemplateManager& template_manager_;
   
+  // AI services
+  std::unique_ptr<AiExplanationService> ai_explanation_service_;
+  
   // Application state
   AppState state_;
   PanelSizing panel_sizing_;
@@ -337,10 +349,9 @@ private:
   void onSearchInput(const std::string& query);
   
   // Note operations
-  Result<void> createNote(const std::string& title);
+  Result<void> createNote();
   Result<void> editNote(const nx::core::NoteId& note_id);
   Result<void> deleteNote(const nx::core::NoteId& note_id);
-  Result<void> renameNote(const nx::core::NoteId& note_id, const std::string& new_title);
   
   // Tag operations
   Result<void> addTagsToNote(const nx::core::NoteId& note_id, const std::vector<std::string>& tags);
@@ -381,7 +392,7 @@ private:
   std::vector<TUICommand> getFilteredCommands(const std::string& query) const;
   
   // Rendering helpers
-  ftxui::Element renderNoteMetadata(const nx::core::Metadata& metadata, bool selected) const;
+  ftxui::Element renderNoteMetadata(const nx::core::Note& note, bool selected) const;
   ftxui::Element renderNavigationPanel() const;
   ftxui::Element renderNotePreview(const nx::core::NoteId& note_id) const;
   ftxui::Element renderNotesPanel() const;
@@ -430,6 +441,14 @@ private:
   
   // Panel resizing
   void resizeNotesPanel(int delta);
+  
+  // AI Explanation handlers
+  void handleBriefExplanation();
+  void handleExpandExplanation();
+  void insertExplanationText(const std::string& explanation_text);
+  void expandExistingExplanation();
+  void clearExplanationState();
+  AiExplanationService::Config createExplanationConfig() const;
   
   // Layout calculation helpers
   int calculateVisibleTagsCount() const;

@@ -23,6 +23,7 @@
 - **Local-First**: Full offline functionality with optional Git synchronization
 - **High Performance**: Sub-50ms operations on collections of 10,000+ notes
 - **Interactive TUI**: 3-pane interface for browsing, editing, and organizing notes
+- **Auto-Title Derivation**: Note titles automatically derived from first line of content
 - **AI Integration**: Claude and GPT support for summarization, tagging, and Q&A
 - **Powerful Search**: SQLite FTS5 with ripgrep fallback for lightning-fast text search
 - **Rich Organization**: Notebooks, tags, templates, and file attachments
@@ -126,6 +127,7 @@ Notes are the fundamental unit in nx. Each note:
 - Contains Markdown content with optional YAML front-matter
 - Can belong to one notebook and have multiple tags
 - Supports file attachments and internal links
+- **Automatic titles**: Title is automatically derived from the first line of content
 
 **Example note structure**:
 ```markdown
@@ -147,6 +149,29 @@ This is the note content written in **Markdown**.
 - [Links](https://example.com)
 - Code blocks and more
 ```
+
+### Title Derivation
+
+nx automatically derives note titles from the first line of content, making note management seamless:
+
+- **Markdown headers**: `# My Title` becomes "My Title"
+- **Plain text**: Any first line becomes the title
+- **Smart processing**: Removes markdown syntax and extra whitespace
+- **Length limit**: Titles are capped at 200 characters
+- **Fallback**: Empty notes get "Untitled" as title
+
+**Examples**:
+```markdown
+# Meeting Notes 2024-03-15    →  Title: "Meeting Notes 2024-03-15"
+## Project Planning           →  Title: "Project Planning" 
+Weekly Review                 →  Title: "Weekly Review"
+```
+
+This means:
+- **No manual title entry required** when creating notes
+- **Titles update automatically** as you edit the first line
+- **Consistent title handling** across CLI and TUI
+- **No separate rename function needed** - just edit the first line
 
 ### Notebooks
 
@@ -177,14 +202,14 @@ Templates help create consistent note structures:
 
 #### Create Notes
 ```bash
-# Basic note creation
-nx new "Note Title"
+# Basic note creation (title will be derived from first line of content)
+nx new
 
-# With tags and notebook
-nx new "Meeting Notes" --tags meeting,work --nb project-alpha
+# With tags and notebook  
+nx new --tags meeting,work --nb project-alpha
 
 # From template
-nx new "Weekly Review" --template weekly-review
+nx new --template weekly-review
 ```
 
 #### View and Edit Notes
@@ -236,8 +261,8 @@ nx notebook list
 # Create notebook
 nx notebook create "Project Alpha" "Main project workspace"
 
-# Rename notebook
-nx notebook rename "old-name" "new-name"
+# List notebooks
+nx notebook list
 
 # Delete notebook
 nx notebook delete "archive" --force
@@ -315,9 +340,6 @@ nx summarize abc123 --style bullets --apply
 # Get AI tag suggestions
 nx tag-suggest abc123 --apply
 
-# Generate better titles
-nx title abc123 --apply
-
 # Rewrite content
 nx rewrite abc123 --tone professional --apply
 
@@ -330,6 +352,21 @@ nx suggest-links abc123 --apply
 # Generate topic outline
 nx outline "Project Management" --create
 ```
+
+**AI Explanation Feature in TUI**:
+
+The TUI editor includes an AI-powered explanation feature to help understand technical terms and abbreviations:
+
+1. **Brief Explanations**: Place cursor after a term and press `Alt+?` to get a concise explanation (5-10 words)
+2. **Detailed Explanations**: Press `Ctrl+E` to expand a brief explanation into 2-3 sentences
+3. **Context-Aware**: Uses surrounding text to provide more accurate explanations
+4. **Caching**: Explanations are cached to reduce API calls and improve performance
+
+Example workflow:
+1. Type "API" in your note
+2. Place cursor after "API" 
+3. Press `Alt+?` → "Application Programming Interface"
+4. Press `Ctrl+E` → "A set of protocols and tools for building software applications. APIs define how different software components should interact with each other."
 
 ### System Maintenance
 
@@ -430,14 +467,17 @@ The TUI features a 3-pane layout:
 
 **Notes Pane**:
 - `/`: Search notes
-- `n`: Create new note
+- `n`: Create new note (title derived from first line)
 - `e`: Edit selected note
 - `d`: Delete selected note
+- `r`: Refresh data
 - `t`: Add/edit tags
 
 **Editor Mode**:
 - `Ctrl+S`: Save note
 - `Esc`: Exit editor mode
+- `Alt+?`: Generate brief AI explanation for term before cursor
+- `Ctrl+E`: Expand brief explanation to detailed explanation
 - Standard editing keys (arrows, backspace, etc.)
 
 **Search**:
@@ -664,7 +704,7 @@ nx edit "$note_id"
 
 # Post-meeting: Extract actions
 nx tasks "$note_id" --priority high
-nx title "$note_id" --apply  # Better title based on content
+# Title is automatically derived from first line of content
 ```
 
 #### Project Documentation
@@ -700,8 +740,7 @@ nx ls --nb imported | while read id; do
   # Auto-suggest better organization
   nx tag-suggest "$id" --apply
   
-  # Improve titles
-  nx title "$id" --apply
+  # Titles are automatically derived from first line
   
   # Find appropriate notebook
   tags=$(nx view "$id" --json | jq -r '.tags[]' | head -3)
@@ -740,7 +779,10 @@ nx grep "machine learning" --ignore-case | \
 
 # Find notes by content patterns
 nx grep "TODO|FIXME|HACK" --regex | \
-  xargs -I {} sh -c 'echo "Action needed in: $(nx view {} --json | jq -r .title)"'
+  while read note_id; do
+    title=$(nx view "$note_id" --json | jq -r .title)
+    echo "Action needed in: $title"
+  done
 
 # Time-based discovery
 nx ls --since "2024-01-01" --tag work | \
@@ -766,7 +808,8 @@ nx ask "Which personal projects relate to my professional work?"
 # Rediscover forgotten notes
 old_notes=$(nx ls --since "2023-01-01" | tail -20)
 for note in $old_notes; do
-  echo "Rediscovered: $(nx view "$note" --json | jq -r .title)"
+  title=$(nx view "$note" --json | jq -r .title)
+  echo "Rediscovered: $title"
   nx suggest-links "$note" --apply
 done
 ```
@@ -819,7 +862,7 @@ done
 nx import notion ~/notion-export --nb notion-import
 nx ls --nb notion-import | while read id; do
   nx rewrite "$id" --tone crisp --apply  # Clean up formatting
-  nx title "$id" --apply  # Better titles
+  # Titles automatically derived from first line
 done
 
 # Reorganize after import
@@ -858,7 +901,7 @@ review_notes=$(nx ls --tag "needs-review")
 for note in $review_notes; do
   # Clean up for review
   nx rewrite "$note" --tone professional --apply
-  nx title "$note" --apply
+  # Title automatically derived from first line
   
   # Export for sharing
   nx export pdf --note "$note" --to ~/reviews/
@@ -879,16 +922,27 @@ note_quick() {
 
 #### Integration with Other Tools
 ```bash
-# Capture from clipboard with processing
-pbpaste | nx new "Clipboard $(date +%Y-%m-%d %H:%M)" --tags inbox | \
-  xargs -I {} nx tag-suggest {} --apply
+# Capture from clipboard with processing  
+content=$(pbpaste)
+note_id=$(nx new --tags inbox)
+echo "# Clipboard $(date +%Y-%m-%d %H:%M)" > temp_content.md
+echo "" >> temp_content.md
+echo "$content" >> temp_content.md
+nx edit "$note_id" < temp_content.md
+nx tag-suggest "$note_id" --apply
+rm temp_content.md
 
-# Create note from URL
+# Create note from URL  
 url_to_note() {
   local url="$1"
   local title=$(curl -s "$url" | grep -o '<title>[^<]*' | sed 's/<title>//')
-  nx new "$title" --tags web,research --edit
-  echo "Source: $url" | nx attach "$(nx ls --limit 1 | head -1 | awk '{print $1}')" -
+  # Create note and add title as first line
+  note_id=$(nx new --tags web,research)
+  echo "# $title" > temp_content.md
+  echo "" >> temp_content.md
+  echo "Source: $url" >> temp_content.md
+  nx edit "$note_id" < temp_content.md
+  rm temp_content.md
 }
 ```
 
@@ -917,10 +971,11 @@ nx export md --nb "Archive" --to ~/archives/notes-archive-$(date +%Y)/
 
 ### Organization
 
-1. **Use consistent naming**: Develop a consistent approach to note titles
-2. **Leverage notebooks**: Group related notes into logical notebooks
-3. **Tag strategically**: Use tags for cross-cutting concerns (status, priority, type)
-4. **Regular cleanup**: Periodically run `nx gc all` to optimize storage
+1. **Write meaningful first lines**: Since titles are derived from the first line, make it descriptive
+2. **Use consistent first line patterns**: Develop consistent approaches (e.g., "# Meeting Notes - 2024-03-15")
+3. **Leverage notebooks**: Group related notes into logical notebooks
+4. **Tag strategically**: Use tags for cross-cutting concerns (status, priority, type)
+5. **Regular cleanup**: Periodically run `nx gc all` to optimize storage
 
 ### Workflow
 

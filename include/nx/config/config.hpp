@@ -90,6 +90,18 @@ class Config {
     bool strip_emails = true;
     bool strip_urls = false;
     bool mask_numbers = true;
+    
+    // AI Explanation settings
+    struct ExplanationConfig {
+      bool enabled = true;                     // Enable AI explanations
+      size_t brief_max_words = 10;            // Maximum words in brief explanation
+      size_t expanded_max_words = 50;         // Maximum words in expanded explanation
+      int timeout_ms = 3000;                  // Timeout for AI requests
+      bool cache_explanations = true;         // Whether to cache explanations
+      size_t max_cache_size = 1000;           // Maximum cached explanations
+      size_t context_radius = 100;            // Characters around term for context
+    };
+    ExplanationConfig explanations;
   };
   std::optional<AiConfig> ai;
   

@@ -1,6 +1,6 @@
 # nx - High-Performance CLI Notes Application
 
-**nx** is a local-first, plaintext Markdown note-taking tool for Linux and macOS terminals that prioritizes speed, security, and composability. Built in modern C++, it delivers instant operations on thousands of notes while maintaining full offline functionality.
+**nx** is a local-first, plaintext Markdown note-taking tool for Windows, Linux and macOS terminals that prioritizes speed, security, and composability. Built in modern C++, it delivers instant operations on thousands of notes while maintaining full offline functionality.
 
 **🎉 v1.0.0 RELEASE**: Production-ready with enterprise-grade TUI editor, comprehensive documentation, complete security analysis, and 35+ commands across all functional areas.
 
@@ -9,13 +9,14 @@
 ### **Core Features (Production Ready)**
 - ⚡ **Blazing Fast**: Sub-50ms operations on 10k+ notes with 96% test coverage
 - 📝 **Markdown Native**: Notes stored as plaintext Markdown with YAML front-matter
+- 🏷️ **Auto-Title Derivation**: Note titles automatically derived from first line of content
 - 🔍 **Powerful Search**: Full-text search with SQLite FTS5 and ripgrep fallback
 - 🏷️ **Smart Tagging**: Manual and AI-powered tag management
 - 📚 **Notebooks**: Complete hierarchical organization system
 - 🔗 **Backlinks**: Automatic relationship discovery
 - 🎨 **Rich TUI**: Interactive terminal interface with 3-pane layout
 - ✨ **Production Editor**: Enterprise-grade in-TUI editing with Unicode support
-- 🤖 **AI Integration**: Optional Claude/GPT integration for summaries, titles, and Q&A
+- 🤖 **AI Integration**: Optional Claude/GPT integration for summaries and Q&A
 - 📤 **Export**: Multiple formats (Markdown, JSON, PDF, HTML)
 - 📎 **File Attachments**: Complete file management system
 - 🔐 **Encryption**: Per-file encryption with age/rage
@@ -25,11 +26,11 @@
 - 🧠 **Ask Questions**: RAG-powered Q&A over your note collection
 - 📋 **Auto-Summarize**: Generate concise summaries with different styles
 - 🏷️ **Auto-Tagging**: AI-suggested tags based on content
-- 📝 **Title Suggestions**: AI-generated descriptive titles
 - ✍️ **Content Rewriting**: Adjust tone and style
 - ✅ **Task Extraction**: Extract action items and todos
 - 🔗 **Link Suggestions**: Find related notes automatically
 - 📊 **Outline Generation**: Create structured outlines for topics
+- 💡 **Inline Explanations**: AI-powered term explanations in TUI editor (Alt+? for brief, Ctrl+E for detailed)
 
 ## 🎯 Quick Start
 
@@ -62,8 +63,8 @@ cd build-release && sudo ./install.sh
 
 ### Basic Usage
 ```bash
-# Create your first note
-nx new "My First Note" --tags personal,ideas
+# Create your first note (title will be derived from first line of content)
+nx new --tags personal,ideas
 
 # Launch interactive TUI
 nx ui
@@ -109,7 +110,7 @@ Run `nx` or `nx ui` to launch the full-featured terminal interface:
 
 ### **Note Management**
 ```bash
-nx new [title] [--tags a,b] [--nb notebook]     # Create note
+nx new [--tags a,b] [--nb notebook]             # Create note (title auto-derived from first line)
 nx edit <id>                                     # Edit in $EDITOR
 nx view <id>                                     # Display note
 nx rm <id>                                       # Delete note
@@ -130,7 +131,6 @@ nx tags                                          # List all tags
 nx ask "What did I learn about X?"               # RAG Q&A
 nx summarize <id> [--style bullets] [--apply]    # AI summary
 nx tag-suggest <id> [--apply]                    # AI tag suggestions
-nx title <id> [--apply]                          # AI title suggestions
 nx rewrite <id> [--tone crisp]                   # Content rewriting
 nx tasks <id>                                    # Extract action items
 nx suggest-links <id>                            # Find related notes

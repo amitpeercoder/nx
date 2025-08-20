@@ -26,7 +26,6 @@
 #include "nx/cli/commands/ask_command.hpp"
 #include "nx/cli/commands/summarize_command.hpp"
 #include "nx/cli/commands/tag_suggest_command.hpp"
-#include "nx/cli/commands/title_command.hpp"
 #include "nx/cli/commands/rewrite_command.hpp"
 #include "nx/cli/commands/tasks_command.hpp"
 #include "nx/cli/commands/suggest_links_command.hpp"
@@ -145,7 +144,6 @@ void Application::setupCommands() {
   registerCommand(std::make_unique<AskCommand>(*this));
   registerCommand(std::make_unique<SummarizeCommand>(*this));
   registerCommand(std::make_unique<TagSuggestCommand>(*this));
-  registerCommand(std::make_unique<TitleCommand>(*this));
   registerCommand(std::make_unique<RewriteCommand>(*this));
   registerCommand(std::make_unique<TasksCommand>(*this));
   registerCommand(std::make_unique<SuggestLinksCommand>(*this));
@@ -187,7 +185,7 @@ void Application::setupHelp() {
   
   // Add footer with examples
   app_.footer(R"(Examples:
-  nx new "My Note Title" --tags work,important
+  nx new --tags work,important  # Title automatically derived from first line
   nx ls --tag work --since 2024-01-01
   nx grep "algorithm" --regex
   nx edit abc123
@@ -197,7 +195,6 @@ AI Commands:
   nx ask "What did I learn about machine learning?"
   nx summarize abc123 --style bullets --apply
   nx tag-suggest abc123 --apply
-  nx title abc123 --apply
   nx rewrite abc123 --tone professional --apply
   nx tasks abc123 --priority high
   nx suggest-links abc123 --apply

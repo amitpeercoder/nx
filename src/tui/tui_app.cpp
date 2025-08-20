@@ -53,6 +53,7 @@ TUIApp::TUIApp(nx::config::Config& config,
     , notebook_manager_(notebook_manager)
     , search_index_(search_index)
     , template_manager_(template_manager)
+    , ai_explanation_service_(std::make_unique<AiExplanationService>(createExplanationConfig()))
     , screen_(ScreenInteractive::Fullscreen()) {
   
   
@@ -318,12 +319,12 @@ Result<void> TUIApp::loadNotes() {
       return std::unexpected(notes_result.error());
     }
     
-    // Convert notes to metadata and store in state, filtering out notebook placeholders
+    // Store full notes, filtering out notebook placeholders
     state_.all_notes.clear();
     for (const auto& note : *notes_result) {
       // Filter out notebook placeholder notes (notes starting with .notebook_)
       if (!note.title().starts_with(".notebook_")) {
-        state_.all_notes.push_back(note.metadata());
+        state_.all_notes.push_back(note);
       }
     }
     
@@ -505,7 +506,7 @@ void TUIApp::refreshData() {
 
 void TUIApp::applyFilters() {
   // Start with all notes (unfiltered)
-  std::vector<nx::core::Metadata> filtered_notes = state_.all_notes;
+  std::vector<nx::core::Note> filtered_notes = state_.all_notes;
   
   // Apply search query filter (title + content via search index)
   if (!state_.search_query.empty()) {
@@ -525,12 +526,12 @@ void TUIApp::applyFilters() {
     // Filter notes: include if found in title OR in content (via search index)
     filtered_notes.erase(
       std::remove_if(filtered_notes.begin(), filtered_notes.end(),
-        [this, &content_matches](const nx::core::Metadata& metadata) {
-          // Search in title
+        [this, &content_matches](const nx::core::Note& note) {
+          // Search in title (using derived title from first line)
           std::string query_lower = state_.search_query;
           std::transform(query_lower.begin(), query_lower.end(), query_lower.begin(), ::tolower);
           
-          std::string title_lower = metadata.title();
+          std::string title_lower = note.title();
           std::transform(title_lower.begin(), title_lower.end(), title_lower.begin(), ::tolower);
           
           // Include if found in title
@@ -539,7 +540,7 @@ void TUIApp::applyFilters() {
           }
           
           // Include if found in content (via search index)
-          if (content_matches.count(metadata.id()) > 0) {
+          if (content_matches.count(note.metadata().id()) > 0) {
             return false; // Keep this note
           }
           
@@ -559,9 +560,9 @@ void TUIApp::applyFilters() {
   if (has_notebook_filters || has_notebook_tag_filters || has_global_tag_filters || has_legacy_tag_filters) {
     filtered_notes.erase(
       std::remove_if(filtered_notes.begin(), filtered_notes.end(),
-        [this, has_notebook_filters, has_notebook_tag_filters, has_global_tag_filters, has_legacy_tag_filters](const nx::core::Metadata& metadata) {
-          const auto& note_tags = metadata.tags();
-          const auto& note_notebook = metadata.notebook();
+        [this, has_notebook_filters, has_notebook_tag_filters, has_global_tag_filters, has_legacy_tag_filters](const nx::core::Note& note) {
+          const auto& note_tags = note.metadata().tags();
+          const auto& note_notebook = note.metadata().notebook();
           
           // 1. Check notebook filters (OR logic)
           bool passes_notebook_filter = true;
@@ -638,22 +639,22 @@ void TUIApp::sortNotes() {
   switch (state_.sort_mode) {
     case SortMode::Modified:
       std::sort(state_.notes.begin(), state_.notes.end(),
-        [](const nx::core::Metadata& a, const nx::core::Metadata& b) {
-          return a.updated() > b.updated(); // Most recent first
+        [](const nx::core::Note& a, const nx::core::Note& b) {
+          return a.metadata().updated() > b.metadata().updated(); // Most recent first
         });
       break;
       
     case SortMode::Created:
       std::sort(state_.notes.begin(), state_.notes.end(),
-        [](const nx::core::Metadata& a, const nx::core::Metadata& b) {
-          return a.created() > b.created(); // Most recent first
+        [](const nx::core::Note& a, const nx::core::Note& b) {
+          return a.metadata().created() > b.metadata().created(); // Most recent first
         });
       break;
       
     case SortMode::Title:
       std::sort(state_.notes.begin(), state_.notes.end(),
-        [](const nx::core::Metadata& a, const nx::core::Metadata& b) {
-          return a.title() < b.title(); // Alphabetical
+        [](const nx::core::Note& a, const nx::core::Note& b) {
+          return a.title() < b.title(); // Alphabetical (using derived title)
         });
       break;
       
@@ -662,8 +663,8 @@ void TUIApp::sortNotes() {
       // or fall back to modified date if no search query
       if (state_.search_query.empty()) {
         std::sort(state_.notes.begin(), state_.notes.end(),
-          [](const nx::core::Metadata& a, const nx::core::Metadata& b) {
-            return a.updated() > b.updated();
+          [](const nx::core::Note& a, const nx::core::Note& b) {
+            return a.metadata().updated() > b.metadata().updated();
           });
       }
       break;
@@ -754,6 +755,19 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       saveEditedNote();
       return;
     }
+    
+    // Handle AI explanation shortcuts  
+    // Alt+? for brief explanation
+    if (event.character() == "\x1b?") { // Alt+? (escape sequence)
+      handleBriefExplanation();
+      return;
+    }
+    
+    if (event.character() == "\x05") { // Ctrl+E (ASCII 5) for expand explanation
+      handleExpandExplanation();
+      return;
+    }
+    
     // Handle text input and cursor movement
     handleEditModeInput(event);
     return;
@@ -792,7 +806,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
         focusPane(ActivePane::Notes);
         state_.selected_note_index = 0;
         if (static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-          state_.selected_note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+          state_.selected_note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
         }
         setStatusMessage("Moved to notes");
       }
@@ -815,48 +829,18 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   if (state_.new_note_modal_open) {
     if (event == ftxui::Event::Escape) {
       state_.new_note_modal_open = false;
-      state_.rename_mode_active = false;
-      state_.new_note_title.clear();
       return;
     }
     if (event == ftxui::Event::Return) {
-      if (state_.rename_mode_active) {
-        // Rename existing note
-        if (!state_.notes.empty() && state_.selected_note_index >= 0 && 
-            static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-          const auto& metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
-          std::string new_title = state_.new_note_title.empty() ? metadata.title() : state_.new_note_title;
-          auto result = renameNote(metadata.id(), new_title);
-          if (!result) {
-            setStatusMessage("Error renaming note: " + result.error().message());
-          }
-        }
-        state_.rename_mode_active = false;
-      } else {
-        // Create note with entered title
-        std::string title = state_.new_note_title.empty() ? "New Note" : state_.new_note_title;
-        auto result = createNote(title);
-        if (!result) {
-          setStatusMessage("Error creating note: " + result.error().message());
-        }
+      // Create new note (title will be derived from first line of content)
+      auto result = createNote();
+      if (!result) {
+        setStatusMessage("Error creating note: " + result.error().message());
       }
       state_.new_note_modal_open = false;
-      state_.new_note_title.clear();
       return;
     }
-    if (event == ftxui::Event::Backspace) {
-      if (!state_.new_note_title.empty()) {
-        state_.new_note_title.pop_back();
-      }
-      return;
-    }
-    if (event.is_character() && event.character().size() == 1) {
-      char c = event.character()[0];
-      if (c >= 32 && c <= 126) { // Printable ASCII
-        state_.new_note_title += c;
-      }
-      return;
-    }
+    // No title input needed - title will be derived from first line of content
     return;
   }
   
@@ -875,8 +859,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       closeTemplateBrowser();
       state_.new_note_modal_open = true;
       state_.new_note_template_mode = false;
-      state_.new_note_title.clear();
-      setStatusMessage("Enter note title (Enter to create, Esc to cancel)");
+      setStatusMessage("Press Enter to create note (Esc to cancel)");
       return;
     }
     if (event == ftxui::Event::ArrowUp) {
@@ -1187,8 +1170,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       // No templates available, go directly to note creation
       state_.new_note_modal_open = true;
       state_.new_note_template_mode = false;
-      state_.new_note_title.clear();
-      setStatusMessage("Enter note title (Enter to create, Esc to cancel)");
+      setStatusMessage("Press Enter to create note (Esc to cancel)");
     }
     return;
   }
@@ -1196,7 +1178,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   if (event == ftxui::Event::Character('e')) {
     if (!state_.notes.empty() && state_.selected_note_index >= 0 && 
         static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
       auto result = editNote(note_id);
       if (!result) {
         setStatusMessage("Error editing note: " + result.error().message());
@@ -1208,7 +1190,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   if (event == ftxui::Event::Character('d')) {
     if (!state_.notes.empty() && state_.selected_note_index >= 0 && 
         static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
       auto result = deleteNote(note_id);
       if (!result) {
         setStatusMessage("Error deleting note: " + result.error().message());
@@ -1232,18 +1214,8 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   }
   
   if (event == ftxui::Event::Character('r')) {
-    // If shift+r or nothing selected, refresh data
-    if (state_.notes.empty() || state_.selected_note_index >= static_cast<int>(state_.notes.size())) {
-      refreshData();
-    } else {
-      // Start rename operation - for simplicity, use the new note modal system
-      // In a full implementation, this could have a dedicated rename modal
-      state_.new_note_modal_open = true;
-      state_.rename_mode_active = true;
-      const auto& metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
-      state_.new_note_title = metadata.title();
-      setStatusMessage("Enter new title (Enter to rename, Esc to cancel)");
-    }
+    // Refresh data
+    refreshData();
     return;
   }
   
@@ -1260,7 +1232,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     } else if (state_.current_pane == ActivePane::Notes && !state_.notes.empty() && 
         state_.selected_note_index >= 0 && 
         static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
       if (state_.selected_notes.count(note_id)) {
         state_.selected_notes.erase(note_id);
         setStatusMessage("Deselected note");
@@ -1285,7 +1257,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
                state_.selected_note_index >= 0 && 
                static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
       // Edit tags for selected note
-      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+      auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
       openTagEditModal(note_id);
     }
     return;
@@ -1525,7 +1497,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       case ActivePane::Notes:
         if (!state_.notes.empty() && state_.selected_note_index >= 0 && 
             static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-          auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+          auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
           auto result = editNote(note_id);
           if (!result) {
             setStatusMessage("Error editing note: " + result.error().message());
@@ -1764,7 +1736,7 @@ void TUIApp::performSimpleFilter(const std::string& query) {
   }
   
   // Simple case-insensitive filtering by title
-  std::vector<nx::core::Metadata> filtered_notes;
+  std::vector<nx::core::Note> filtered_notes;
   std::string query_lower = query;
   std::transform(query_lower.begin(), query_lower.end(), query_lower.begin(), ::tolower);
   
@@ -1782,7 +1754,7 @@ void TUIApp::performSimpleFilter(const std::string& query) {
     }
     
     if (matches) {
-      filtered_notes.push_back(metadata);
+      filtered_notes.push_back(*note_result);
     }
   }
   
@@ -1815,11 +1787,11 @@ void TUIApp::performFullTextSearch(const std::string& query) {
   }
   
   // Load the full notes for these IDs
-  std::vector<nx::core::Metadata> search_notes;
+  std::vector<nx::core::Note> search_notes;
   for (const auto& note_id : note_ids) {
     auto note_result = note_store_.load(note_id);
     if (note_result) {
-      search_notes.push_back(note_result->metadata());
+      search_notes.push_back(*note_result);
     }
   }
   
@@ -1879,20 +1851,20 @@ void TUIApp::onSearchInput(const std::string& query) {
   performSearch(query);
 }
 
-Element TUIApp::renderNoteMetadata(const nx::core::Metadata& metadata, bool selected) const {
+Element TUIApp::renderNoteMetadata(const nx::core::Note& note, bool selected) const {
   // Create rich metadata display as per specification
   Elements content;
   
-  // Primary: Note title with selection indicator
+  // Primary: Note title with selection indicator (use derived title from first line)
   std::string prefix = selected ? "▶ " : "  ";
   Element title_element;
   
   // Apply search highlighting to title if search is active
   if (!state_.search_query.empty()) {
-    auto highlighted_title = highlightSearchInLine(metadata.title(), state_.search_query);
+    auto highlighted_title = highlightSearchInLine(note.title(), state_.search_query);
     title_element = hbox({text(prefix), highlighted_title});
   } else {
-    std::string title_str = prefix + metadata.title();
+    std::string title_str = prefix + note.title();
     title_element = text(title_str);
   }
   
@@ -1902,7 +1874,7 @@ Element TUIApp::renderNoteMetadata(const nx::core::Metadata& metadata, bool sele
   content.push_back(title_element);
   
   // Secondary: Last modified date/time
-  auto modified_time = std::chrono::system_clock::to_time_t(metadata.updated());
+  auto modified_time = std::chrono::system_clock::to_time_t(note.metadata().updated());
   std::stringstream date_ss;
   date_ss << "  " << std::put_time(std::localtime(&modified_time), "%Y-%m-%d %H:%M");
   
@@ -1910,14 +1882,14 @@ Element TUIApp::renderNoteMetadata(const nx::core::Metadata& metadata, bool sele
   std::string metadata_line = date_ss.str() + " 📝";
   
   // Add tags
-  if (!metadata.tags().empty()) {
+  if (!note.metadata().tags().empty()) {
     metadata_line += " ";
-    for (size_t i = 0; i < metadata.tags().size() && i < 3; ++i) { // Limit to 3 tags
+    for (size_t i = 0; i < note.metadata().tags().size() && i < 3; ++i) { // Limit to 3 tags
       if (i > 0) metadata_line += ",";
-      metadata_line += metadata.tags()[i];
+      metadata_line += note.metadata().tags()[i];
     }
-    if (metadata.tags().size() > 3) {
-      metadata_line += ",+" + std::to_string(metadata.tags().size() - 3);
+    if (note.metadata().tags().size() > 3) {
+      metadata_line += ",+" + std::to_string(note.metadata().tags().size() - 3);
     }
   }
   
@@ -2008,7 +1980,7 @@ void TUIApp::registerCommands() {
   commands_.push_back({
     "new", "Create new note", "File",
     [this]() { 
-      auto result = createNote("New Note");
+      auto result = createNote();
       if (!result) setStatusMessage("Error: " + result.error().message());
     },
     "n"
@@ -2018,7 +1990,7 @@ void TUIApp::registerCommands() {
     "edit", "Edit selected note", "File",
     [this]() {
       if (!state_.notes.empty() && state_.selected_note_index >= 0 && static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-        auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+        auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
         auto result = editNote(note_id);
         if (!result) setStatusMessage("Error: " + result.error().message());
       }
@@ -2030,7 +2002,7 @@ void TUIApp::registerCommands() {
     "delete", "Delete selected note", "File",
     [this]() {
       if (!state_.notes.empty() && state_.selected_note_index >= 0 && static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-        auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+        auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
         auto result = deleteNote(note_id);
         if (!result) setStatusMessage("Error: " + result.error().message());
       }
@@ -2083,10 +2055,10 @@ void TUIApp::registerCommands() {
   });
 }
 
-Result<void> TUIApp::createNote(const std::string& title) {
+Result<void> TUIApp::createNote() {
   try {
-    // Create new note using the note store
-    auto note = nx::core::Note::create(title, "");
+    // Create new note with default content (title will be derived from first line)
+    auto note = nx::core::Note::create("", "# New Note\n\nStart writing your content here...");
     auto result = note_store_.store(note);
     
     if (!result) {
@@ -2098,14 +2070,14 @@ Result<void> TUIApp::createNote(const std::string& title) {
     
     // Select the new note
     for (size_t i = 0; i < state_.notes.size(); ++i) {
-      if (state_.notes[i].id() == note.id()) {
+      if (state_.notes[i].metadata().id() == note.metadata().id()) {
         state_.selected_note_index = static_cast<int>(i);
         state_.selected_note_id = note.id();
         break;
       }
     }
     
-    setStatusMessage("Created note: " + title);
+    setStatusMessage("Created note (title will be derived from first line)");
     return Result<void>();
   } catch (const std::exception& e) {
     return std::unexpected(Error(ErrorCode::kFileError, "Failed to create note: " + std::string(e.what())));
@@ -2165,33 +2137,6 @@ Result<void> TUIApp::deleteNote(const nx::core::NoteId& note_id) {
   }
 }
 
-Result<void> TUIApp::renameNote(const nx::core::NoteId& note_id, const std::string& new_title) {
-  try {
-    // Get the note
-    auto note_result = note_store_.load(note_id);
-    if (!note_result) {
-      return std::unexpected(note_result.error());
-    }
-    
-    // Update title
-    auto note = *note_result;
-    note.setTitle(new_title);
-    
-    // Store updated note
-    auto store_result = note_store_.store(note);
-    if (!store_result) {
-      return std::unexpected(store_result.error());
-    }
-    
-    // Refresh data
-    refreshData();
-    
-    setStatusMessage("Note renamed to: " + new_title);
-    return Result<void>();
-  } catch (const std::exception& e) {
-    return std::unexpected(Error(ErrorCode::kFileError, "Failed to rename note: " + std::string(e.what())));
-  }
-}
 
 Result<void> TUIApp::createNotebook(const std::string& name) {
   try {
@@ -2305,7 +2250,7 @@ void TUIApp::openMoveNoteModal() {
   }
   
   state_.move_note_selected_index = 0;
-  state_.move_note_target_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+  state_.move_note_target_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
   
   setStatusMessage("Use ↑/↓ to select notebook, Enter to move, Esc to cancel");
 }
@@ -2327,8 +2272,8 @@ void TUIApp::focusPane(ActivePane pane) {
       static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
     
     // Get the selected note and start editing
-    const auto& metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
-    auto result = editNote(metadata.id());
+    const auto& note = state_.notes[static_cast<size_t>(state_.selected_note_index)];
+    auto result = editNote(note.metadata().id());
     if (!result) {
       setStatusMessage("Error starting auto-edit mode: " + result.error().message());
     } else {
@@ -2387,7 +2332,7 @@ void TUIApp::moveSelection(int delta) {
         
         // Update selected note ID
         if (state_.selected_note_index >= 0 && static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-          state_.selected_note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+          state_.selected_note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
         }
       } else if (delta < 0) {
         // No notes, go to search box
@@ -2411,7 +2356,7 @@ void TUIApp::moveSelection(int delta) {
         // Update selected note ID
         if (!state_.notes.empty() && state_.selected_note_index >= 0 && 
             static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-          state_.selected_note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].id();
+          state_.selected_note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
         }
       }
       break;
@@ -2511,10 +2456,10 @@ void TUIApp::followLinkInPreview() {
     return;
   }
   
-  const auto& metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
+  const auto& note = state_.notes[static_cast<size_t>(state_.selected_note_index)];
   
   // Load the current note to get links
-  auto note_result = note_store_.load(metadata.id());
+  auto note_result = note_store_.load(note.metadata().id());
   if (!note_result) {
     setStatusMessage("Error loading note for link following");
     return;
@@ -2535,7 +2480,7 @@ void TUIApp::followLinkInPreview() {
   // Find the linked note in our current notes list
   bool found = false;
   for (int i = 0; i < static_cast<int>(state_.notes.size()); ++i) {
-    if (state_.notes[static_cast<size_t>(i)].id() == link_id) {
+    if (state_.notes[static_cast<size_t>(i)].metadata().id() == link_id) {
       state_.selected_note_index = i;
       state_.selected_note_id = link_id;
       found = true;
@@ -2696,12 +2641,12 @@ Element TUIApp::renderNotesPanel() const {
     int visible_end = std::min(static_cast<int>(state_.notes.size()), visible_start + visible_count);
     
     for (int i = visible_start; i < visible_end; ++i) {
-      const auto& metadata = state_.notes[static_cast<size_t>(i)];
-      auto note_element = renderNoteMetadata(metadata, 
+      const auto& note = state_.notes[static_cast<size_t>(i)];
+      auto note_element = renderNoteMetadata(note, 
         state_.current_pane == ActivePane::Notes && i == state_.selected_note_index);
       
       // Multi-select indicator
-      if (state_.selected_notes.count(metadata.id())) {
+      if (state_.selected_notes.count(note.metadata().id())) {
         note_element = hbox({
           text("✓") | color(Color::Green),
           text(" "),
@@ -2775,13 +2720,13 @@ Element TUIApp::renderPreviewPane() const {
   } else if (state_.notes.empty() || state_.selected_note_index >= static_cast<int>(state_.notes.size())) {
     preview_content.push_back(text("No note selected") | center | dim);
   } else {
-    const auto& metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
+    const auto& note = state_.notes[static_cast<size_t>(state_.selected_note_index)];
     
     // Note title
-    preview_content.push_back(text("# " + metadata.title()) | bold);
+    preview_content.push_back(text("# " + note.title()) | bold);
     
     // Metadata
-    auto modified_time = std::chrono::system_clock::to_time_t(metadata.updated());
+    auto modified_time = std::chrono::system_clock::to_time_t(note.metadata().updated());
     
     std::stringstream ss;
     ss << "*Modified: " << std::put_time(std::localtime(&modified_time), "%Y-%m-%d %H:%M") << "*";
@@ -2789,7 +2734,7 @@ Element TUIApp::renderPreviewPane() const {
     preview_content.push_back(text(""));
     
     // Try to load and render note content
-    auto note_result = note_store_.load(metadata.id());
+    auto note_result = note_store_.load(note.metadata().id());
     if (note_result) {
       // Simple markdown-like rendering
       std::string content = note_result->content();
@@ -2819,11 +2764,11 @@ Element TUIApp::renderPreviewPane() const {
     preview_content.push_back(text(""));
     
     // Tags
-    if (!metadata.tags().empty()) {
+    if (!note.metadata().tags().empty()) {
       std::string tags_str = "Tags: ";
-      for (size_t i = 0; i < metadata.tags().size(); ++i) {
+      for (size_t i = 0; i < note.metadata().tags().size(); ++i) {
         if (i > 0) tags_str += " ";
-        tags_str += "#" + metadata.tags()[i];
+        tags_str += "#" + note.metadata().tags()[i];
       }
       preview_content.push_back(text(tags_str) | dim);
     }
@@ -2832,14 +2777,14 @@ Element TUIApp::renderPreviewPane() const {
     std::string links_info = "Links: ";
     
     // Get backlinks
-    auto backlinks_result = note_store_.getBacklinks(metadata.id());
+    auto backlinks_result = note_store_.getBacklinks(note.metadata().id());
     int backlinks_count = 0;
     if (backlinks_result) {
       backlinks_count = static_cast<int>(backlinks_result->size());
     }
     
     // Get outlinks from note content
-    auto note_for_links = note_store_.load(metadata.id());
+    auto note_for_links = note_store_.load(note.metadata().id());
     int outlinks_count = 0;
     if (note_for_links) {
       auto outlinks = note_for_links->extractContentLinks();
@@ -2936,7 +2881,7 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  n       New note"));
   help_content.push_back(text("  e       Edit selected note (built-in editor)"));
   help_content.push_back(text("  d       Delete selected note(s)"));
-  help_content.push_back(text("  r       Rename selected note"));
+  help_content.push_back(text("  r       Refresh data"));
   help_content.push_back(text("  /       Start real-time search"));
   help_content.push_back(text("  :       Open command palette"));
   help_content.push_back(text("  Space   Multi-select toggle"));
@@ -2970,6 +2915,8 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  ↓ on last line: create new line"));
   help_content.push_back(text("  Enter   New line"));
   help_content.push_back(text("  Bksp    Delete character"));
+  help_content.push_back(text("  Ctrl+Q  Brief AI explanation for term before cursor (test)"));
+  help_content.push_back(text("  Ctrl+E  Expand brief explanation to detailed"));
   help_content.push_back(text(""));
   
   help_content.push_back(text("AI Features:") | bold);
@@ -3344,6 +3291,16 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
     return;
   }
   
+  // DEBUG: Log all events to understand what's being received
+  if (!event.character().empty()) {
+    std::string debug_msg = "Key pressed: ";
+    for (unsigned char c : event.character()) {
+      debug_msg += "\\x" + std::to_string(c);
+    }
+    debug_msg += " (char: '" + event.character() + "')";
+    setStatusMessage(debug_msg);
+  }
+  
   // Handle navigation first (no validation needed)
   if (event == ftxui::Event::ArrowUp && state_.edit_cursor_line > 0) {
     state_.edit_cursor_line--;
@@ -3561,10 +3518,10 @@ void TUIApp::saveEditedNote() {
       return;
     }
     
-    const auto& metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
+    const auto& selected_note = state_.notes[static_cast<size_t>(state_.selected_note_index)];
     
     // Load the current note
-    auto note_result = note_store_.load(metadata.id());
+    auto note_result = note_store_.load(selected_note.metadata().id());
     if (!note_result) {
       setStatusMessage("Error loading note for save: " + note_result.error().message());
       return;
@@ -3610,33 +3567,17 @@ Element TUIApp::renderNewNoteModal() const {
   
   Elements modal_content;
   
-  std::string modal_title = state_.rename_mode_active ? "Rename Note" : "New Note";
-  modal_content.push_back(text(modal_title) | bold | center);
+  modal_content.push_back(text("New Note") | bold | center);
   modal_content.push_back(separator());
   modal_content.push_back(text(""));
   
-  // Title input
-  std::string title_display = state_.new_note_title.empty() ? 
-    "[Enter note title]" : state_.new_note_title;
-  modal_content.push_back(
-    hbox({
-      text("Title: "),
-      text(title_display) | 
-      (state_.new_note_title.empty() ? dim : (bgcolor(Color::White) | color(Color::Black)))
-    })
-  );
-  modal_content.push_back(separator());
+  modal_content.push_back(text("Creating a new note...") | center);
+  modal_content.push_back(text(""));
+  modal_content.push_back(text("The note's title will be automatically derived") | center | dim);
+  modal_content.push_back(text("from the first line of content.") | center | dim);
   modal_content.push_back(text(""));
   
-  // Future enhancements could add:
-  // - Notebook selection
-  // - Tag input
-  // - Template selection
-  
-  std::string action_text = state_.rename_mode_active ? 
-    "Press Enter to rename, Esc to cancel" : 
-    "Press Enter to create, Esc to cancel";
-  modal_content.push_back(text(action_text) | center | dim);
+  modal_content.push_back(text("Press Enter to create, Esc to cancel") | center | dim);
   
   return vbox(modal_content) |
          border |
@@ -3673,8 +3614,8 @@ void TUIApp::suggestTagsForAllNotes() {
   int errors = 0;
   
   // Process all notes in all_notes (unfiltered list)
-  for (const auto& metadata : state_.all_notes) {
-    auto note_result = note_store_.load(metadata.id());
+  for (const auto& note_obj : state_.all_notes) {
+    auto note_result = note_store_.load(note_obj.metadata().id());
     if (!note_result.has_value()) {
       errors++;
       continue;
@@ -4422,16 +4363,16 @@ Element TUIApp::renderMoveNoteModal() const {
   // Show current note info
   if (!state_.notes.empty() && state_.selected_note_index >= 0 && 
       static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
-    const auto& metadata = state_.notes[static_cast<size_t>(state_.selected_note_index)];
+    const auto& note = state_.notes[static_cast<size_t>(state_.selected_note_index)];
     modal_content.push_back(
       hbox({
         text("Note: "),
-        text(metadata.title()) | bold
+        text(note.title()) | bold
       })
     );
     
     // Show current notebook if any
-    auto note_result = note_store_.load(metadata.id());
+    auto note_result = note_store_.load(note.metadata().id());
     if (note_result.has_value() && note_result->notebook().has_value() && !note_result->notebook()->empty()) {
       modal_content.push_back(
         hbox({
@@ -4828,7 +4769,7 @@ Result<void> TUIApp::createNoteFromTemplate(const std::string& template_name,
     
     // Find and select the newly created note
     for (size_t i = 0; i < state_.notes.size(); ++i) {
-      if (state_.notes[i].id() == note_result->id()) {
+      if (state_.notes[i].metadata().id() == note_result->metadata().id()) {
         state_.selected_note_index = static_cast<int>(i);
         break;
       }
@@ -4855,6 +4796,252 @@ Result<void> TUIApp::loadAvailableTemplates() {
   } catch (const std::exception& e) {
     return std::unexpected(Error(ErrorCode::kFileError, "Failed to load templates: " + std::string(e.what())));
   }
+}
+
+// AI Explanation operations
+void TUIApp::handleBriefExplanation() {
+  // Check if AI is configured
+  if (!config_.ai.has_value()) {
+    setStatusMessage("AI not configured. Please configure AI settings to use explanations.");
+    return;
+  }
+  
+  // Check if explanations are enabled
+  if (!config_.ai.value().explanations.enabled) {
+    setStatusMessage("AI explanations are disabled in configuration.");
+    return;
+  }
+  
+  // Don't process if already pending
+  if (state_.explanation_pending) {
+    setStatusMessage("Explanation request in progress...");
+    return;
+  }
+  
+  // Extract word before cursor
+  auto word_result = AiExplanationService::extractWordBefore(
+    *state_.editor_buffer, 
+    static_cast<size_t>(state_.edit_cursor_line), 
+    static_cast<size_t>(state_.edit_cursor_col)
+  );
+  
+  if (!word_result.has_value()) {
+    setStatusMessage("No word found before cursor to explain");
+    return;
+  }
+  
+  const std::string& term = *word_result;
+  
+  // Extract context around cursor
+  auto context_result = AiExplanationService::extractContext(
+    *state_.editor_buffer,
+    static_cast<size_t>(state_.edit_cursor_line),
+    static_cast<size_t>(state_.edit_cursor_col),
+    ai_explanation_service_->getCacheStats().first > 0 ? 100 : 150 // More context if cache is empty
+  );
+  
+  if (!context_result.has_value()) {
+    setStatusMessage("Failed to extract context for explanation");
+    return;
+  }
+  
+  // Show progress message
+  state_.explanation_pending = true;
+  setStatusMessage("Getting AI explanation for '" + term + "'...");
+  
+  // Get brief explanation
+  auto explanation_result = ai_explanation_service_->getBriefExplanation(
+    term, *context_result, config_.ai.value()
+  );
+  
+  state_.explanation_pending = false;
+  
+  if (!explanation_result.has_value()) {
+    setStatusMessage("Failed to get AI explanation: " + explanation_result.error().message());
+    return;
+  }
+  
+  // Store explanation state
+  state_.original_term = term;
+  state_.brief_explanation = *explanation_result;
+  state_.explanation_start_line = static_cast<size_t>(state_.edit_cursor_line);
+  state_.explanation_start_col = static_cast<size_t>(state_.edit_cursor_col);
+  
+  // Insert explanation text
+  std::string explanation_text = " - " + *explanation_result;
+  insertExplanationText(explanation_text);
+  
+  state_.explanation_end_col = state_.explanation_start_col + explanation_text.length();
+  state_.has_pending_expansion = true;
+  
+  setStatusMessage("Explanation added. Press Ctrl+E to expand.");
+}
+
+void TUIApp::handleExpandExplanation() {
+  // Check if there's a pending expansion
+  if (!state_.has_pending_expansion) {
+    setStatusMessage("No explanation to expand. Use Alt+? first to get a brief explanation.");
+    return;
+  }
+  
+  // Check if AI is configured
+  if (!config_.ai.has_value()) {
+    setStatusMessage("AI not configured. Please configure AI settings to use explanations.");
+    return;
+  }
+  
+  // Check if explanations are enabled
+  if (!config_.ai.value().explanations.enabled) {
+    setStatusMessage("AI explanations are disabled in configuration.");
+    return;
+  }
+  
+  // Don't process if already pending
+  if (state_.explanation_pending) {
+    setStatusMessage("Explanation request in progress...");
+    return;
+  }
+  
+  // Get expanded explanation if not cached
+  if (state_.expanded_explanation.empty()) {
+    // Extract context again for expanded explanation
+    auto context_result = AiExplanationService::extractContext(
+      *state_.editor_buffer,
+      state_.explanation_start_line,
+      state_.explanation_start_col,
+      200 // More context for expanded explanation
+    );
+    
+    if (!context_result.has_value()) {
+      setStatusMessage("Failed to extract context for expanded explanation");
+      return;
+    }
+    
+    // Show progress message
+    state_.explanation_pending = true;
+    setStatusMessage("Getting expanded explanation for '" + state_.original_term + "'...");
+    
+    // Get expanded explanation
+    auto expanded_result = ai_explanation_service_->getExpandedExplanation(
+      state_.original_term, *context_result, config_.ai.value()
+    );
+    
+    state_.explanation_pending = false;
+    
+    if (!expanded_result.has_value()) {
+      setStatusMessage("Failed to get expanded explanation: " + expanded_result.error().message());
+      return;
+    }
+    
+    state_.expanded_explanation = *expanded_result;
+  }
+  
+  // Replace brief explanation with expanded one
+  expandExistingExplanation();
+  
+  setStatusMessage("Explanation expanded.");
+}
+
+void TUIApp::insertExplanationText(const std::string& explanation_text) {
+  // Insert the explanation text at cursor position
+  for (char c : explanation_text) {
+    auto command = CommandFactory::createInsertChar(
+      CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col), c);
+    auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+    if (insert_result) {
+      state_.edit_cursor_col++;
+      state_.edit_has_changes = true;
+    } else {
+      setStatusMessage("Failed to insert explanation text");
+      return;
+    }
+  }
+}
+
+void TUIApp::expandExistingExplanation() {
+  // Get current line
+  auto line_result = state_.editor_buffer->getLine(state_.explanation_start_line);
+  if (!line_result.has_value()) {
+    setStatusMessage("Failed to expand explanation: cannot access line");
+    return;
+  }
+  
+  const std::string& current_line = *line_result;
+  
+  // Verify the brief explanation is still there
+  if (state_.explanation_start_col + 3 < current_line.length() && // At least " - " 
+      current_line.substr(state_.explanation_start_col, 3) == " - ") {
+    
+    // Calculate the range to replace (brief explanation)
+    size_t brief_start = state_.explanation_start_col;
+    size_t brief_length = state_.explanation_end_col - state_.explanation_start_col;
+    
+    // Delete the brief explanation first (character by character from the start)
+    for (size_t i = 0; i < brief_length; ++i) {
+      // Get the character at the position first
+      auto current_line_result = state_.editor_buffer->getLine(state_.explanation_start_line);
+      if (!current_line_result.has_value() || brief_start >= current_line_result->length()) {
+        setStatusMessage("Failed to get character for deletion");
+        return;
+      }
+      
+      char char_to_delete = (*current_line_result)[brief_start];
+      
+      // Create and execute delete command for undo/redo support
+      auto command = CommandFactory::createDeleteChar(
+        CursorPosition(state_.explanation_start_line, brief_start), char_to_delete);
+      auto delete_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+      if (!delete_result) {
+        setStatusMessage("Failed to replace brief explanation");
+        return;
+      }
+    }
+    
+    // Position cursor at start of deleted text
+    state_.edit_cursor_line = static_cast<int>(state_.explanation_start_line);
+    state_.edit_cursor_col = static_cast<int>(brief_start);
+    
+    // Insert expanded explanation
+    std::string expanded_text = " - " + state_.expanded_explanation;
+    insertExplanationText(expanded_text);
+    
+    // Update state
+    state_.explanation_end_col = state_.explanation_start_col + expanded_text.length();
+    state_.has_pending_expansion = false; // No further expansion possible
+    
+  } else {
+    setStatusMessage("Brief explanation not found at expected location");
+  }
+}
+
+void TUIApp::clearExplanationState() {
+  state_.explanation_pending = false;
+  state_.has_pending_expansion = false;
+  state_.explanation_start_line = 0;
+  state_.explanation_start_col = 0;
+  state_.explanation_end_col = 0;
+  state_.original_term.clear();
+  state_.brief_explanation.clear();
+  state_.expanded_explanation.clear();
+}
+
+AiExplanationService::Config TUIApp::createExplanationConfig() const {
+  AiExplanationService::Config config;
+  
+  // Apply configuration from AI config if available
+  if (config_.ai.has_value()) {
+    const auto& ai_config = config_.ai.value();
+    const auto& explanation_config = ai_config.explanations;
+    
+    config.brief_max_words = explanation_config.brief_max_words;
+    config.expanded_max_words = explanation_config.expanded_max_words;
+    config.timeout = std::chrono::milliseconds(explanation_config.timeout_ms);
+    config.cache_explanations = explanation_config.cache_explanations;
+    config.max_cache_size = explanation_config.max_cache_size;
+    config.context_radius = explanation_config.context_radius;
+  }
+  
+  return config;
 }
 
 } // namespace nx::tui

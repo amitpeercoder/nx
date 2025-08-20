@@ -15,7 +15,7 @@ NewCommand::NewCommand(Application& app) : app_(app) {
 }
 
 void NewCommand::setupCommand(CLI::App* cmd) {
-  cmd->add_option("title", title_, "Note title (optional)");
+  cmd->add_option("title", title_, "Initial title (will be used as first line; title automatically derived from first line of content)");
   cmd->add_option("--tags,-t", tags_, "Tags for the note (comma-separated)");
   cmd->add_option("--notebook,--nb", notebook_, "Notebook name");
   cmd->add_option("--from", template_name_, "Create from template");

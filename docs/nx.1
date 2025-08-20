@@ -8,7 +8,7 @@ nx \- high-performance CLI notes application with AI integration
 .B nx
 is a high-performance command-line notes application built with modern C++ that provides fast, local-first note management with optional AI integration. It supports Markdown notes with YAML front-matter, full-text search, notebook organization, and synchronization via Git.
 .PP
-Features include hierarchical notebook organization, file attachments, template system, import/export capabilities, and a terminal user interface (TUI) for interactive note management.
+Features include automatic title derivation from the first line of content, hierarchical notebook organization, file attachments, template system, import/export capabilities, and a terminal user interface (TUI) for interactive note management.
 .SH OPTIONS
 .TP
 .BR \-h ", " \-\-help
@@ -40,8 +40,8 @@ Disable colored output
 .SH COMMANDS
 .SS "Note Management"
 .TP
-.BR "new " [\fITITLE\fR] " " [\fIOPTIONS\fR]
-Create a new note with optional title and metadata
+.BR "new " [\fIOPTIONS\fR]
+Create a new note (title will be automatically derived from the first line of content)
 .RS
 .TP
 .BR \-\-tags " " \fITAGS\fR
@@ -126,9 +126,6 @@ Output in JSON format
 .BR "notebook create " \fINAME\fR " " [\fIDESCRIPTION\fR]
 Create new notebook
 .TP
-.BR "notebook rename " \fIOLD_NAME\fR " " \fINEW_NAME\fR
-Rename existing notebook
-.TP
 .BR "notebook delete " \fINAME\fR " " [\fIOPTIONS\fR]
 Delete notebook
 .RS
@@ -185,9 +182,6 @@ Delete template
 .BR "tpl use " \fINAME\fR " " [\fIOPTIONS\fR]
 Create note from template
 .RS
-.TP
-.BR \-\-title " " \fITITLE\fR
-Note title
 .TP
 .BR \-\-vars " " \fIKEY=VALUE\fR
 Template variables
@@ -316,14 +310,6 @@ Suggest tags for note using AI
 Apply suggested tags to note
 .RE
 .TP
-.BR "title " \fINOTE_ID\fR " " [\fIOPTIONS\fR]
-Suggest better titles using AI
-.RS
-.TP
-.BR \-\-apply
-Apply suggested title to note
-.RE
-.TP
 .BR "rewrite " \fINOTE_ID\fR " " [\fIOPTIONS\fR]
 Rewrite note content with different tone
 .RS
@@ -440,6 +426,65 @@ Specific files to resolve
 .TP
 .BR "ui"
 Launch interactive Terminal User Interface (TUI)
+.SH TUI KEYBOARD SHORTCUTS
+The Terminal User Interface supports the following keyboard shortcuts:
+.SS "Editor Mode"
+.TP
+.BR "Alt+?"
+Generate brief AI explanation for the term before cursor position
+.TP
+.BR "Ctrl+E"
+Expand existing brief explanation into detailed explanation
+.TP
+.BR "Ctrl+S"
+Save current note
+.TP
+.BR "Ctrl+Z"
+Undo last operation
+.TP
+.BR "Ctrl+Y"
+Redo last operation
+.TP
+.BR "Esc"
+Exit editor mode
+.SS "Navigation"
+.TP
+.BR "h, ←"
+Focus left pane (navigation/tags)
+.TP
+.BR "j, ↓"
+Move down in current pane
+.TP
+.BR "k, ↑"
+Move up in current pane
+.TP
+.BR "l, →"
+Focus right pane (preview/edit)
+.TP
+.BR "Tab"
+Cycle through panes
+.SS "Actions"
+.TP
+.BR "n"
+Create new note
+.TP
+.BR "e"
+Edit selected note
+.TP
+.BR "d"
+Delete selected note
+.TP
+.BR "/"
+Start search mode
+.TP
+.BR ":"
+Open command palette
+.TP
+.BR "?"
+Toggle help modal
+.TP
+.BR "q"
+Quit application
 .SH FILE FORMAT
 Notes are stored as Markdown files with optional YAML front-matter:
 .PP
@@ -453,9 +498,10 @@ tags: [work, project, important]
 notebook: work-notes
 ---
 
-# Note Title
+# Meeting Notes - Project Alpha Review
 
 Note content in **Markdown** format...
+(Title is automatically derived from first line)
 
 ## Section
 
@@ -580,8 +626,8 @@ Search note content:
 Find todos with regex:
 .B nx grep "TODO|FIXME|HACK" --regex
 .TP
-Search by title and tags:
-.B nx ls --tag AI --tag python | grep -i neural
+Search by tags:
+.B nx ls --tag AI --tag python
 .TP
 Find notes linking to specific note:
 .B nx backlinks abc123
@@ -610,9 +656,6 @@ Ask questions about your notes:
 .TP
 Auto-generate tags:
 .B nx tag-suggest abc123 --apply
-.TP
-Improve note title:
-.B nx title abc123 --apply
 .TP
 Rewrite for clarity:
 .B nx rewrite abc123 --tone professional --apply

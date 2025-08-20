@@ -95,8 +95,9 @@ cppcheck --enable=all src/
 1. **Local-first**: Full offline functionality with optional Git sync
 2. **Performance**: All operations < 100ms on 10,000 notes
 3. **Plain Text**: Markdown files with YAML front-matter
-4. **XDG Compliance**: Follows XDG Base Directory specification
-5. **Error Handling**: Use `expected<T, Error>` pattern, no exceptions
+4. **Auto-Title Derivation**: Note titles automatically derived from first line of content
+5. **XDG Compliance**: Follows XDG Base Directory specification
+6. **Error Handling**: Use `expected<T, Error>` pattern, no exceptions
 
 ## File Format
 
@@ -114,13 +115,15 @@ tags: [tag1, tag2]
 Note content...
 ```
 
+**Note**: The title in the YAML front-matter is optional and primarily for legacy compatibility. The actual note title is automatically derived from the first line of content (e.g., `# Note Title` becomes "Note Title").
+
 ## Core CLI Commands
 
 ### ✅ Implemented Commands
 
 #### Note Operations
 ```bash
-nx new [title] [--tags a,b] [--nb notebook]    # Create new note
+nx new [--tags a,b] [--nb notebook]             # Create new note (title auto-derived from first line)
 nx edit <id>                                     # Edit note in $EDITOR  
 nx view <id>                                     # Display note
 nx ls [--tag=X] [--since=Y] [--nb=Z]           # List notes with filtering
@@ -146,12 +149,17 @@ nx export md|json|pdf|html [--to dir]           # Export notes in various format
 nx ask "question"                                # RAG Q&A over note collection
 nx summarize <id> [--style bullets] [--apply]   # AI summarization
 nx tag-suggest <id> [--apply]                    # AI tag suggestions
-nx title <id> [--apply]                          # AI title suggestions
 nx rewrite <id> [--tone crisp]                   # AI content rewriting
 nx tasks <id>                                    # Extract action items
 nx suggest-links <id>                            # Find related notes
 nx outline "topic"                               # Generate structured outlines
 ```
+
+**TUI AI Explanation Feature**:
+- **Alt+?**: Generate brief explanations for terms before cursor (5-10 words)
+- **Ctrl+E**: Expand brief explanations to detailed descriptions (2-3 sentences)
+- **Context-aware**: Uses surrounding text for accurate explanations
+- **Cached**: Reduces API calls and improves performance
 
 #### Interactive TUI
 ```bash
