@@ -864,10 +864,7 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       return;
     }
     
-    if (event == ftxui::Event::Character('\x0A')) { // Ctrl+J (ASCII 10) for journal insights  
-      handleJournalInsights();
-      return;
-    }
+    // Note: Journal insights moved outside edit mode to avoid conflicting with Enter key
     
     if (event == ftxui::Event::Character('\x16')) { // Ctrl+V (ASCII 22) for workflow orchestrator
       handleWorkflowOrchestrator();
@@ -936,6 +933,12 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     handleEditModeInput(event);
     return;
   }
+  
+  // Journal insights - DISABLED to fix Enter key conflicts
+  // if (event.character() == "\x0A" && event != ftxui::Event::Return) { // Ctrl+J (ASCII 10) for journal insights
+  //   handleJournalInsights();
+  //   return;
+  // }
   
   // Handle search mode first
   if (state_.search_mode_active) {
@@ -1685,10 +1688,8 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   }
   
   // Manual panel scrolling (independent of selection)
-  if (event.character() == "\x0A") { // Ctrl+J - scroll down
-    scrollPanelDown();
-    return;
-  }
+  // Note: Removed Ctrl+J to avoid conflict with journal insights
+  // Using Ctrl+Down arrow for panel scrolling instead
   
   if (event.character() == "\x0B") { // Ctrl+K - scroll up  
     scrollPanelUp();
@@ -2980,6 +2981,9 @@ Element TUIApp::renderPreviewPane() const {
             // Calculate available width for wrapping
             int panel_width = calculatePreviewPanelWidth();
             
+            // Account for the preview panel's border (2 chars: 1 left + 1 right)
+            panel_width = std::max(1, panel_width - 2);
+            
             
             // Wrap the line
             auto wrapped_lines = WordWrapper::wrapLine(line, static_cast<size_t>(panel_width));
@@ -3068,7 +3072,26 @@ Element TUIApp::renderPreviewPane() const {
 }
 
 Element TUIApp::renderStatusLine() const {
-  return text(state_.status_message) | dim;
+  // Get horizontal space info
+  int terminal_width = screen_.dimx();
+  int preview_width = calculatePreviewPanelWidth();
+  int editor_width = calculateEditorPanelWidth();
+  
+  // Create width info string
+  std::string width_info = "Terminal:" + std::to_string(terminal_width) + 
+                          " Preview:" + std::to_string(preview_width) + 
+                          " Editor:" + std::to_string(editor_width);
+  
+  // If status message is empty, just show width info
+  if (state_.status_message.empty()) {
+    return text(width_info) | dim;
+  }
+  
+  // Show status message on left, width info on right
+  return hbox({
+    text(state_.status_message) | dim | flex,
+    text(" | " + width_info) | dim
+  });
 }
 
 Element TUIApp::renderCommandPalette() const {
@@ -3565,16 +3588,59 @@ Element TUIApp::renderEditor() const {
     // Apply markdown highlighting to the line
     HighlightResult highlight = state_.markdown_highlighter->highlightLine(display_line, static_cast<size_t>(i));
     
-    // Show cursor position as a caret
-    if (i == state_.edit_cursor_line) {
-      // Insert cursor at current column - use a simple caret
-      size_t cursor_pos = std::min(static_cast<size_t>(state_.edit_cursor_col), display_line.length());
+    // Check if word wrap is enabled
+    if (state_.word_wrap_enabled) {
+      // Calculate available width for wrapping
+      int panel_width = calculateEditorPanelWidth();
       
-      // Create a custom styled line with cursor embedded
-      editor_content.push_back(createStyledLineWithCursor(display_line, highlight, cursor_pos));
+      // Account for the editor panel's border (2 chars: 1 left + 1 right)
+      panel_width = std::max(1, panel_width - 2);
+      
+      // Wrap the line
+      auto wrapped_lines = WordWrapper::wrapLine(display_line, static_cast<size_t>(panel_width));
+      
+      // Render each wrapped segment
+      for (size_t j = 0; j < wrapped_lines.size(); ++j) {
+        const auto& wrapped_line = wrapped_lines[j];
+        
+        // Split highlight segments for wrapped lines
+        auto wrapped_highlight = splitHighlightForWrappedLine(highlight, wrapped_lines, j, display_line);
+        
+        // Show cursor position if this is the cursor line
+        if (i == state_.edit_cursor_line) {
+          // Calculate which wrapped segment contains the cursor
+          size_t char_offset = 0;
+          for (size_t k = 0; k < j; ++k) {
+            char_offset += wrapped_lines[k].length();
+          }
+          
+          // Check if cursor is in this wrapped segment
+          size_t cursor_pos = static_cast<size_t>(state_.edit_cursor_col);
+          if (cursor_pos >= char_offset && cursor_pos <= char_offset + wrapped_line.length()) {
+            size_t local_cursor_pos = cursor_pos - char_offset;
+            local_cursor_pos = std::min(local_cursor_pos, wrapped_line.length());
+            editor_content.push_back(createStyledLineWithCursor(wrapped_line, wrapped_highlight, local_cursor_pos));
+          } else {
+            editor_content.push_back(createStyledLine(wrapped_line, wrapped_highlight));
+          }
+        } else {
+          // Regular wrapped line with highlighting
+          editor_content.push_back(createStyledLine(wrapped_line, wrapped_highlight));
+        }
+      }
     } else {
-      // Regular line with markdown highlighting
-      editor_content.push_back(createStyledLine(display_line, highlight));
+      // No word wrap - use original rendering
+      // Show cursor position as a caret
+      if (i == state_.edit_cursor_line) {
+        // Insert cursor at current column - use a simple caret
+        size_t cursor_pos = std::min(static_cast<size_t>(state_.edit_cursor_col), display_line.length());
+        
+        // Create a custom styled line with cursor embedded
+        editor_content.push_back(createStyledLineWithCursor(display_line, highlight, cursor_pos));
+      } else {
+        // Regular line with markdown highlighting
+        editor_content.push_back(createStyledLine(display_line, highlight));
+      }
     }
   }
   
@@ -4985,29 +5051,30 @@ int TUIApp::calculatePreviewPanelWidth() const {
   
   switch (state_.view_mode) {
     case ViewMode::SinglePane:
-      // In single pane mode, use most of the terminal width
-      width = terminal_width - 4; // Account for borders and padding
+      // In single pane mode, use almost all of the terminal width
+      width = terminal_width - 2; // Only account for minimal borders
       break;
       
     case ViewMode::TwoPane:
-      // Account for: border(2) + separator(1) + padding(2)
-      width = (terminal_width * panel_sizing_.preview_width / 100) - 5;
+      // Account for minimal spacing: separator(1) + minimal padding(1)
+      width = (terminal_width * panel_sizing_.preview_width / 100) - 2;
       break;
       
     case ViewMode::ThreePane:
-      // Preview uses flex in three-pane mode, calculate remaining space
+      // Preview uses flex in three-pane mode, gets all remaining space
+      // The layout uses sizing values directly as character counts, not percentages
       {
-        int tags_width = (terminal_width * panel_sizing_.tags_width / 100);
-        int notes_width = (terminal_width * panel_sizing_.notes_width / 100);
-        // Reduce padding - was too conservative with -7
-        width = terminal_width - tags_width - notes_width - 4; // Only account for 2 separators + minimal padding
+        int tags_width = panel_sizing_.tags_width;     // Direct character count
+        int notes_width = panel_sizing_.notes_width;   // Direct character count
+        // Account for 2 separators between panels
+        width = terminal_width - tags_width - notes_width - 2;
       }
       break;
   }
   
   
   // Ensure minimum width for readability
-  return std::max(30, width); // Increased minimum from 20 to 30
+  return std::max(30, width);
 }
 
 int TUIApp::calculateEditorPanelWidth() const {
@@ -8964,11 +9031,8 @@ Result<std::string> TUIApp::synthesizeKnowledge(const std::vector<nx::core::Note
 }
 
 void TUIApp::handleJournalInsights() {
-  if (!config_.ai.has_value() || !config_.ai->journal_insights.enabled) {
-    setStatusMessage("⚠️  Journal insights not configured or disabled");
-    return;
-  }
-  setStatusMessage("📔 Journal insights feature ready for implementation!");
+  // Journal insights feature completely disabled
+  setStatusMessage("📔 Journal insights feature disabled");
 }
 
 Result<std::string> TUIApp::analyzeJournalPatterns(const std::vector<nx::core::Note>& journal_notes,
