@@ -334,6 +334,12 @@ Shell completions for bash/zsh
 - **Comprehensive Documentation**: Man pages, user manual, tldr guides, security analysis ✅
 - **Release Infrastructure**: Install scripts, packaging, checksums ✅
 
+### ✅ Recent Critical Fixes (August 2025)
+- **Segmentation Fault Fix**: Resolved critical config loading crash affecting all commands ✅
+- **Alt Key Shortcuts**: Restored Phase 7 keyboard shortcuts (Alt+1/2/3/4) after fixing crash ✅
+- **Configuration Safety**: Fixed nullptr dereference in TOML AI config sections ✅
+- **Full Functionality**: All 35+ commands and AI features now working correctly ✅
+
 ### ✅ Phase 6 - Advanced AI Integration (Completed)
 - **Multi-Modal AI (F6)**: Analyzes notes with attached images and documents, generates alt text ✅
 - **Voice Integration (F7)**: Voice command processing for note operations (demo mode) ✅
@@ -347,9 +353,9 @@ Shell completions for bash/zsh
 ### ✅ Phase 7 - Collaborative Intelligence & Knowledge Networks (Completed)
 - **Collaborative AI (F11)**: Team dynamics analysis and collaboration improvement suggestions ✅
 - **Knowledge Graphs (F12)**: Concept relationship generation and visualization across notes ✅
-- **Expert Systems (Shift+E)**: Domain-specific advice and intelligent recommendations ✅
-- **Intelligent Workflows (Shift+S)**: Complex multi-step process automation ✅
-- **Meta-Learning (Shift+M)**: Learning pattern analysis and knowledge retention optimization ✅
+- **Expert Systems (Alt+1)**: Domain-specific advice and intelligent recommendations ✅
+- **Intelligent Workflows (Alt+2)**: Complex multi-step process automation ✅
+- **Meta-Learning (Alt+4)**: Learning pattern analysis and knowledge retention optimization ✅
 - **HTTP Client Integration**: Full AI provider support with advanced prompt engineering ✅
 - **Configuration Management**: Complete TOML loading/saving for all Phase 7 features ✅
 - **TUI Integration**: Seamless keyboard shortcuts and user feedback system ✅

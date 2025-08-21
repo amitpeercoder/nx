@@ -3142,6 +3142,15 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  A       AI auto-title selected note"));
   help_content.push_back(text(""));
   
+  help_content.push_back(text("Phase 7 AI Features:") | bold);
+  help_content.push_back(text("  F11     Collaborative AI analysis"));
+  help_content.push_back(text("  F12     Knowledge graph generation"));
+  help_content.push_back(text("  Alt+1   Expert systems advice"));
+  help_content.push_back(text("  Alt+2   Intelligent workflows"));
+  help_content.push_back(text("  Alt+3   Smart note merging"));
+  help_content.push_back(text("  Alt+4   Meta-learning analysis"));
+  help_content.push_back(text(""));
+  
   help_content.push_back(text("Notebook Management:") | bold);
   help_content.push_back(text("  Ctrl+N  Create new notebook"));
   help_content.push_back(text("  Ctrl+R  Rename notebook (navigation pane)"));
