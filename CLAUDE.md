@@ -179,7 +179,7 @@ nx outline "topic"                               # Generate structured outlines
 - **Ctrl+T**: Intelligent template suggestions based on content analysis
 - **Ctrl+I**: Cross-note insights - find patterns and connections across your notes
 - **Ctrl+N**: Smart search enhancement - improve queries with AI-powered expansion
-- **Ctrl+M**: Smart note merging - detect opportunities to consolidate similar notes
+- **Alt+3**: Smart note merging - detect opportunities to consolidate similar notes
 
 **Phase 5 - Workflow Automation:**
 - **Ctrl+F1**: Workflow orchestrator - automate multi-step processes
@@ -198,9 +198,9 @@ nx outline "topic"                               # Generate structured outlines
 **Phase 7 - Collaborative Intelligence & Knowledge Networks:**
 - **F11**: Collaborative AI - analyze team dynamics and suggest collaboration improvements
 - **F12**: Knowledge Graphs - generate and visualize concept relationships across notes
-- **Shift+E**: Expert Systems - get domain-specific advice and recommendations
-- **Shift+S**: Intelligent Workflows - automate complex multi-step processes
-- **Shift+M**: Meta-Learning - analyze learning patterns and optimize knowledge retention
+- **Alt+1**: Expert Systems - get domain-specific advice and recommendations
+- **Alt+2**: Intelligent Workflows - automate complex multi-step processes
+- **Alt+4**: Meta-Learning - analyze learning patterns and optimize knowledge retention
 
 **AI System Features:**
 - **Context-aware**: Uses surrounding text for accurate AI assistance

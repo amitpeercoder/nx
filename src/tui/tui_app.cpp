@@ -841,7 +841,8 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       return;
     }
     
-    if (event.character() == "\x0D") { // Ctrl+M (ASCII 13) for smart note merging
+    // Alt+3 for smart note merging (moved from Ctrl+M to avoid conflicts)
+    if (event.character() == "\x1b" "3") { // ESC+3 for Alt+3
       handleSmartNoteMerging();
       return;
     }
@@ -913,19 +914,18 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       // We'll implement F13-F15 using Alt+key combinations instead
     }
     
-    // Alt+key combinations for remaining Phase 7 features
-    // We'll use Shift+character combinations for simplicity
-    if (event == ftxui::Event::Character('E')) { // Shift+E for expert systems
+    // Alt+number combinations for remaining Phase 7 features (avoiding Shift+letter conflicts)
+    if (event.character() == "\x1b" "1") { // ESC+1 for Alt+1 - expert systems (was Shift+E)
       handleExpertSystems();
       return;
     }
     
-    if (event == ftxui::Event::Character('S')) { // Shift+S for intelligent workflows  
+    if (event.character() == "\x1b" "2") { // ESC+2 for Alt+2 - intelligent workflows (was Shift+S)
       handleIntelligentWorkflows();
       return;
     }
     
-    if (event == ftxui::Event::Character('M')) { // Shift+M for meta-learning
+    if (event.character() == "\x1b" "4") { // ESC+4 for Alt+4 - meta-learning (was Shift+M)
       handleMetaLearning();
       return;
     }

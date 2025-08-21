@@ -499,7 +499,7 @@ The TUI features a 3-pane layout:
 - `Ctrl+T`: Intelligent template suggestions based on content analysis
 - `Ctrl+I`: Cross-note insights - find patterns across notes
 - `Ctrl+N`: Smart search enhancement with AI-powered expansion
-- `Ctrl+M`: Smart note merging - detect consolidation opportunities
+- `Alt+3`: Smart note merging - detect consolidation opportunities
 
 **AI Features (Phase 5)**:
 - `Ctrl+F1`: Workflow orchestrator - automate multi-step processes
@@ -518,9 +518,9 @@ The TUI features a 3-pane layout:
 **AI Features (Phase 7 - Collaborative Intelligence & Knowledge Networks)**:
 - `F11`: Collaborative AI - analyze team dynamics and suggest collaboration improvements
 - `F12`: Knowledge Graphs - generate and visualize concept relationships across notes
-- `Shift+E`: Expert Systems - get domain-specific advice and recommendations
-- `Shift+S`: Intelligent Workflows - automate complex multi-step processes
-- `Shift+M`: Meta-Learning - analyze learning patterns and optimize knowledge retention
+- `Alt+1`: Expert Systems - get domain-specific advice and recommendations
+- `Alt+2`: Intelligent Workflows - automate complex multi-step processes
+- `Alt+4`: Meta-Learning - analyze learning patterns and optimize knowledge retention
 
 - Standard editing keys (arrows, backspace, etc.)
 
