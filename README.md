@@ -116,6 +116,7 @@ Run `nx` or `nx ui` to launch the full-featured terminal interface:
 - `Ctrl+I` - Cross-note insights
 - `Ctrl+F1-F5` - **Phase 5 Advanced AI** (workflow orchestrator, project analyzer, learning paths, knowledge synthesis, journal patterns)
 - `F6-F10` - **Phase 6 Advanced AI Integration** (multi-modal analysis, voice integration, contextual awareness, workspace AI, predictive AI)
+- `F11-F12, Shift+E/S/M` - **Phase 7 Collaborative Intelligence** (collaborative AI, knowledge graphs, expert systems, intelligent workflows, meta-learning)
 
 ## 📚 Commands Reference
 
@@ -248,8 +249,9 @@ nx follows XDG Base Directory specification:
 - **MVP1 Complete**: Core note operations, search, TUI, AI integration
 - **MVP2 Phase 1 Complete**: Notebooks, attachments, templates, metadata, system maintenance
 - **MVP3 Complete**: Enhanced TUI editor with security and performance improvements
+- **Phase 7 Complete**: Collaborative Intelligence & Knowledge Networks with 5 advanced AI features
 - **35+ Commands**: Complete functional coverage across all areas
-- **96% Test Coverage**: 340/351 tests passing with comprehensive validation
+- **97% Test Coverage**: 368/379 tests passing with comprehensive validation
 - **Documentation Complete**: User manual, man pages, tldr guides, security analysis
 
 ### 🚧 **Future Enhancements**

@@ -881,6 +881,148 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
           ai_config.predictive_ai.learning_path_optimization = *value;
         }
       }
+
+      // Phase 7 AI configuration loading
+      
+      // Collaborative AI configuration (Phase 7)
+      if (auto collaborative_table = ai_table->get("collaborative_ai")->as_table()) {
+        if (auto value = (*collaborative_table)["enabled"].value<bool>()) {
+          ai_config.collaborative_ai.enabled = *value;
+        }
+        if (auto value = (*collaborative_table)["max_tokens"].value<int>()) {
+          ai_config.collaborative_ai.max_tokens = *value;
+        }
+        if (auto value = (*collaborative_table)["temperature"].value<double>()) {
+          ai_config.collaborative_ai.temperature = *value;
+        }
+        if (auto value = (*collaborative_table)["timeout_ms"].value<int>()) {
+          ai_config.collaborative_ai.timeout_ms = *value;
+        }
+        if (auto value = (*collaborative_table)["enable_shared_sessions"].value<bool>()) {
+          ai_config.collaborative_ai.enable_shared_sessions = *value;
+        }
+        if (auto value = (*collaborative_table)["cross_reference_analysis"].value<bool>()) {
+          ai_config.collaborative_ai.cross_reference_analysis = *value;
+        }
+        if (auto value = (*collaborative_table)["collaborative_editing"].value<bool>()) {
+          ai_config.collaborative_ai.collaborative_editing = *value;
+        }
+        if (auto value = (*collaborative_table)["consensus_building"].value<bool>()) {
+          ai_config.collaborative_ai.consensus_building = *value;
+        }
+      }
+      
+      // Knowledge graph configuration (Phase 7)
+      if (auto graph_table = ai_table->get("knowledge_graph")->as_table()) {
+        if (auto value = (*graph_table)["enabled"].value<bool>()) {
+          ai_config.knowledge_graph.enabled = *value;
+        }
+        if (auto value = (*graph_table)["max_tokens"].value<int>()) {
+          ai_config.knowledge_graph.max_tokens = *value;
+        }
+        if (auto value = (*graph_table)["temperature"].value<double>()) {
+          ai_config.knowledge_graph.temperature = *value;
+        }
+        if (auto value = (*graph_table)["timeout_ms"].value<int>()) {
+          ai_config.knowledge_graph.timeout_ms = *value;
+        }
+        if (auto value = (*graph_table)["auto_generate_graphs"].value<bool>()) {
+          ai_config.knowledge_graph.auto_generate_graphs = *value;
+        }
+        if (auto value = (*graph_table)["semantic_clustering"].value<bool>()) {
+          ai_config.knowledge_graph.semantic_clustering = *value;
+        }
+        if (auto value = (*graph_table)["relationship_inference"].value<bool>()) {
+          ai_config.knowledge_graph.relationship_inference = *value;
+        }
+        if (auto value = (*graph_table)["visual_graph_export"].value<bool>()) {
+          ai_config.knowledge_graph.visual_graph_export = *value;
+        }
+      }
+      
+      // Expert systems configuration (Phase 7)
+      if (auto expert_table = ai_table->get("expert_systems")->as_table()) {
+        if (auto value = (*expert_table)["enabled"].value<bool>()) {
+          ai_config.expert_systems.enabled = *value;
+        }
+        if (auto value = (*expert_table)["max_tokens"].value<int>()) {
+          ai_config.expert_systems.max_tokens = *value;
+        }
+        if (auto value = (*expert_table)["temperature"].value<double>()) {
+          ai_config.expert_systems.temperature = *value;
+        }
+        if (auto value = (*expert_table)["timeout_ms"].value<int>()) {
+          ai_config.expert_systems.timeout_ms = *value;
+        }
+        if (auto value = (*expert_table)["primary_domain"].value<std::string>()) {
+          ai_config.expert_systems.primary_domain = *value;
+        }
+        if (auto value = (*expert_table)["multi_domain_support"].value<bool>()) {
+          ai_config.expert_systems.multi_domain_support = *value;
+        }
+        if (auto value = (*expert_table)["adaptive_expertise"].value<bool>()) {
+          ai_config.expert_systems.adaptive_expertise = *value;
+        }
+        if (auto value = (*expert_table)["citation_generation"].value<bool>()) {
+          ai_config.expert_systems.citation_generation = *value;
+        }
+      }
+      
+      // Intelligent workflows configuration (Phase 7)
+      if (auto workflow_table = ai_table->get("intelligent_workflows")->as_table()) {
+        if (auto value = (*workflow_table)["enabled"].value<bool>()) {
+          ai_config.intelligent_workflows.enabled = *value;
+        }
+        if (auto value = (*workflow_table)["max_tokens"].value<int>()) {
+          ai_config.intelligent_workflows.max_tokens = *value;
+        }
+        if (auto value = (*workflow_table)["temperature"].value<double>()) {
+          ai_config.intelligent_workflows.temperature = *value;
+        }
+        if (auto value = (*workflow_table)["timeout_ms"].value<int>()) {
+          ai_config.intelligent_workflows.timeout_ms = *value;
+        }
+        if (auto value = (*workflow_table)["auto_workflow_detection"].value<bool>()) {
+          ai_config.intelligent_workflows.auto_workflow_detection = *value;
+        }
+        if (auto value = (*workflow_table)["process_optimization"].value<bool>()) {
+          ai_config.intelligent_workflows.process_optimization = *value;
+        }
+        if (auto value = (*workflow_table)["deadline_management"].value<bool>()) {
+          ai_config.intelligent_workflows.deadline_management = *value;
+        }
+        if (auto value = (*workflow_table)["resource_allocation"].value<bool>()) {
+          ai_config.intelligent_workflows.resource_allocation = *value;
+        }
+      }
+      
+      // Meta-learning configuration (Phase 7)
+      if (auto meta_table = ai_table->get("meta_learning")->as_table()) {
+        if (auto value = (*meta_table)["enabled"].value<bool>()) {
+          ai_config.meta_learning.enabled = *value;
+        }
+        if (auto value = (*meta_table)["max_tokens"].value<int>()) {
+          ai_config.meta_learning.max_tokens = *value;
+        }
+        if (auto value = (*meta_table)["temperature"].value<double>()) {
+          ai_config.meta_learning.temperature = *value;
+        }
+        if (auto value = (*meta_table)["timeout_ms"].value<int>()) {
+          ai_config.meta_learning.timeout_ms = *value;
+        }
+        if (auto value = (*meta_table)["user_pattern_learning"].value<bool>()) {
+          ai_config.meta_learning.user_pattern_learning = *value;
+        }
+        if (auto value = (*meta_table)["adaptive_assistance"].value<bool>()) {
+          ai_config.meta_learning.adaptive_assistance = *value;
+        }
+        if (auto value = (*meta_table)["personalization"].value<bool>()) {
+          ai_config.meta_learning.personalization = *value;
+        }
+        if (auto value = (*meta_table)["learning_analytics"].value<bool>()) {
+          ai_config.meta_learning.learning_analytics = *value;
+        }
+      }
       
       ai = ai_config;
     }
@@ -1289,6 +1431,68 @@ Result<void> Config::save(const std::filesystem::path& config_path) const {
       predictive_ai_table.insert_or_assign("proactive_reminders", ai->predictive_ai.proactive_reminders);
       predictive_ai_table.insert_or_assign("learning_path_optimization", ai->predictive_ai.learning_path_optimization);
       ai_table.insert_or_assign("predictive_ai", predictive_ai_table);
+
+      // Phase 7 AI configuration serialization
+      
+      // Collaborative AI configuration (Phase 7)
+      auto collaborative_ai_table = toml::table{};
+      collaborative_ai_table.insert_or_assign("enabled", ai->collaborative_ai.enabled);
+      collaborative_ai_table.insert_or_assign("max_tokens", ai->collaborative_ai.max_tokens);
+      collaborative_ai_table.insert_or_assign("temperature", ai->collaborative_ai.temperature);
+      collaborative_ai_table.insert_or_assign("timeout_ms", ai->collaborative_ai.timeout_ms);
+      collaborative_ai_table.insert_or_assign("enable_shared_sessions", ai->collaborative_ai.enable_shared_sessions);
+      collaborative_ai_table.insert_or_assign("cross_reference_analysis", ai->collaborative_ai.cross_reference_analysis);
+      collaborative_ai_table.insert_or_assign("collaborative_editing", ai->collaborative_ai.collaborative_editing);
+      collaborative_ai_table.insert_or_assign("consensus_building", ai->collaborative_ai.consensus_building);
+      ai_table.insert_or_assign("collaborative_ai", collaborative_ai_table);
+      
+      // Knowledge graph configuration (Phase 7)
+      auto knowledge_graph_table = toml::table{};
+      knowledge_graph_table.insert_or_assign("enabled", ai->knowledge_graph.enabled);
+      knowledge_graph_table.insert_or_assign("max_tokens", ai->knowledge_graph.max_tokens);
+      knowledge_graph_table.insert_or_assign("temperature", ai->knowledge_graph.temperature);
+      knowledge_graph_table.insert_or_assign("timeout_ms", ai->knowledge_graph.timeout_ms);
+      knowledge_graph_table.insert_or_assign("auto_generate_graphs", ai->knowledge_graph.auto_generate_graphs);
+      knowledge_graph_table.insert_or_assign("semantic_clustering", ai->knowledge_graph.semantic_clustering);
+      knowledge_graph_table.insert_or_assign("relationship_inference", ai->knowledge_graph.relationship_inference);
+      knowledge_graph_table.insert_or_assign("visual_graph_export", ai->knowledge_graph.visual_graph_export);
+      ai_table.insert_or_assign("knowledge_graph", knowledge_graph_table);
+      
+      // Expert systems configuration (Phase 7)
+      auto expert_systems_table = toml::table{};
+      expert_systems_table.insert_or_assign("enabled", ai->expert_systems.enabled);
+      expert_systems_table.insert_or_assign("max_tokens", ai->expert_systems.max_tokens);
+      expert_systems_table.insert_or_assign("temperature", ai->expert_systems.temperature);
+      expert_systems_table.insert_or_assign("timeout_ms", ai->expert_systems.timeout_ms);
+      expert_systems_table.insert_or_assign("primary_domain", ai->expert_systems.primary_domain);
+      expert_systems_table.insert_or_assign("multi_domain_support", ai->expert_systems.multi_domain_support);
+      expert_systems_table.insert_or_assign("adaptive_expertise", ai->expert_systems.adaptive_expertise);
+      expert_systems_table.insert_or_assign("citation_generation", ai->expert_systems.citation_generation);
+      ai_table.insert_or_assign("expert_systems", expert_systems_table);
+      
+      // Intelligent workflows configuration (Phase 7)
+      auto intelligent_workflows_table = toml::table{};
+      intelligent_workflows_table.insert_or_assign("enabled", ai->intelligent_workflows.enabled);
+      intelligent_workflows_table.insert_or_assign("max_tokens", ai->intelligent_workflows.max_tokens);
+      intelligent_workflows_table.insert_or_assign("temperature", ai->intelligent_workflows.temperature);
+      intelligent_workflows_table.insert_or_assign("timeout_ms", ai->intelligent_workflows.timeout_ms);
+      intelligent_workflows_table.insert_or_assign("auto_workflow_detection", ai->intelligent_workflows.auto_workflow_detection);
+      intelligent_workflows_table.insert_or_assign("process_optimization", ai->intelligent_workflows.process_optimization);
+      intelligent_workflows_table.insert_or_assign("deadline_management", ai->intelligent_workflows.deadline_management);
+      intelligent_workflows_table.insert_or_assign("resource_allocation", ai->intelligent_workflows.resource_allocation);
+      ai_table.insert_or_assign("intelligent_workflows", intelligent_workflows_table);
+      
+      // Meta-learning configuration (Phase 7)
+      auto meta_learning_table = toml::table{};
+      meta_learning_table.insert_or_assign("enabled", ai->meta_learning.enabled);
+      meta_learning_table.insert_or_assign("max_tokens", ai->meta_learning.max_tokens);
+      meta_learning_table.insert_or_assign("temperature", ai->meta_learning.temperature);
+      meta_learning_table.insert_or_assign("timeout_ms", ai->meta_learning.timeout_ms);
+      meta_learning_table.insert_or_assign("user_pattern_learning", ai->meta_learning.user_pattern_learning);
+      meta_learning_table.insert_or_assign("adaptive_assistance", ai->meta_learning.adaptive_assistance);
+      meta_learning_table.insert_or_assign("personalization", ai->meta_learning.personalization);
+      meta_learning_table.insert_or_assign("learning_analytics", ai->meta_learning.learning_analytics);
+      ai_table.insert_or_assign("meta_learning", meta_learning_table);
       
       config_data.insert_or_assign("ai", ai_table);
     }

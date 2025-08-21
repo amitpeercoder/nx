@@ -587,6 +587,30 @@ private:
                                        const std::string& current_activity,
                                        const nx::config::Config::AiConfig& ai_config);
   
+  // Phase 7 - Collaborative Intelligence & Knowledge Networks handlers
+  void handleCollaborativeAI();
+  void handleKnowledgeGraph();
+  void handleExpertSystems();
+  void handleIntelligentWorkflows();
+  void handleMetaLearning();
+  
+  // Phase 7 AI helper functions
+  Result<std::string> analyzeCollaborativeSession(const std::vector<nx::core::Note>& shared_notes,
+                                                  const std::string& collaboration_context,
+                                                  const nx::config::Config::AiConfig& ai_config);
+  Result<std::string> generateKnowledgeGraph(const std::vector<nx::core::Note>& notes,
+                                             const std::string& focus_topic,
+                                             const nx::config::Config::AiConfig& ai_config);
+  Result<std::string> consultExpertSystem(const nx::core::Note& note,
+                                          const std::string& domain,
+                                          const nx::config::Config::AiConfig& ai_config);
+  Result<std::string> optimizeIntelligentWorkflow(const std::vector<nx::core::Note>& workflow_notes,
+                                                  const std::string& workflow_type,
+                                                  const nx::config::Config::AiConfig& ai_config);
+  Result<std::string> adaptWithMetaLearning(const std::vector<nx::core::Note>& user_history,
+                                            const std::string& interaction_pattern,
+                                            const nx::config::Config::AiConfig& ai_config);
+  
   // Layout calculation helpers
   int calculateVisibleTagsCount() const;
   int calculateVisibleNavigationItemsCount() const;

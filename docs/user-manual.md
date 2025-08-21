@@ -515,6 +515,13 @@ The TUI features a 3-pane layout:
 - `F9`: Workspace AI - optimize note organization and suggest improvements
 - `F10`: Predictive AI - predict user needs and provide proactive recommendations
 
+**AI Features (Phase 7 - Collaborative Intelligence & Knowledge Networks)**:
+- `F11`: Collaborative AI - analyze team dynamics and suggest collaboration improvements
+- `F12`: Knowledge Graphs - generate and visualize concept relationships across notes
+- `Shift+E`: Expert Systems - get domain-specific advice and recommendations
+- `Shift+S`: Intelligent Workflows - automate complex multi-step processes
+- `Shift+M`: Meta-Learning - analyze learning patterns and optimize knowledge retention
+
 - Standard editing keys (arrows, backspace, etc.)
 
 **Search**:

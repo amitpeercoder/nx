@@ -408,6 +408,73 @@ class Config {
       bool learning_path_optimization = true;      // Optimize learning paths based on progress
     };
     PredictiveAIConfig predictive_ai;
+
+    // Phase 7 - Collaborative Intelligence & Knowledge Networks
+    
+    // Collaborative AI settings (Phase 7)
+    struct CollaborativeAIConfig {
+      bool enabled = false;                         // Enable collaborative AI features (disabled by default)
+      int max_tokens = 2500;                       // Maximum tokens for collaborative analysis
+      double temperature = 0.5;                    // Balanced temperature for creativity in collaboration
+      int timeout_ms = 45000;                      // Timeout for collaborative operations
+      bool enable_shared_sessions = true;          // Enable shared AI sessions across notes
+      bool cross_reference_analysis = true;        // Analyze cross-references between notes
+      bool collaborative_editing = true;           // Enable collaborative editing suggestions
+      bool consensus_building = true;              // Build consensus from multiple viewpoints
+    };
+    CollaborativeAIConfig collaborative_ai;
+    
+    // Knowledge graph settings (Phase 7)
+    struct KnowledgeGraphConfig {
+      bool enabled = false;                         // Enable knowledge graph features (disabled by default)
+      int max_tokens = 2200;                       // Maximum tokens for graph generation
+      double temperature = 0.3;                    // Lower temperature for accurate relationship mapping
+      int timeout_ms = 35000;                      // Timeout for graph operations
+      bool auto_generate_graphs = true;            // Automatically generate knowledge graphs
+      bool semantic_clustering = true;             // Cluster related concepts semantically
+      bool relationship_inference = true;          // Infer implicit relationships between concepts
+      bool visual_graph_export = true;             // Export graphs in visual formats
+    };
+    KnowledgeGraphConfig knowledge_graph;
+    
+    // Expert systems settings (Phase 7)
+    struct ExpertSystemsConfig {
+      bool enabled = false;                         // Enable expert systems (disabled by default)
+      int max_tokens = 2800;                       // Maximum tokens for expert analysis
+      double temperature = 0.2;                    // Low temperature for expert-level accuracy
+      int timeout_ms = 40000;                      // Timeout for expert system operations
+      std::string primary_domain = "general";      // Primary domain of expertise
+      bool multi_domain_support = true;            // Support multiple domains of expertise
+      bool adaptive_expertise = true;              // Adapt expertise based on content
+      bool citation_generation = true;             // Generate citations and references
+    };
+    ExpertSystemsConfig expert_systems;
+    
+    // Intelligent workflows settings (Phase 7)
+    struct IntelligentWorkflowsConfig {
+      bool enabled = false;                         // Enable intelligent workflows (disabled by default)
+      int max_tokens = 2000;                       // Maximum tokens for workflow analysis
+      double temperature = 0.4;                    // Medium temperature for workflow creativity
+      int timeout_ms = 30000;                      // Timeout for workflow operations
+      bool auto_workflow_detection = true;         // Automatically detect workflow patterns
+      bool process_optimization = true;            // Optimize existing processes
+      bool deadline_management = true;             // Intelligent deadline and priority management
+      bool resource_allocation = true;             // Suggest optimal resource allocation
+    };
+    IntelligentWorkflowsConfig intelligent_workflows;
+    
+    // Meta-learning settings (Phase 7)
+    struct MetaLearningConfig {
+      bool enabled = false;                         // Enable meta-learning features (disabled by default)
+      int max_tokens = 1800;                       // Maximum tokens for meta-learning analysis
+      double temperature = 0.35;                   // Balanced temperature for learning adaptation
+      int timeout_ms = 25000;                      // Timeout for meta-learning operations
+      bool user_pattern_learning = true;           // Learn from user interaction patterns
+      bool adaptive_assistance = true;             // Adapt assistance based on user behavior
+      bool personalization = true;                 // Personalize AI responses over time
+      bool learning_analytics = true;              // Provide analytics on learning progress
+    };
+    MetaLearningConfig meta_learning;
   };
   std::optional<AiConfig> ai;
   
