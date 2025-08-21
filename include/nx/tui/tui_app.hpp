@@ -132,6 +132,7 @@ struct AppState {
   bool search_mode_active = false;
   bool semantic_search_mode_active = false;  // Track if we're in semantic search mode
   bool edit_mode_active = false;
+  bool word_wrap_enabled = false;  // Word wrap toggle for preview
   bool tag_edit_modal_open = false;
   bool notebook_modal_open = false;
   bool move_note_modal_open = false;
@@ -616,6 +617,8 @@ private:
   int calculateVisibleNavigationItemsCount() const;
   int calculateVisibleNotesCount() const;
   int calculateVisibleEditorLinesCount() const;
+  int calculatePreviewPanelWidth() const;
+  int calculateEditorPanelWidth() const;
 };
 
 } // namespace nx::tui

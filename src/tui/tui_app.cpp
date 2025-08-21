@@ -1,4 +1,5 @@
 #include "nx/tui/tui_app.hpp"
+#include "nx/tui/word_wrapper.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -927,6 +928,14 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     
     if (event.character() == "\x1b" "4") { // ESC+4 for Alt+4 - meta-learning (was Shift+M)
       handleMetaLearning();
+      return;
+    }
+    
+    // Word wrap toggle
+    if (event.character() == "\x1b" "w") { // ESC+w for Alt+W - toggle word wrap
+      state_.word_wrap_enabled = !state_.word_wrap_enabled;
+      setStatusMessage(state_.word_wrap_enabled ? 
+        "📝 Word wrap enabled" : "📄 Word wrap disabled");
       return;
     }
     
@@ -2959,18 +2968,63 @@ Element TUIApp::renderPreviewPane() const {
       std::string line;
       
       int line_count = 0;
+      int visual_line_count = 0;  // Track visual lines for wrapping
+      
       while (std::getline(stream, line) && line_count < 20) { // Limit preview
         if (line_count >= state_.preview_scroll_offset) {
-          // Apply proper markdown highlighting to the line
-          HighlightResult highlight = state_.markdown_highlighter->highlightLine(line, static_cast<size_t>(line_count));
-          Element line_element = createStyledLine(line, highlight);
           
-          // Apply search highlighting on top if there's an active search query
-          if (!state_.search_query.empty()) {
-            line_element = highlightSearchInLine(line, state_.search_query);
+          // Check if word wrap is enabled
+          if (state_.word_wrap_enabled) {
+            // Calculate available width for wrapping
+            int panel_width = calculatePreviewPanelWidth();
+            
+            // Wrap the line
+            auto wrapped_lines = WordWrapper::wrapLine(line, static_cast<size_t>(panel_width));
+            
+            // Render each wrapped segment
+            for (size_t i = 0; i < wrapped_lines.size(); ++i) {
+              const auto& wrapped_line = wrapped_lines[i];
+              
+              // Apply markdown highlighting to the original line
+              HighlightResult highlight = state_.markdown_highlighter->highlightLine(line, static_cast<size_t>(line_count));
+              
+              // For wrapped segments, we'll use simplified highlighting
+              // TODO: Could be enhanced to properly split highlight segments
+              Element line_element;
+              if (i == 0) {
+                // First segment keeps the full styling
+                line_element = createStyledLine(wrapped_line, highlight);
+              } else {
+                // Continuation lines use simple text for now
+                line_element = text(wrapped_line);
+              }
+              
+              // Apply search highlighting on top if there's an active search query
+              if (!state_.search_query.empty()) {
+                line_element = highlightSearchInLine(wrapped_line, state_.search_query);
+              }
+              
+              preview_content.push_back(line_element);
+              visual_line_count++;
+              
+              // Limit total visual lines to prevent overflow
+              if (visual_line_count >= 15) break;
+            }
+            
+            if (visual_line_count >= 15) break;
+          } else {
+            // No word wrap - use original rendering
+            HighlightResult highlight = state_.markdown_highlighter->highlightLine(line, static_cast<size_t>(line_count));
+            Element line_element = createStyledLine(line, highlight);
+            
+            // Apply search highlighting on top if there's an active search query
+            if (!state_.search_query.empty()) {
+              line_element = highlightSearchInLine(line, state_.search_query);
+            }
+            
+            preview_content.push_back(line_element);
+            visual_line_count++;
           }
-          
-          preview_content.push_back(line_element);
         }
         line_count++;
       }
@@ -3149,6 +3203,10 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text("  Alt+2   Intelligent workflows"));
   help_content.push_back(text("  Alt+3   Smart note merging"));
   help_content.push_back(text("  Alt+4   Meta-learning analysis"));
+  help_content.push_back(text(""));
+  
+  help_content.push_back(text("Display Options:") | bold);
+  help_content.push_back(text("  Alt+W   Toggle word wrap in preview"));
   help_content.push_back(text(""));
   
   help_content.push_back(text("Notebook Management:") | bold);
@@ -4872,6 +4930,42 @@ int TUIApp::calculateVisibleEditorLinesCount() const {
   
   // Don't cap the editor lines like other panels since it needs more space
   return max_lines;
+}
+
+int TUIApp::calculatePreviewPanelWidth() const {
+  int terminal_width = screen_.dimx();
+  int width = 0;
+  
+  switch (state_.view_mode) {
+    case ViewMode::SinglePane:
+      // In single pane mode, use most of the terminal width
+      width = terminal_width - 4; // Account for borders and padding
+      break;
+      
+    case ViewMode::TwoPane:
+      // Account for: border(2) + separator(1) + padding(2)
+      width = (terminal_width * panel_sizing_.preview_width / 100) - 5;
+      break;
+      
+    case ViewMode::ThreePane:
+      // Preview uses flex in three-pane mode, calculate remaining space
+      {
+        int tags_width = (terminal_width * panel_sizing_.tags_width / 100);
+        int notes_width = (terminal_width * panel_sizing_.notes_width / 100);
+        // Account for: 2 separators + borders + padding
+        width = terminal_width - tags_width - notes_width - 7;
+      }
+      break;
+  }
+  
+  // Ensure minimum width for readability
+  return std::max(20, width);
+}
+
+int TUIApp::calculateEditorPanelWidth() const {
+  // For now, editor panel width is the same as preview panel width
+  // since they share the same space
+  return calculatePreviewPanelWidth();
 }
 
 // Template operations implementation
