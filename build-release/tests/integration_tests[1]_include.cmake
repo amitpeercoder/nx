@@ -1,5 +1,5 @@
-if(EXISTS "C:/Users/AmitPeer/OneDrive - Aize/Dokumenter/GitHub/nx/build-release/tests/integration_tests[1]_tests.cmake")
-  include("C:/Users/AmitPeer/OneDrive - Aize/Dokumenter/GitHub/nx/build-release/tests/integration_tests[1]_tests.cmake")
+if(EXISTS "/Users/amitpeer/Documents/Code/nx/build-release/tests/integration_tests[1]_tests.cmake")
+  include("/Users/amitpeer/Documents/Code/nx/build-release/tests/integration_tests[1]_tests.cmake")
 else()
   add_test(integration_tests_NOT_BUILT integration_tests_NOT_BUILT)
 endif()
