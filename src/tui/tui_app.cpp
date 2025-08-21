@@ -1,5 +1,6 @@
 #include "nx/tui/tui_app.hpp"
 #include "nx/tui/word_wrapper.hpp"
+#include "nx/tui/unicode_handler.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -71,12 +72,21 @@ TUIApp::~TUIApp() {
   // Ensure proper cleanup of terminal state
   try {
     screen_.Exit();
+    // Clean up Unicode handler
+    UnicodeHandler::cleanup();
   } catch (...) {
     // Ignore errors during cleanup
   }
 }
 
 void TUIApp::initializeEditor() {
+  // Initialize Unicode handler for proper Unicode character support
+  auto unicode_result = UnicodeHandler::initialize();
+  if (!unicode_result) {
+    // Log error but continue - fallback to ASCII-only mode
+    std::cerr << "Warning: Failed to initialize Unicode handler: " << unicode_result.error().message() << std::endl;
+  }
+  
   // Configure editor buffer for optimal performance
   EditorBuffer::Config buffer_config;
   buffer_config.max_line_length = 10000;
@@ -1007,10 +1017,12 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       }
       return;
     }
-    if (event.is_character() && event.character().size() == 1) {
-      char c = event.character()[0];
-      if (c >= 32 && c <= 126) { // Printable ASCII
-        state_.search_query += c;
+    if (event.is_character()) {
+      const std::string& input = event.character();
+      // Validate UTF-8 input
+      auto validation_result = UnicodeHandler::validateUtf8(input);
+      if (validation_result) {
+        state_.search_query += input;
         // Perform real-time search
         performSearch(state_.search_query);
         setStatusMessage("Search: " + state_.search_query);
@@ -1088,10 +1100,12 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       }
       return;
     }
-    if (event.is_character() && event.character().size() == 1) {
-      char c = event.character()[0];
-      if (c >= 32 && c <= 126) { // Printable ASCII
-        state_.template_variable_input += c;
+    if (event.is_character()) {
+      const std::string& input = event.character();
+      // Validate UTF-8 input
+      auto validation_result = UnicodeHandler::validateUtf8(input);
+      if (validation_result) {
+        state_.template_variable_input += input;
       }
       return;
     }
@@ -1138,10 +1152,12 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       }
       return;
     }
-    if (event.is_character() && event.character().size() == 1) {
-      char c = event.character()[0];
-      if (c >= 32 && c <= 126) { // Printable ASCII
-        state_.tag_edit_input += c;
+    if (event.is_character()) {
+      const std::string& input = event.character();
+      // Validate UTF-8 input
+      auto validation_result = UnicodeHandler::validateUtf8(input);
+      if (validation_result) {
+        state_.tag_edit_input += input;
       }
       return;
     }
@@ -1170,10 +1186,12 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       }
       return;
     }
-    if (event.is_character() && event.character().size() == 1) {
-      char c = event.character()[0];
-      if (c >= 32 && c <= 126) { // Printable ASCII
-        state_.command_palette_query += c;
+    if (event.is_character()) {
+      const std::string& input = event.character();
+      // Validate UTF-8 input
+      auto validation_result = UnicodeHandler::validateUtf8(input);
+      if (validation_result) {
+        state_.command_palette_query += input;
       }
       return;
     }
@@ -1234,10 +1252,12 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       }
       return;
     }
-    if (event.is_character() && event.character().size() == 1) {
-      char c = event.character()[0];
-      if (c >= 32 && c <= 126) { // Printable ASCII
-        state_.notebook_modal_input += c;
+    if (event.is_character()) {
+      const std::string& input = event.character();
+      // Validate UTF-8 input
+      auto validation_result = UnicodeHandler::validateUtf8(input);
+      if (validation_result) {
+        state_.notebook_modal_input += input;
       }
       return;
     }
@@ -3698,6 +3718,33 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
     setStatusMessage(debug_msg);
   }
   
+  // Handle word jumping with Ctrl+Arrow keys
+  if (event == ftxui::Event::Custom && event.character() == "\x1b[1;5C") { // Ctrl+Right Arrow
+    // Jump to next word boundary
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      const std::string& line = line_result.value();
+      auto next_boundary_result = UnicodeHandler::findNextWordBoundary(line, static_cast<size_t>(state_.edit_cursor_col));
+      if (next_boundary_result) {
+        state_.edit_cursor_col = static_cast<int>(std::min(next_boundary_result.value(), line.length()));
+      }
+    }
+    return;
+  }
+  
+  if (event == ftxui::Event::Custom && event.character() == "\x1b[1;5D") { // Ctrl+Left Arrow
+    // Jump to previous word boundary
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      const std::string& line = line_result.value();
+      auto prev_boundary_result = UnicodeHandler::findPreviousWordBoundary(line, static_cast<size_t>(state_.edit_cursor_col));
+      if (prev_boundary_result) {
+        state_.edit_cursor_col = static_cast<int>(prev_boundary_result.value());
+      }
+    }
+    return;
+  }
+
   // Handle navigation first (no validation needed)
   if (event == ftxui::Event::ArrowUp && state_.edit_cursor_line > 0) {
     state_.edit_cursor_line--;
@@ -3775,26 +3822,106 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
     return;
   }
   
-  // Handle text input with security validation
-  if (event.is_character() && event.character().size() == 1) {
-    char c = event.character()[0];
+  // Handle text input with Unicode and security validation
+  if (event.is_character()) {
+    const std::string& input = event.character();
     
-    // Validate character input
-    auto char_result = state_.input_validator->validateCharacter(c, state_.edit_cursor_col);
-    if (!char_result) {
-      setStatusMessage("Invalid character: " + char_result.error().message());
+    // First validate UTF-8
+    auto utf8_validation = UnicodeHandler::validateUtf8(input);
+    if (!utf8_validation) {
+      setStatusMessage("Invalid UTF-8 input: " + utf8_validation.error().message());
       return;
     }
     
-    // Insert character using command pattern for undo/redo support
-    auto command = CommandFactory::createInsertChar(
-        CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col), c);
-    auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
-    if (insert_result) {
-      state_.edit_cursor_col++;
-      state_.edit_has_changes = true;
+    // For multi-byte Unicode characters, process each character
+    UnicodeHandler::Utf8Iterator iter(input);
+    while (iter.hasNext()) {
+      UChar32 codepoint = iter.next();
+      if (codepoint == U_SENTINEL) continue; // Skip invalid characters
+      
+      // Convert codepoint back to UTF-8 for processing
+      char utf8_buffer[8] = {0};
+      size_t utf8_length = 0;
+      
+      if (codepoint <= 0x7F) {
+        utf8_buffer[0] = static_cast<char>(codepoint);
+        utf8_length = 1;
+      } else if (codepoint <= 0x7FF) {
+        utf8_buffer[0] = static_cast<char>(0xC0 | (codepoint >> 6));
+        utf8_buffer[1] = static_cast<char>(0x80 | (codepoint & 0x3F));
+        utf8_length = 2;
+      } else if (codepoint <= 0xFFFF) {
+        utf8_buffer[0] = static_cast<char>(0xE0 | (codepoint >> 12));
+        utf8_buffer[1] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+        utf8_buffer[2] = static_cast<char>(0x80 | (codepoint & 0x3F));
+        utf8_length = 3;
+      } else if (codepoint <= 0x10FFFF) {
+        utf8_buffer[0] = static_cast<char>(0xF0 | (codepoint >> 18));
+        utf8_buffer[1] = static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
+        utf8_buffer[2] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+        utf8_buffer[3] = static_cast<char>(0x80 | (codepoint & 0x3F));
+        utf8_length = 4;
+      } else {
+        continue; // Invalid codepoint
+      }
+      
+      std::string char_str(utf8_buffer, utf8_length);
+      
+      // Validate character input using first byte for compatibility
+      char first_byte = utf8_buffer[0];
+      auto char_result = state_.input_validator->validateCharacter(first_byte, state_.edit_cursor_col);
+      if (!char_result) {
+        setStatusMessage("Invalid character: " + char_result.error().message());
+        continue;
+      }
+    
+      // Insert Unicode character using command pattern for undo/redo support
+      for (size_t i = 0; i < utf8_length; ++i) {
+        auto command = CommandFactory::createInsertChar(
+            CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col), utf8_buffer[i]);
+        auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+        if (insert_result) {
+          state_.edit_cursor_col++;
+          state_.edit_has_changes = true;
+        } else {
+          setStatusMessage("Insert failed: " + insert_result.error().message());
+          break;
+        }
+      }
+    }
+    return;
+  }
+  
+  // Handle Tab with configurable tab width
+  if (event == ftxui::Event::Tab) {
+    int tab_width = config_.tui_editor.tab_width;
+    
+    if (config_.tui_editor.use_tabs) {
+      // Insert a single tab character
+      auto command = CommandFactory::createInsertChar(
+          CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col), '\t');
+      auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+      if (insert_result) {
+        state_.edit_cursor_col++;
+        state_.edit_has_changes = true;
+      }
     } else {
-      setStatusMessage("Insert failed: " + insert_result.error().message());
+      // Insert spaces up to the next tab stop
+      int current_col = state_.edit_cursor_col;
+      int spaces_to_insert = tab_width - (current_col % tab_width);
+      
+      for (int i = 0; i < spaces_to_insert; ++i) {
+        auto command = CommandFactory::createInsertChar(
+            CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col), ' ');
+        auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+        if (insert_result) {
+          state_.edit_cursor_col++;
+          state_.edit_has_changes = true;
+        } else {
+          setStatusMessage("Tab insert failed: " + insert_result.error().message());
+          break;
+        }
+      }
     }
     return;
   }
@@ -3823,15 +3950,38 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
   // Handle Backspace with secure deletion
   if (event == ftxui::Event::Backspace) {
     if (state_.edit_cursor_col > 0) {
-      // Delete character before cursor - need to get the character first
+      // Delete Unicode character before cursor - need to handle multi-byte characters properly
       auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
-      if (line_result && state_.edit_cursor_col - 1 < static_cast<int>(line_result.value().size())) {
-        char deleted_char = line_result.value()[state_.edit_cursor_col - 1];
-        auto command = CommandFactory::createDeleteChar(
-            CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col - 1), deleted_char);
-        auto delete_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
-        if (delete_result) {
-          state_.edit_cursor_col--;
+      if (line_result) {
+        const std::string& line = line_result.value();
+        
+        // Find the start of the previous Unicode character
+        size_t byte_pos = static_cast<size_t>(state_.edit_cursor_col);
+        size_t char_start = byte_pos;
+        
+        // Move backward to find the start of the Unicode character
+        if (byte_pos > 0 && byte_pos <= line.length()) {
+          char_start = byte_pos - 1;
+          // For UTF-8, find the start of the character (byte that doesn't start with 10xxxxxx)
+          while (char_start > 0 && (static_cast<uint8_t>(line[char_start]) & 0xC0) == 0x80) {
+            char_start--;
+          }
+          
+          // Delete all bytes of the Unicode character
+          size_t char_length = byte_pos - char_start;
+          for (size_t i = 0; i < char_length; ++i) {
+            char deleted_char = line[char_start + i];
+            auto command = CommandFactory::createDeleteChar(
+                CursorPosition(state_.edit_cursor_line, static_cast<int>(char_start + i)), deleted_char);
+            auto delete_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+            if (!delete_result) {
+              setStatusMessage("Delete failed: " + delete_result.error().message());
+              break;
+            }
+          }
+          
+          // Update cursor position to the start of the deleted character
+          state_.edit_cursor_col = static_cast<int>(char_start);
           state_.edit_has_changes = true;
         }
       }

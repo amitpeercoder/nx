@@ -478,6 +478,16 @@ class Config {
   };
   std::optional<AiConfig> ai;
   
+  // TUI Editor configuration
+  struct TuiEditorConfig {
+    int tab_width = 4;                    // Tab width in spaces (default 4)
+    bool use_tabs = false;                // Use tabs vs spaces
+    bool show_whitespace = false;         // Show whitespace characters
+    bool auto_indent = true;              // Auto-indent new lines
+    bool rtl_support = true;              // Right-to-left language support
+  };
+  TuiEditorConfig tui_editor;
+  
   // Performance tuning
   struct PerformanceConfig {
     size_t cache_size_mb = 50;
