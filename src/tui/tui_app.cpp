@@ -3249,11 +3249,11 @@ Element TUIApp::renderHelpModal() const {
   
   return vbox(help_content) |
          border |
-         size(WIDTH, GREATER_THAN, 60) |
-         size(WIDTH, LESS_THAN, 80) |
-         size(HEIGHT, GREATER_THAN, 30) |
-         size(HEIGHT, LESS_THAN, 45) |
-         bgcolor(Color::DarkBlue) |
+         size(WIDTH, GREATER_THAN, 80) |
+         size(WIDTH, LESS_THAN, 120) |
+         size(HEIGHT, GREATER_THAN, 35) |
+         size(HEIGHT, LESS_THAN, 55) |
+         bgcolor(Color::Blue) |
          color(Color::White);
 }
 

@@ -339,6 +339,11 @@ Shell completions for bash/zsh
 - **Alt Key Shortcuts**: Restored Phase 7 keyboard shortcuts (Alt+1/2/3/4) after fixing crash ✅
 - **Configuration Safety**: Fixed nullptr dereference in TOML AI config sections ✅
 - **Full Functionality**: All 35+ commands and AI features now working correctly ✅
+- **Word Wrap Width Calculation**: Fixed ThreePane mode to use correct panel widths (70 chars vs 55) ✅
+- **Editor Word Wrap Support**: Added complete word wrap functionality to editor mode with cursor positioning ✅
+- **Enter Key Fix**: Disabled journal insights feature to prevent Enter key interception in note creation ✅
+- **Help Modal Display**: Improved help modal visibility, sizing, and background opacity ✅
+- **Keyboard Conflicts**: Resolved conflicting Ctrl+J handlers causing input issues ✅
 
 ### ✅ Phase 6 - Advanced AI Integration (Completed)
 - **Multi-Modal AI (F6)**: Analyzes notes with attached images and documents, generates alt text ✅
