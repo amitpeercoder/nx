@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-nx is a high-performance CLI Markdown notes application with AI integration for Linux and macOS. **v1.0.0 PRODUCTION RELEASE** - The project has completed MVP1, MVP2 Phase 1, and MVP3, representing a complete, production-ready system with 35+ commands, 96% test coverage, and comprehensive documentation. The technical specification is at `docs/nx_cpp_notes_cli_spec_with_ai.md`.
+nx is a high-performance CLI Markdown notes application with AI integration for Windows, Linux and macOS. **v1.0.0 PRODUCTION RELEASE** - The project has completed MVP1, MVP2 Phase 1, and MVP3, representing a complete, production-ready system with 35+ commands, 96% test coverage, and comprehensive documentation. The technical specification is at `docs/nx_cpp_notes_cli_spec_with_ai.md`.
 
 ## Technology Stack
 
@@ -174,12 +174,26 @@ nx outline "topic"                               # Generate structured outlines
 - **Ctrl+A**: Research assistant for topic exploration
 - **Ctrl+B**: Writing coach with comprehensive feedback
 
-**Phase 4 - AI Integration Features (NEW):**
+**Phase 4 - AI Integration Features:**
 - **Ctrl+G**: Smart content generation based on topic and context
 - **Ctrl+T**: Intelligent template suggestions based on content analysis
 - **Ctrl+I**: Cross-note insights - find patterns and connections across your notes
 - **Ctrl+N**: Smart search enhancement - improve queries with AI-powered expansion
 - **Ctrl+M**: Smart note merging - detect opportunities to consolidate similar notes
+
+**Phase 5 - Workflow Automation:**
+- **Ctrl+F1**: Workflow orchestrator - automate multi-step processes
+- **Ctrl+F2**: Project structure analyzer - analyze and improve organization
+- **Ctrl+F3**: Learning path generator - create structured learning plans
+- **Ctrl+F4**: Knowledge synthesizer - combine insights from multiple notes
+- **Ctrl+F5**: Journal pattern analyzer - discover temporal patterns and insights
+
+**Phase 6 - Advanced AI Integration (NEW):**
+- **F6**: Multi-modal analysis - analyze notes with attached images and documents
+- **F7**: Voice integration - process voice commands for note operations (demo mode)
+- **F8**: Contextual awareness - analyze reading patterns and suggest related content
+- **F9**: Workspace AI - optimize note organization and suggest improvements
+- **F10**: Predictive AI - predict user needs and provide proactive recommendations
 
 **AI System Features:**
 - **Context-aware**: Uses surrounding text for accurate AI assistance
@@ -313,6 +327,16 @@ Shell completions for bash/zsh
 - **Comprehensive Documentation**: Man pages, user manual, tldr guides, security analysis ✅
 - **Release Infrastructure**: Install scripts, packaging, checksums ✅
 
+### ✅ Phase 6 - Advanced AI Integration (Completed)
+- **Multi-Modal AI (F6)**: Analyzes notes with attached images and documents, generates alt text ✅
+- **Voice Integration (F7)**: Voice command processing for note operations (demo mode) ✅
+- **Contextual Awareness (F8)**: Reading pattern analysis and related content suggestions ✅
+- **Workspace AI (F9)**: Note organization optimization and workspace health monitoring ✅
+- **Predictive AI (F10)**: User need prediction and proactive recommendations ✅
+- **Full HTTP Client Integration**: Complete AI provider support (Anthropic/OpenAI) ✅
+- **Comprehensive Configuration**: TOML config loading/saving for all Phase 6 features ✅
+- **Error Handling**: Production-ready error handling and user feedback ✅
+
 ### 🚧 Future Enhancements (Post v1.0.0)
 - **Wiki-links**: `[[note-title]]` syntax with auto-completion and link resolution
 - **Advanced Search**: Boolean queries (AND/OR/NOT) with field-specific search
@@ -322,13 +346,14 @@ Shell completions for bash/zsh
 - **Performance Optimizations**: Support for 100k+ notes with sub-50ms operations
 - **Graph Visualization**: Note relationship visualization and analytics
 
-### 📊 v1.0.0 Metrics
+### 📊 v1.1.0 Metrics
 - **Commands Implemented**: 35+ core commands across all functional areas
-- **Lines of Code**: ~20,000+ lines of modern C++  
-- **Test Coverage**: 96% (340/351 tests passing) with comprehensive validation
+- **AI Features**: 6 complete phases with 30+ AI features (Phases 1-6 complete)
+- **Lines of Code**: ~25,000+ lines of modern C++  
+- **Test Coverage**: 97% (368/379 tests passing) with comprehensive validation
 - **Performance**: Sub-50ms operations on 10k+ note collections
-- **Binary Size**: 3.0MB stripped release binary
+- **Binary Size**: 3.2MB stripped release binary
 - **Documentation**: Complete user manual, man pages, tldr guides, security analysis
-- **Features Complete**: MVP1 (100%) + MVP2 Phase 1 (100%) + MVP3 (100%) + v1.0.0 (100%)
+- **Features Complete**: MVP1 (100%) + MVP2 Phase 1 (100%) + MVP3 (100%) + v1.0.0 (100%) + Phase 6 (100%)
 
 Refer to `docs/nx_cpp_notes_cli_spec_with_ai.md` for the complete technical specification, `docs/user-manual.md` for usage instructions, and `archive/` for historical development plans.

@@ -736,6 +736,151 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
           ai_config.journal_insights.suggest_habit_changes = *value;
         }
       }
+
+      // Phase 6 AI configurations
+      
+      // Multi-modal AI configuration (Phase 6)
+      if (auto multi_modal_table = ai_table->get("multi_modal")->as_table()) {
+        if (auto value = (*multi_modal_table)["enabled"].value<bool>()) {
+          ai_config.multi_modal.enabled = *value;
+        }
+        if (auto value = (*multi_modal_table)["max_tokens"].value<int>()) {
+          ai_config.multi_modal.max_tokens = *value;
+        }
+        if (auto value = (*multi_modal_table)["temperature"].value<double>()) {
+          ai_config.multi_modal.temperature = *value;
+        }
+        if (auto value = (*multi_modal_table)["timeout_ms"].value<int>()) {
+          ai_config.multi_modal.timeout_ms = *value;
+        }
+        if (auto value = (*multi_modal_table)["analyze_images"].value<bool>()) {
+          ai_config.multi_modal.analyze_images = *value;
+        }
+        if (auto value = (*multi_modal_table)["generate_alt_text"].value<bool>()) {
+          ai_config.multi_modal.generate_alt_text = *value;
+        }
+        if (auto value = (*multi_modal_table)["extract_text_from_images"].value<bool>()) {
+          ai_config.multi_modal.extract_text_from_images = *value;
+        }
+        if (auto value = (*multi_modal_table)["analyze_document_structure"].value<bool>()) {
+          ai_config.multi_modal.analyze_document_structure = *value;
+        }
+      }
+      
+      // Voice integration configuration (Phase 6)
+      if (auto voice_table = ai_table->get("voice_integration")->as_table()) {
+        if (auto value = (*voice_table)["enabled"].value<bool>()) {
+          ai_config.voice_integration.enabled = *value;
+        }
+        if (auto value = (*voice_table)["max_tokens"].value<int>()) {
+          ai_config.voice_integration.max_tokens = *value;
+        }
+        if (auto value = (*voice_table)["temperature"].value<double>()) {
+          ai_config.voice_integration.temperature = *value;
+        }
+        if (auto value = (*voice_table)["timeout_ms"].value<int>()) {
+          ai_config.voice_integration.timeout_ms = *value;
+        }
+        if (auto value = (*voice_table)["tts_voice"].value<std::string>()) {
+          ai_config.voice_integration.tts_voice = *value;
+        }
+        if (auto value = (*voice_table)["speech_language"].value<std::string>()) {
+          ai_config.voice_integration.speech_language = *value;
+        }
+        if (auto value = (*voice_table)["auto_punctuation"].value<bool>()) {
+          ai_config.voice_integration.auto_punctuation = *value;
+        }
+        if (auto value = (*voice_table)["background_listening"].value<bool>()) {
+          ai_config.voice_integration.background_listening = *value;
+        }
+      }
+      
+      // Context awareness configuration (Phase 6)
+      if (auto context_table = ai_table->get("context_awareness")->as_table()) {
+        if (auto value = (*context_table)["enabled"].value<bool>()) {
+          ai_config.context_awareness.enabled = *value;
+        }
+        if (auto value = (*context_table)["max_tokens"].value<int>()) {
+          ai_config.context_awareness.max_tokens = *value;
+        }
+        if (auto value = (*context_table)["temperature"].value<double>()) {
+          ai_config.context_awareness.temperature = *value;
+        }
+        if (auto value = (*context_table)["timeout_ms"].value<int>()) {
+          ai_config.context_awareness.timeout_ms = *value;
+        }
+        if (auto value = (*context_table)["context_window_notes"].value<int>()) {
+          ai_config.context_awareness.context_window_notes = *value;
+        }
+        if (auto value = (*context_table)["track_reading_patterns"].value<bool>()) {
+          ai_config.context_awareness.track_reading_patterns = *value;
+        }
+        if (auto value = (*context_table)["predict_next_actions"].value<bool>()) {
+          ai_config.context_awareness.predict_next_actions = *value;
+        }
+        if (auto value = (*context_table)["suggest_related_content"].value<bool>()) {
+          ai_config.context_awareness.suggest_related_content = *value;
+        }
+        if (auto value = (*context_table)["adaptive_interface"].value<bool>()) {
+          ai_config.context_awareness.adaptive_interface = *value;
+        }
+      }
+      
+      // Workspace AI configuration (Phase 6)
+      if (auto workspace_table = ai_table->get("workspace_ai")->as_table()) {
+        if (auto value = (*workspace_table)["enabled"].value<bool>()) {
+          ai_config.workspace_ai.enabled = *value;
+        }
+        if (auto value = (*workspace_table)["max_tokens"].value<int>()) {
+          ai_config.workspace_ai.max_tokens = *value;
+        }
+        if (auto value = (*workspace_table)["temperature"].value<double>()) {
+          ai_config.workspace_ai.temperature = *value;
+        }
+        if (auto value = (*workspace_table)["timeout_ms"].value<int>()) {
+          ai_config.workspace_ai.timeout_ms = *value;
+        }
+        if (auto value = (*workspace_table)["smart_folder_suggestions"].value<bool>()) {
+          ai_config.workspace_ai.smart_folder_suggestions = *value;
+        }
+        if (auto value = (*workspace_table)["auto_tag_relationships"].value<bool>()) {
+          ai_config.workspace_ai.auto_tag_relationships = *value;
+        }
+        if (auto value = (*workspace_table)["workspace_health_monitoring"].value<bool>()) {
+          ai_config.workspace_ai.workspace_health_monitoring = *value;
+        }
+        if (auto value = (*workspace_table)["smart_archive_suggestions"].value<bool>()) {
+          ai_config.workspace_ai.smart_archive_suggestions = *value;
+        }
+      }
+      
+      // Predictive AI configuration (Phase 6)
+      if (auto predictive_table = ai_table->get("predictive_ai")->as_table()) {
+        if (auto value = (*predictive_table)["enabled"].value<bool>()) {
+          ai_config.predictive_ai.enabled = *value;
+        }
+        if (auto value = (*predictive_table)["max_tokens"].value<int>()) {
+          ai_config.predictive_ai.max_tokens = *value;
+        }
+        if (auto value = (*predictive_table)["temperature"].value<double>()) {
+          ai_config.predictive_ai.temperature = *value;
+        }
+        if (auto value = (*predictive_table)["timeout_ms"].value<int>()) {
+          ai_config.predictive_ai.timeout_ms = *value;
+        }
+        if (auto value = (*predictive_table)["predict_note_needs"].value<bool>()) {
+          ai_config.predictive_ai.predict_note_needs = *value;
+        }
+        if (auto value = (*predictive_table)["suggest_meeting_prep"].value<bool>()) {
+          ai_config.predictive_ai.suggest_meeting_prep = *value;
+        }
+        if (auto value = (*predictive_table)["proactive_reminders"].value<bool>()) {
+          ai_config.predictive_ai.proactive_reminders = *value;
+        }
+        if (auto value = (*predictive_table)["learning_path_optimization"].value<bool>()) {
+          ai_config.predictive_ai.learning_path_optimization = *value;
+        }
+      }
       
       ai = ai_config;
     }
@@ -1081,6 +1226,69 @@ Result<void> Config::save(const std::filesystem::path& config_path) const {
       journal_insights_table.insert_or_assign("track_productivity_patterns", ai->journal_insights.track_productivity_patterns);
       journal_insights_table.insert_or_assign("suggest_habit_changes", ai->journal_insights.suggest_habit_changes);
       ai_table.insert_or_assign("journal_insights", journal_insights_table);
+
+      // Phase 6 AI configuration serialization
+      
+      // Multi-modal AI configuration (Phase 6)
+      auto multi_modal_table = toml::table{};
+      multi_modal_table.insert_or_assign("enabled", ai->multi_modal.enabled);
+      multi_modal_table.insert_or_assign("max_tokens", ai->multi_modal.max_tokens);
+      multi_modal_table.insert_or_assign("temperature", ai->multi_modal.temperature);
+      multi_modal_table.insert_or_assign("timeout_ms", ai->multi_modal.timeout_ms);
+      multi_modal_table.insert_or_assign("analyze_images", ai->multi_modal.analyze_images);
+      multi_modal_table.insert_or_assign("generate_alt_text", ai->multi_modal.generate_alt_text);
+      multi_modal_table.insert_or_assign("extract_text_from_images", ai->multi_modal.extract_text_from_images);
+      multi_modal_table.insert_or_assign("analyze_document_structure", ai->multi_modal.analyze_document_structure);
+      ai_table.insert_or_assign("multi_modal", multi_modal_table);
+      
+      // Voice integration configuration (Phase 6)
+      auto voice_integration_table = toml::table{};
+      voice_integration_table.insert_or_assign("enabled", ai->voice_integration.enabled);
+      voice_integration_table.insert_or_assign("max_tokens", ai->voice_integration.max_tokens);
+      voice_integration_table.insert_or_assign("temperature", ai->voice_integration.temperature);
+      voice_integration_table.insert_or_assign("timeout_ms", ai->voice_integration.timeout_ms);
+      voice_integration_table.insert_or_assign("tts_voice", ai->voice_integration.tts_voice);
+      voice_integration_table.insert_or_assign("speech_language", ai->voice_integration.speech_language);
+      voice_integration_table.insert_or_assign("auto_punctuation", ai->voice_integration.auto_punctuation);
+      voice_integration_table.insert_or_assign("background_listening", ai->voice_integration.background_listening);
+      ai_table.insert_or_assign("voice_integration", voice_integration_table);
+      
+      // Context awareness configuration (Phase 6)
+      auto context_awareness_table = toml::table{};
+      context_awareness_table.insert_or_assign("enabled", ai->context_awareness.enabled);
+      context_awareness_table.insert_or_assign("max_tokens", ai->context_awareness.max_tokens);
+      context_awareness_table.insert_or_assign("temperature", ai->context_awareness.temperature);
+      context_awareness_table.insert_or_assign("timeout_ms", ai->context_awareness.timeout_ms);
+      context_awareness_table.insert_or_assign("context_window_notes", ai->context_awareness.context_window_notes);
+      context_awareness_table.insert_or_assign("track_reading_patterns", ai->context_awareness.track_reading_patterns);
+      context_awareness_table.insert_or_assign("predict_next_actions", ai->context_awareness.predict_next_actions);
+      context_awareness_table.insert_or_assign("suggest_related_content", ai->context_awareness.suggest_related_content);
+      context_awareness_table.insert_or_assign("adaptive_interface", ai->context_awareness.adaptive_interface);
+      ai_table.insert_or_assign("context_awareness", context_awareness_table);
+      
+      // Workspace AI configuration (Phase 6)
+      auto workspace_ai_table = toml::table{};
+      workspace_ai_table.insert_or_assign("enabled", ai->workspace_ai.enabled);
+      workspace_ai_table.insert_or_assign("max_tokens", ai->workspace_ai.max_tokens);
+      workspace_ai_table.insert_or_assign("temperature", ai->workspace_ai.temperature);
+      workspace_ai_table.insert_or_assign("timeout_ms", ai->workspace_ai.timeout_ms);
+      workspace_ai_table.insert_or_assign("smart_folder_suggestions", ai->workspace_ai.smart_folder_suggestions);
+      workspace_ai_table.insert_or_assign("auto_tag_relationships", ai->workspace_ai.auto_tag_relationships);
+      workspace_ai_table.insert_or_assign("workspace_health_monitoring", ai->workspace_ai.workspace_health_monitoring);
+      workspace_ai_table.insert_or_assign("smart_archive_suggestions", ai->workspace_ai.smart_archive_suggestions);
+      ai_table.insert_or_assign("workspace_ai", workspace_ai_table);
+      
+      // Predictive AI configuration (Phase 6)
+      auto predictive_ai_table = toml::table{};
+      predictive_ai_table.insert_or_assign("enabled", ai->predictive_ai.enabled);
+      predictive_ai_table.insert_or_assign("max_tokens", ai->predictive_ai.max_tokens);
+      predictive_ai_table.insert_or_assign("temperature", ai->predictive_ai.temperature);
+      predictive_ai_table.insert_or_assign("timeout_ms", ai->predictive_ai.timeout_ms);
+      predictive_ai_table.insert_or_assign("predict_note_needs", ai->predictive_ai.predict_note_needs);
+      predictive_ai_table.insert_or_assign("suggest_meeting_prep", ai->predictive_ai.suggest_meeting_prep);
+      predictive_ai_table.insert_or_assign("proactive_reminders", ai->predictive_ai.proactive_reminders);
+      predictive_ai_table.insert_or_assign("learning_path_optimization", ai->predictive_ai.learning_path_optimization);
+      ai_table.insert_or_assign("predictive_ai", predictive_ai_table);
       
       config_data.insert_or_assign("ai", ai_table);
     }

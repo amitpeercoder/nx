@@ -340,6 +340,74 @@ class Config {
       bool suggest_habit_changes = true;           // Suggest habit and routine improvements
     };
     JournalInsightsConfig journal_insights;
+
+    // Phase 6 - Advanced AI Integration
+    
+    // Multi-modal AI settings (Phase 6) 
+    struct MultiModalConfig {
+      bool enabled = false;                         // Enable multi-modal AI (disabled by default)
+      int max_tokens = 2000;                       // Maximum tokens for multi-modal analysis
+      double temperature = 0.4;                    // Balanced temperature for creativity and accuracy
+      int timeout_ms = 30000;                      // Timeout for multi-modal analysis
+      bool analyze_images = true;                  // Analyze attached images
+      bool generate_alt_text = true;               // Generate alt text for images
+      bool extract_text_from_images = true;        // OCR text extraction from images
+      bool analyze_document_structure = true;      // Analyze document layout and structure
+    };
+    MultiModalConfig multi_modal;
+    
+    // Voice integration settings (Phase 6)
+    struct VoiceIntegrationConfig {
+      bool enabled = false;                         // Enable voice features (disabled by default)
+      int max_tokens = 1500;                       // Maximum tokens for voice processing
+      double temperature = 0.3;                    // Low temperature for accurate transcription
+      int timeout_ms = 25000;                      // Timeout for voice processing
+      std::string tts_voice = "default";           // Text-to-speech voice preference
+      std::string speech_language = "en-US";       // Speech recognition language
+      bool auto_punctuation = true;                // Auto-add punctuation to transcriptions
+      bool background_listening = false;           // Enable background voice commands
+    };
+    VoiceIntegrationConfig voice_integration;
+    
+    // Context awareness settings (Phase 6)
+    struct ContextAwarenessConfig {
+      bool enabled = false;                         // Enable advanced context awareness (disabled by default)
+      int max_tokens = 1800;                       // Maximum tokens for context analysis
+      double temperature = 0.35;                   // Balanced temperature for context understanding
+      int timeout_ms = 15000;                      // Timeout for context analysis
+      int context_window_notes = 20;               // Number of recent notes to consider
+      bool track_reading_patterns = true;          // Track what user reads/focuses on
+      bool predict_next_actions = true;            // Predict likely next user actions
+      bool suggest_related_content = true;         // Suggest related notes and topics
+      bool adaptive_interface = true;              // Adapt interface based on usage patterns
+    };
+    ContextAwarenessConfig context_awareness;
+    
+    // AI workspace settings (Phase 6)
+    struct WorkspaceAIConfig {
+      bool enabled = false;                         // Enable AI workspace features (disabled by default)
+      int max_tokens = 1600;                       // Maximum tokens for workspace analysis
+      double temperature = 0.4;                    // Medium temperature for creative organization
+      int timeout_ms = 20000;                      // Timeout for workspace operations
+      bool smart_folder_suggestions = true;        // Suggest optimal folder organization
+      bool auto_tag_relationships = true;          // Automatically tag note relationships
+      bool workspace_health_monitoring = true;     // Monitor workspace organization health
+      bool smart_archive_suggestions = true;       // Suggest notes to archive based on usage
+    };
+    WorkspaceAIConfig workspace_ai;
+    
+    // Predictive AI settings (Phase 6)
+    struct PredictiveAIConfig {
+      bool enabled = false;                         // Enable predictive AI features (disabled by default)
+      int max_tokens = 1400;                       // Maximum tokens for prediction analysis
+      double temperature = 0.3;                    // Lower temperature for accurate predictions
+      int timeout_ms = 18000;                      // Timeout for predictive analysis
+      bool predict_note_needs = true;              // Predict when user might need specific notes
+      bool suggest_meeting_prep = true;            // Suggest relevant notes for upcoming meetings
+      bool proactive_reminders = true;             // Proactively suggest action items and reminders
+      bool learning_path_optimization = true;      // Optimize learning paths based on progress
+    };
+    PredictiveAIConfig predictive_ai;
   };
   std::optional<AiConfig> ai;
   

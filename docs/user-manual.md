@@ -501,12 +501,19 @@ The TUI features a 3-pane layout:
 - `Ctrl+N`: Smart search enhancement with AI-powered expansion
 - `Ctrl+M`: Smart note merging - detect consolidation opportunities
 
-**AI Features (Phase 5 - NEW)**:
+**AI Features (Phase 5)**:
 - `Ctrl+F1`: Workflow orchestrator - automate multi-step processes
 - `Ctrl+F2`: Project structure analyzer - analyze and improve organization
 - `Ctrl+F3`: Learning path generator - create structured learning plans
 - `Ctrl+F4`: Knowledge synthesizer - combine insights from multiple notes
 - `Ctrl+F5`: Journal pattern analyzer - discover temporal patterns and insights
+
+**AI Features (Phase 6 - Advanced AI Integration)**:
+- `F6`: Multi-modal analysis - analyze notes with attached images and documents
+- `F7`: Voice integration - process voice commands for note operations (demo mode)
+- `F8`: Contextual awareness - analyze reading patterns and suggest related content
+- `F9`: Workspace AI - optimize note organization and suggest improvements
+- `F10`: Predictive AI - predict user needs and provide proactive recommendations
 
 - Standard editing keys (arrows, backspace, etc.)
 

@@ -565,6 +565,28 @@ private:
   Result<std::string> analyzeJournalPatterns(const std::vector<nx::core::Note>& journal_notes,
                                             const nx::config::Config::AiConfig& ai_config);
   
+  // Phase 6 - Advanced AI Integration handlers
+  void handleMultiModalAnalysis();
+  void handleVoiceIntegration();
+  void handleContextualAwareness();
+  void handleWorkspaceAI();
+  void handlePredictiveAI();
+  
+  // Phase 6 AI helper functions
+  Result<std::string> analyzeMultiModalContent(const nx::core::Note& note,
+                                               const std::vector<std::string>& image_paths,
+                                               const nx::config::Config::AiConfig& ai_config);
+  Result<std::string> processVoiceCommand(const std::string& voice_input,
+                                         const nx::config::Config::AiConfig& ai_config);
+  Result<std::string> analyzeContextualPatterns(const std::vector<nx::core::Note>& recent_notes,
+                                               const std::string& current_focus,
+                                               const nx::config::Config::AiConfig& ai_config);
+  Result<std::string> optimizeWorkspaceOrganization(const std::vector<nx::core::Note>& all_notes,
+                                                    const nx::config::Config::AiConfig& ai_config);
+  Result<std::string> predictUserNeeds(const std::vector<nx::core::Note>& context_notes,
+                                       const std::string& current_activity,
+                                       const nx::config::Config::AiConfig& ai_config);
+  
   // Layout calculation helpers
   int calculateVisibleTagsCount() const;
   int calculateVisibleNavigationItemsCount() const;

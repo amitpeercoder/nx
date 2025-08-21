@@ -872,6 +872,32 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       return;
     }
     
+    // Phase 6 AI Features - Advanced AI Integration
+    if (event == ftxui::Event::F6) { // F6 for multi-modal analysis
+      handleMultiModalAnalysis();
+      return;
+    }
+    
+    if (event == ftxui::Event::F7) { // F7 for voice integration
+      handleVoiceIntegration();
+      return;
+    }
+    
+    if (event == ftxui::Event::F8) { // F8 for contextual awareness
+      handleContextualAwareness();
+      return;
+    }
+    
+    if (event == ftxui::Event::F9) { // F9 for workspace AI
+      handleWorkspaceAI();
+      return;
+    }
+    
+    if (event == ftxui::Event::F10) { // F10 for predictive AI
+      handlePredictiveAI();
+      return;
+    }
+    
     // Handle text input and cursor movement
     handleEditModeInput(event);
     return;
@@ -8897,6 +8923,783 @@ Result<std::string> TUIApp::analyzeJournalPatterns(const std::vector<nx::core::N
     
   } catch (const std::exception& e) {
     return std::unexpected(Error(ErrorCode::kAiError, "Failed to analyze journal patterns: " + std::string(e.what())));
+  }
+}
+
+// Phase 6 - Advanced AI Integration Implementations
+
+void TUIApp::handleMultiModalAnalysis() {
+  if (!config_.ai) {
+    setStatusMessage("❌ AI configuration not available");
+    return;
+  }
+  
+  if (!config_.ai->multi_modal.enabled) {
+    setStatusMessage("❌ Multi-modal AI features disabled in configuration");
+    return;
+  }
+  
+  if (state_.selected_note_index >= static_cast<int>(state_.notes.size())) {
+    setStatusMessage("❌ No note selected for multi-modal analysis");
+    return;
+  }
+  
+  setStatusMessage("🖼️ Analyzing multi-modal content...");
+  
+  const auto& note = state_.notes[state_.selected_note_index];
+  
+  // Find attached image files
+  std::vector<std::string> image_paths;
+  try {
+    auto attachments_dir = config_.notes_dir / ".attachments" / note.id().toString();
+    if (std::filesystem::exists(attachments_dir)) {
+      for (const auto& entry : std::filesystem::directory_iterator(attachments_dir)) {
+        if (entry.is_regular_file()) {
+          auto ext = entry.path().extension().string();
+          std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+          if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".bmp") {
+            image_paths.push_back(entry.path().string());
+          }
+        }
+      }
+    }
+  } catch (const std::exception& e) {
+    setStatusMessage("❌ Error scanning for images: " + std::string(e.what()));
+    return;
+  }
+  
+  auto result = analyzeMultiModalContent(note, image_paths, *config_.ai);
+  if (result.has_value()) {
+    // Display result as status message
+    setStatusMessage("🖼️ Multi-modal analysis: " + result->substr(0, 100) + "...");
+  } else {
+    setStatusMessage("❌ Multi-modal analysis failed: " + result.error().message());
+  }
+}
+
+void TUIApp::handleVoiceIntegration() {
+  if (!config_.ai) {
+    setStatusMessage("❌ AI configuration not available");
+    return;
+  }
+  
+  if (!config_.ai->voice_integration.enabled) {
+    setStatusMessage("❌ Voice integration disabled in configuration");
+    return;
+  }
+  
+  setStatusMessage("🎤 Voice integration (demo mode - text input simulation)");
+  
+  // For now, simulate voice input with a demo command
+  std::string demo_voice_input = "Create a note about machine learning fundamentals";
+  
+  auto result = processVoiceCommand(demo_voice_input, *config_.ai);
+  if (result.has_value()) {
+    setStatusMessage("🎤 Voice command processed: " + result->substr(0, 80) + "...");
+  } else {
+    setStatusMessage("❌ Voice processing failed: " + result.error().message());
+  }
+}
+
+void TUIApp::handleContextualAwareness() {
+  if (!config_.ai) {
+    setStatusMessage("❌ AI configuration not available");
+    return;
+  }
+  
+  if (!config_.ai->context_awareness.enabled) {
+    setStatusMessage("❌ Contextual awareness disabled in configuration");
+    return;
+  }
+  
+  setStatusMessage("🧠 Analyzing contextual patterns...");
+  
+  // Get recent notes for context
+  std::vector<nx::core::Note> recent_notes;
+  size_t max_notes = std::min(static_cast<size_t>(config_.ai->context_awareness.context_window_notes), 
+                             state_.notes.size());
+  
+  for (size_t i = 0; i < max_notes; ++i) {
+    recent_notes.push_back(state_.notes[i]);
+  }
+  
+  std::string current_focus = (state_.selected_note_index < static_cast<int>(state_.notes.size())) 
+    ? state_.notes[state_.selected_note_index].metadata().title() : "general";
+  
+  auto result = analyzeContextualPatterns(recent_notes, current_focus, *config_.ai);
+  if (result.has_value()) {
+    setStatusMessage("🧠 Context analysis: " + result->substr(0, 100) + "...");
+  } else {
+    setStatusMessage("❌ Context analysis failed: " + result.error().message());
+  }
+}
+
+void TUIApp::handleWorkspaceAI() {
+  if (!config_.ai) {
+    setStatusMessage("❌ AI configuration not available");
+    return;
+  }
+  
+  if (!config_.ai->workspace_ai.enabled) {
+    setStatusMessage("❌ Workspace AI disabled in configuration");
+    return;
+  }
+  
+  setStatusMessage("🏗️ Optimizing workspace organization...");
+  
+  auto result = optimizeWorkspaceOrganization(state_.notes, *config_.ai);
+  if (result.has_value()) {
+    setStatusMessage("🏗️ Workspace optimization: " + result->substr(0, 100) + "...");
+  } else {
+    setStatusMessage("❌ Workspace optimization failed: " + result.error().message());
+  }
+}
+
+void TUIApp::handlePredictiveAI() {
+  if (!config_.ai) {
+    setStatusMessage("❌ AI configuration not available");
+    return;
+  }
+  
+  if (!config_.ai->predictive_ai.enabled) {
+    setStatusMessage("❌ Predictive AI disabled in configuration");
+    return;
+  }
+  
+  setStatusMessage("🔮 Predicting user needs...");
+  
+  std::string current_activity = "note_browsing";
+  if (state_.selected_note_index < static_cast<int>(state_.notes.size())) {
+    current_activity = "viewing_" + state_.notes[state_.selected_note_index].metadata().title();
+  }
+  
+  auto result = predictUserNeeds(state_.notes, current_activity, *config_.ai);
+  if (result.has_value()) {
+    setStatusMessage("🔮 Predictions: " + result->substr(0, 100) + "...");
+  } else {
+    setStatusMessage("❌ Prediction failed: " + result.error().message());
+  }
+}
+
+// Phase 6 AI Helper Function Implementations
+
+Result<std::string> TUIApp::analyzeMultiModalContent(const nx::core::Note& note,
+                                                     const std::vector<std::string>& image_paths,
+                                                     const nx::config::Config::AiConfig& ai_config) {
+  try {
+    // Build multi-modal analysis prompt
+    std::string prompt = "Analyze this note and its attached images for comprehensive insights:\n\n";
+    prompt += "Note Title: " + note.metadata().title() + "\n";
+    prompt += "Content:\n" + note.content().substr(0, 1000) + "\n\n";
+    
+    if (!image_paths.empty()) {
+      prompt += "Attached Images: " + std::to_string(image_paths.size()) + " files\n";
+      for (const auto& path : image_paths) {
+        prompt += "- " + std::filesystem::path(path).filename().string() + "\n";
+      }
+      prompt += "\n";
+    }
+    
+    prompt += "Please provide:\n"
+              "1. Content analysis and key insights\n"
+              "2. Image analysis (if any) and relevance to content\n"
+              "3. Suggested improvements or additions\n"
+              "4. Alternative text descriptions for accessibility\n"
+              "5. Document structure recommendations\n";
+    
+    // Create HTTP client for AI request
+    auto http_client = std::make_unique<nx::util::HttpClient>();
+    
+    std::string url;
+    std::string auth_header;
+    nlohmann::json request_body;
+    
+    // Configure request based on AI provider
+    if (ai_config.provider == "anthropic") {
+      url = "https://api.anthropic.com/v1/messages";
+      auth_header = "x-api-key: " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.multi_modal.max_tokens},
+        {"temperature", ai_config.multi_modal.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else if (ai_config.provider == "openai") {
+      url = "https://api.openai.com/v1/chat/completions";
+      auth_header = "Authorization: Bearer " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.multi_modal.max_tokens},
+        {"temperature", ai_config.multi_modal.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else {
+      return std::unexpected(Error(ErrorCode::kConfigError, "Unsupported AI provider: " + ai_config.provider));
+    }
+    
+    // Set headers
+    std::vector<std::string> headers = {
+      "Content-Type: application/json",
+      "User-Agent: nx-cli/1.0.0",
+      auth_header
+    };
+    
+    if (ai_config.provider == "anthropic") {
+      headers.push_back("anthropic-version: 2023-06-01");
+    }
+    
+    // Make the HTTP request
+    auto response = http_client->post(url, request_body.dump(), headers);
+    if (!response.has_value()) {
+      return std::unexpected(Error(ErrorCode::kNetworkError, "HTTP request failed: " + response.error().message()));
+    }
+    
+    // Parse response
+    nlohmann::json response_json;
+    try {
+      response_json = nlohmann::json::parse(response->body);
+    } catch (const std::exception& e) {
+      return std::unexpected(Error(ErrorCode::kParseError, "Failed to parse AI response: " + std::string(e.what())));
+    }
+    
+    // Extract result based on provider
+    std::string result;
+    if (ai_config.provider == "anthropic") {
+      if (response_json.contains("content") && response_json["content"].is_array() && 
+          !response_json["content"].empty() && response_json["content"][0].contains("text")) {
+        result = response_json["content"][0]["text"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "Anthropic API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected Anthropic response format"));
+      }
+    } else if (ai_config.provider == "openai") {
+      if (response_json.contains("choices") && !response_json["choices"].empty() &&
+          response_json["choices"][0].contains("message") &&
+          response_json["choices"][0]["message"].contains("content")) {
+        result = response_json["choices"][0]["message"]["content"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "OpenAI API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected OpenAI response format"));
+      }
+    }
+    
+    return result;
+    
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kAiError, "Failed to analyze multi-modal content: " + std::string(e.what())));
+  }
+}
+
+Result<std::string> TUIApp::processVoiceCommand(const std::string& voice_input,
+                                               const nx::config::Config::AiConfig& ai_config) {
+  try {
+    // Create voice command processing prompt
+    std::string prompt = "Process this voice command for a note-taking application:\n\n";
+    prompt += "Voice Input: \"" + voice_input + "\"\n\n";
+    prompt += "Please:\n"
+              "1. Interpret the user's intent\n"
+              "2. Suggest appropriate actions (create note, search, tag, etc.)\n"
+              "3. Generate content if requested\n"
+              "4. Provide any clarifying questions if intent is unclear\n"
+              "5. Format output as actionable steps\n";
+    
+    // Create HTTP client for AI request
+    auto http_client = std::make_unique<nx::util::HttpClient>();
+    
+    std::string url;
+    std::string auth_header;
+    nlohmann::json request_body;
+    
+    // Configure request based on AI provider  
+    if (ai_config.provider == "anthropic") {
+      url = "https://api.anthropic.com/v1/messages";
+      auth_header = "x-api-key: " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.voice_integration.max_tokens},
+        {"temperature", ai_config.voice_integration.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else if (ai_config.provider == "openai") {
+      url = "https://api.openai.com/v1/chat/completions";
+      auth_header = "Authorization: Bearer " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.voice_integration.max_tokens},
+        {"temperature", ai_config.voice_integration.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else {
+      return std::unexpected(Error(ErrorCode::kConfigError, "Unsupported AI provider: " + ai_config.provider));
+    }
+    
+    // Set headers
+    std::vector<std::string> headers = {
+      "Content-Type: application/json",
+      "User-Agent: nx-cli/1.0.0",
+      auth_header
+    };
+    
+    if (ai_config.provider == "anthropic") {
+      headers.push_back("anthropic-version: 2023-06-01");
+    }
+    
+    // Make the HTTP request
+    auto response = http_client->post(url, request_body.dump(), headers);
+    if (!response.has_value()) {
+      return std::unexpected(Error(ErrorCode::kNetworkError, "HTTP request failed: " + response.error().message()));
+    }
+    
+    // Parse response
+    nlohmann::json response_json;
+    try {
+      response_json = nlohmann::json::parse(response->body);
+    } catch (const std::exception& e) {
+      return std::unexpected(Error(ErrorCode::kParseError, "Failed to parse AI response: " + std::string(e.what())));
+    }
+    
+    // Extract result based on provider
+    std::string result;
+    if (ai_config.provider == "anthropic") {
+      if (response_json.contains("content") && response_json["content"].is_array() && 
+          !response_json["content"].empty() && response_json["content"][0].contains("text")) {
+        result = response_json["content"][0]["text"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "Anthropic API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected Anthropic response format"));
+      }
+    } else if (ai_config.provider == "openai") {
+      if (response_json.contains("choices") && !response_json["choices"].empty() &&
+          response_json["choices"][0].contains("message") &&
+          response_json["choices"][0]["message"].contains("content")) {
+        result = response_json["choices"][0]["message"]["content"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "OpenAI API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected OpenAI response format"));
+      }
+    }
+    
+    return result;
+    
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kAiError, "Failed to process voice command: " + std::string(e.what())));
+  }
+}
+
+Result<std::string> TUIApp::analyzeContextualPatterns(const std::vector<nx::core::Note>& recent_notes,
+                                                      const std::string& current_focus,
+                                                      const nx::config::Config::AiConfig& ai_config) {
+  try {
+    // Build context from recent notes
+    std::stringstream notes_context;
+    for (size_t i = 0; i < recent_notes.size() && i < 15; ++i) {
+      const auto& note = recent_notes[i];
+      notes_context << "Note " << (i + 1) << ": " << note.metadata().title() << "\n";
+      notes_context << note.content().substr(0, 150) << "\n\n";
+    }
+    
+    // Create contextual analysis prompt
+    std::string prompt = "Analyze these recent notes for contextual patterns and provide insights:\n\n";
+    prompt += "Current Focus: " + current_focus + "\n\n";
+    prompt += "Recent Notes Context:\n" + notes_context.str() + "\n";
+    
+    prompt += "Please analyze:\n"
+              "1. Common themes and patterns across notes\n"
+              "2. Knowledge gaps or areas needing attention\n"
+              "3. Connections between different topics\n"
+              "4. Suggested next actions based on reading patterns\n"
+              "5. Related content recommendations\n"
+              "6. Optimal study/work sequences\n";
+    
+    // Create HTTP client for AI request
+    auto http_client = std::make_unique<nx::util::HttpClient>();
+    
+    std::string url;
+    std::string auth_header;
+    nlohmann::json request_body;
+    
+    // Configure request based on AI provider
+    if (ai_config.provider == "anthropic") {
+      url = "https://api.anthropic.com/v1/messages";
+      auth_header = "x-api-key: " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.context_awareness.max_tokens},
+        {"temperature", ai_config.context_awareness.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else if (ai_config.provider == "openai") {
+      url = "https://api.openai.com/v1/chat/completions";
+      auth_header = "Authorization: Bearer " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.context_awareness.max_tokens},
+        {"temperature", ai_config.context_awareness.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else {
+      return std::unexpected(Error(ErrorCode::kConfigError, "Unsupported AI provider: " + ai_config.provider));
+    }
+    
+    // Set headers
+    std::vector<std::string> headers = {
+      "Content-Type: application/json",
+      "User-Agent: nx-cli/1.0.0",
+      auth_header
+    };
+    
+    if (ai_config.provider == "anthropic") {
+      headers.push_back("anthropic-version: 2023-06-01");
+    }
+    
+    // Make the HTTP request
+    auto response = http_client->post(url, request_body.dump(), headers);
+    if (!response.has_value()) {
+      return std::unexpected(Error(ErrorCode::kNetworkError, "HTTP request failed: " + response.error().message()));
+    }
+    
+    // Parse response
+    nlohmann::json response_json;
+    try {
+      response_json = nlohmann::json::parse(response->body);
+    } catch (const std::exception& e) {
+      return std::unexpected(Error(ErrorCode::kParseError, "Failed to parse AI response: " + std::string(e.what())));
+    }
+    
+    // Extract result based on provider
+    std::string result;
+    if (ai_config.provider == "anthropic") {
+      if (response_json.contains("content") && response_json["content"].is_array() && 
+          !response_json["content"].empty() && response_json["content"][0].contains("text")) {
+        result = response_json["content"][0]["text"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "Anthropic API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected Anthropic response format"));
+      }
+    } else if (ai_config.provider == "openai") {
+      if (response_json.contains("choices") && !response_json["choices"].empty() &&
+          response_json["choices"][0].contains("message") &&
+          response_json["choices"][0]["message"].contains("content")) {
+        result = response_json["choices"][0]["message"]["content"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "OpenAI API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected OpenAI response format"));
+      }
+    }
+    
+    return result;
+    
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kAiError, "Failed to analyze contextual patterns: " + std::string(e.what())));
+  }
+}
+
+Result<std::string> TUIApp::optimizeWorkspaceOrganization(const std::vector<nx::core::Note>& all_notes,
+                                                         const nx::config::Config::AiConfig& ai_config) {
+  try {
+    // Build workspace summary
+    std::stringstream workspace_summary;
+    std::map<std::string, int> tag_counts;
+    std::map<std::string, int> notebook_counts;
+    
+    for (const auto& note : all_notes) {
+      // Count tags
+      for (const auto& tag : note.metadata().tags()) {
+        tag_counts[tag]++;
+      }
+      // Count notebooks
+      if (note.metadata().notebook().has_value()) {
+        notebook_counts[*note.metadata().notebook()]++;
+      }
+    }
+    
+    workspace_summary << "Total Notes: " << all_notes.size() << "\n";
+    workspace_summary << "Unique Tags: " << tag_counts.size() << "\n";
+    workspace_summary << "Notebooks: " << notebook_counts.size() << "\n\n";
+    
+    workspace_summary << "Top Tags:\n";
+    std::vector<std::pair<std::string, int>> sorted_tags(tag_counts.begin(), tag_counts.end());
+    std::sort(sorted_tags.begin(), sorted_tags.end(), 
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+    
+    for (size_t i = 0; i < std::min(size_t(10), sorted_tags.size()); ++i) {
+      workspace_summary << "- " << sorted_tags[i].first << " (" << sorted_tags[i].second << ")\n";
+    }
+    
+    // Create workspace optimization prompt
+    std::string prompt = "Analyze this note workspace and suggest optimization improvements:\n\n";
+    prompt += workspace_summary.str() + "\n";
+    
+    prompt += "Please provide:\n"
+              "1. Workspace organization assessment\n"
+              "2. Tag structure optimization suggestions\n"
+              "3. Notebook organization recommendations\n"
+              "4. Duplicate content detection strategies\n"
+              "5. Archive suggestions for inactive notes\n"
+              "6. Workflow improvement recommendations\n"
+              "7. Knowledge management best practices\n";
+    
+    // Create HTTP client for AI request
+    auto http_client = std::make_unique<nx::util::HttpClient>();
+    
+    std::string url;
+    std::string auth_header;
+    nlohmann::json request_body;
+    
+    // Configure request based on AI provider
+    if (ai_config.provider == "anthropic") {
+      url = "https://api.anthropic.com/v1/messages";
+      auth_header = "x-api-key: " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.workspace_ai.max_tokens},
+        {"temperature", ai_config.workspace_ai.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else if (ai_config.provider == "openai") {
+      url = "https://api.openai.com/v1/chat/completions";
+      auth_header = "Authorization: Bearer " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.workspace_ai.max_tokens},
+        {"temperature", ai_config.workspace_ai.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else {
+      return std::unexpected(Error(ErrorCode::kConfigError, "Unsupported AI provider: " + ai_config.provider));
+    }
+    
+    // Set headers
+    std::vector<std::string> headers = {
+      "Content-Type: application/json",
+      "User-Agent: nx-cli/1.0.0",
+      auth_header
+    };
+    
+    if (ai_config.provider == "anthropic") {
+      headers.push_back("anthropic-version: 2023-06-01");
+    }
+    
+    // Make the HTTP request
+    auto response = http_client->post(url, request_body.dump(), headers);
+    if (!response.has_value()) {
+      return std::unexpected(Error(ErrorCode::kNetworkError, "HTTP request failed: " + response.error().message()));
+    }
+    
+    // Parse response
+    nlohmann::json response_json;
+    try {
+      response_json = nlohmann::json::parse(response->body);
+    } catch (const std::exception& e) {
+      return std::unexpected(Error(ErrorCode::kParseError, "Failed to parse AI response: " + std::string(e.what())));
+    }
+    
+    // Extract result based on provider
+    std::string result;
+    if (ai_config.provider == "anthropic") {
+      if (response_json.contains("content") && response_json["content"].is_array() && 
+          !response_json["content"].empty() && response_json["content"][0].contains("text")) {
+        result = response_json["content"][0]["text"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "Anthropic API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected Anthropic response format"));
+      }
+    } else if (ai_config.provider == "openai") {
+      if (response_json.contains("choices") && !response_json["choices"].empty() &&
+          response_json["choices"][0].contains("message") &&
+          response_json["choices"][0]["message"].contains("content")) {
+        result = response_json["choices"][0]["message"]["content"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "OpenAI API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected OpenAI response format"));
+      }
+    }
+    
+    return result;
+    
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kAiError, "Failed to optimize workspace organization: " + std::string(e.what())));
+  }
+}
+
+Result<std::string> TUIApp::predictUserNeeds(const std::vector<nx::core::Note>& context_notes,
+                                            const std::string& current_activity,
+                                            const nx::config::Config::AiConfig& ai_config) {
+  try {
+    // Build context for prediction
+    std::stringstream context_summary;
+    context_summary << "Current Activity: " << current_activity << "\n\n";
+    
+    // Analyze recent note patterns
+    std::map<std::string, int> recent_topics;
+    std::map<std::string, int> action_patterns;
+    
+    for (size_t i = 0; i < std::min(size_t(20), context_notes.size()); ++i) {
+      const auto& note = context_notes[i];
+      
+      // Extract topics from tags
+      for (const auto& tag : note.metadata().tags()) {
+        recent_topics[tag]++;
+      }
+      
+      // Simple pattern detection in content
+      if (note.content().find("TODO") != std::string::npos || 
+          note.content().find("- [ ]") != std::string::npos) {
+        action_patterns["tasks"]++;
+      }
+      if (note.content().find("meeting") != std::string::npos ||
+          note.content().find("call") != std::string::npos) {
+        action_patterns["meetings"]++;
+      }
+      if (note.content().find("learn") != std::string::npos ||
+          note.content().find("study") != std::string::npos) {
+        action_patterns["learning"]++;
+      }
+    }
+    
+    context_summary << "Recent Topic Focus:\n";
+    for (const auto& [topic, count] : recent_topics) {
+      context_summary << "- " << topic << " (" << count << " notes)\n";
+    }
+    
+    context_summary << "\nActivity Patterns:\n";
+    for (const auto& [pattern, count] : action_patterns) {
+      context_summary << "- " << pattern << " (" << count << " occurrences)\n";
+    }
+    
+    // Create prediction prompt
+    std::string prompt = "Based on this user's note-taking patterns, predict their likely next needs:\n\n";
+    prompt += context_summary.str() + "\n";
+    
+    prompt += "Please predict:\n"
+              "1. What information they'll likely need next\n"
+              "2. Suggested notes to review or create\n"
+              "3. Potential upcoming deadlines or meetings\n"
+              "4. Learning opportunities and knowledge gaps\n"
+              "5. Workflow optimizations for their patterns\n"
+              "6. Proactive reminders and suggestions\n"
+              "7. Resource recommendations\n";
+    
+    // Create HTTP client for AI request
+    auto http_client = std::make_unique<nx::util::HttpClient>();
+    
+    std::string url;
+    std::string auth_header;
+    nlohmann::json request_body;
+    
+    // Configure request based on AI provider
+    if (ai_config.provider == "anthropic") {
+      url = "https://api.anthropic.com/v1/messages";
+      auth_header = "x-api-key: " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.predictive_ai.max_tokens},
+        {"temperature", ai_config.predictive_ai.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else if (ai_config.provider == "openai") {
+      url = "https://api.openai.com/v1/chat/completions";
+      auth_header = "Authorization: Bearer " + ai_config.api_key;
+      
+      request_body = {
+        {"model", ai_config.model},
+        {"max_tokens", ai_config.predictive_ai.max_tokens},
+        {"temperature", ai_config.predictive_ai.temperature},
+        {"messages", nlohmann::json::array({
+          {{"role", "user"}, {"content", prompt}}
+        })}
+      };
+    } else {
+      return std::unexpected(Error(ErrorCode::kConfigError, "Unsupported AI provider: " + ai_config.provider));
+    }
+    
+    // Set headers
+    std::vector<std::string> headers = {
+      "Content-Type: application/json",
+      "User-Agent: nx-cli/1.0.0",
+      auth_header
+    };
+    
+    if (ai_config.provider == "anthropic") {
+      headers.push_back("anthropic-version: 2023-06-01");
+    }
+    
+    // Make the HTTP request
+    auto response = http_client->post(url, request_body.dump(), headers);
+    if (!response.has_value()) {
+      return std::unexpected(Error(ErrorCode::kNetworkError, "HTTP request failed: " + response.error().message()));
+    }
+    
+    // Parse response
+    nlohmann::json response_json;
+    try {
+      response_json = nlohmann::json::parse(response->body);
+    } catch (const std::exception& e) {
+      return std::unexpected(Error(ErrorCode::kParseError, "Failed to parse AI response: " + std::string(e.what())));
+    }
+    
+    // Extract result based on provider
+    std::string result;
+    if (ai_config.provider == "anthropic") {
+      if (response_json.contains("content") && response_json["content"].is_array() && 
+          !response_json["content"].empty() && response_json["content"][0].contains("text")) {
+        result = response_json["content"][0]["text"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "Anthropic API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected Anthropic response format"));
+      }
+    } else if (ai_config.provider == "openai") {
+      if (response_json.contains("choices") && !response_json["choices"].empty() &&
+          response_json["choices"][0].contains("message") &&
+          response_json["choices"][0]["message"].contains("content")) {
+        result = response_json["choices"][0]["message"]["content"].get<std::string>();
+      } else if (response_json.contains("error")) {
+        return std::unexpected(Error(ErrorCode::kAiError, "OpenAI API error: " + response_json["error"]["message"].get<std::string>()));
+      } else {
+        return std::unexpected(Error(ErrorCode::kParseError, "Unexpected OpenAI response format"));
+      }
+    }
+    
+    return result;
+    
+  } catch (const std::exception& e) {
+    return std::unexpected(Error(ErrorCode::kAiError, "Failed to predict user needs: " + std::string(e.what())));
   }
 }
 

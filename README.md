@@ -115,6 +115,7 @@ Run `nx` or `nx ui` to launch the full-featured terminal interface:
 - `Ctrl+H` - Content enhancement
 - `Ctrl+I` - Cross-note insights
 - `Ctrl+F1-F5` - **Phase 5 Advanced AI** (workflow orchestrator, project analyzer, learning paths, knowledge synthesis, journal patterns)
+- `F6-F10` - **Phase 6 Advanced AI Integration** (multi-modal analysis, voice integration, contextual awareness, workspace AI, predictive AI)
 
 ## 📚 Commands Reference
 
