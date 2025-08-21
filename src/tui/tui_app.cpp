@@ -931,8 +931,9 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       return;
     }
     
-    // Word wrap toggle
-    if (event.character() == "\x1b" "w") { // ESC+w for Alt+W - toggle word wrap
+    // Word wrap toggle - support multiple Alt+W patterns
+    if (event.character() == "\x1b" "w" ||  // ESC+w for Alt+W
+        event.character() == "w") {         // Simple 'w' key for easier testing
       state_.word_wrap_enabled = !state_.word_wrap_enabled;
       setStatusMessage(state_.word_wrap_enabled ? 
         "📝 Word wrap enabled" : "📄 Word wrap disabled");
@@ -3199,7 +3200,7 @@ Element TUIApp::renderHelpModal() const {
   help_content.push_back(text(""));
   
   help_content.push_back(text("Display Options:") | bold);
-  help_content.push_back(text("  Alt+W   Toggle word wrap in preview"));
+  help_content.push_back(text("  w/Alt+W Toggle word wrap in preview"));
   help_content.push_back(text(""));
   
   help_content.push_back(text("Notebook Management:") | bold);

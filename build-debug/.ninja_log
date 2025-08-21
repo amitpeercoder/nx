@@ -219,3 +219,14 @@
 5462	6607	1755760279561524080	tests/integration_tests	8b0eb7f639ef6ecf
 5462	6607	1755760279561524080	tests/integration_tests[1]_tests.cmake	8b0eb7f639ef6ecf
 5462	6607	1755760279561524080	/Users/amitpeer/Documents/Code/nx/build-debug/tests/integration_tests[1]_tests.cmake	8b0eb7f639ef6ecf
+9	3640	1755760686438739826	tests/CMakeFiles/nx_core.dir/__/src/tui/tui_app.cpp.o	75f9ae85b48eb426
+9	3681	1755760686439144660	CMakeFiles/nx.dir/src/tui/tui_app.cpp.o	e54b9bcc64c88be8
+3682	3796	1755760690111188663	nx	91f784b56deaeeed
+3640	5380	1755760690069525591	tests/libnx_core.a	5c3b0915c90995bb
+5381	5927	1755760691810292575	tests/nx_benchmark	ad6bb3fe87b8d51e
+5380	6385	1755760692813964295	tests/unit_tests	9f308006b1dfbfdf
+5380	6385	1755760692813964295	tests/unit_tests[1]_tests.cmake	9f308006b1dfbfdf
+5380	6385	1755760692813964295	/Users/amitpeer/Documents/Code/nx/build-debug/tests/unit_tests[1]_tests.cmake	9f308006b1dfbfdf
+5380	6535	1755760692964013386	tests/integration_tests	8b0eb7f639ef6ecf
+5380	6535	1755760692964013386	tests/integration_tests[1]_tests.cmake	8b0eb7f639ef6ecf
+5380	6535	1755760692964013386	/Users/amitpeer/Documents/Code/nx/build-debug/tests/integration_tests[1]_tests.cmake	8b0eb7f639ef6ecf
