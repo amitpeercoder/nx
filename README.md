@@ -106,6 +106,16 @@ Run `nx` or `nx ui` to launch the full-featured terminal interface:
 - `Space` - Expand/collapse notebook
 - `?` - Help
 
+**AI Editor Features (Phase 1-5):**
+- `Ctrl+Q` - Brief AI explanations
+- `Ctrl+E` - Expand explanations
+- `Ctrl+W` - Smart completion
+- `Ctrl+U` - Smart summarization
+- `Ctrl+R` - Note relationships
+- `Ctrl+H` - Content enhancement
+- `Ctrl+I` - Cross-note insights
+- `Ctrl+F1-F5` - **Phase 5 Advanced AI** (workflow orchestrator, project analyzer, learning paths, knowledge synthesis, journal patterns)
+
 ## 📚 Commands Reference
 
 ### **Note Management**

@@ -102,6 +102,244 @@ class Config {
       size_t context_radius = 100;            // Characters around term for context
     };
     ExplanationConfig explanations;
+    
+    // AI Smart Completion settings
+    struct SmartCompletionConfig {
+      bool enabled = false;                     // Enable smart completion (disabled by default)
+      int max_tokens = 150;                     // Maximum tokens for completion
+      double temperature = 0.3;                // Temperature for completion (slightly higher for creativity)
+      size_t max_completion_length = 300;      // Maximum completion length in characters
+      int timeout_ms = 2000;                   // Timeout for completion requests (faster than explanations)
+    };
+    SmartCompletionConfig smart_completion;
+    
+    // AI Semantic Search settings
+    struct SemanticSearchConfig {
+      bool enabled = false;                     // Enable semantic search (disabled by default)
+      int max_tokens = 500;                     // Maximum tokens for search analysis
+      double temperature = 0.1;                // Low temperature for consistent results
+      int timeout_ms = 5000;                   // Timeout for search requests
+      size_t max_notes_per_query = 50;         // Maximum notes to include in search prompt
+    };
+    SemanticSearchConfig semantic_search;
+    
+    // AI Grammar & Style Check settings
+    struct GrammarStyleCheckConfig {
+      bool enabled = false;                     // Enable grammar & style check (disabled by default)
+      int max_tokens = 800;                     // Maximum tokens for style analysis
+      double temperature = 0.2;                // Low temperature for consistent suggestions
+      int timeout_ms = 4000;                   // Timeout for grammar check requests
+      size_t max_text_length = 2000;           // Maximum text length to analyze
+      std::string style = "clear";             // Style preference: "clear", "formal", "casual", "academic"
+    };
+    GrammarStyleCheckConfig grammar_style_check;
+    
+    // AI Smart Examples settings
+    struct SmartExamplesConfig {
+      bool enabled = false;                     // Enable smart examples (disabled by default)
+      int max_tokens = 600;                     // Maximum tokens for example generation
+      double temperature = 0.4;                // Moderate temperature for creative examples
+      int timeout_ms = 3500;                   // Timeout for example generation
+      size_t max_examples = 3;                 // Maximum number of examples to generate
+      std::string example_type = "practical";  // Example type: "practical", "simple", "advanced", "real-world"
+    };
+    SmartExamplesConfig smart_examples;
+    
+    // AI Code Generation settings
+    struct CodeGenerationConfig {
+      bool enabled = false;                     // Enable code generation (disabled by default)
+      int max_tokens = 1000;                    // Maximum tokens for code generation
+      double temperature = 0.3;                // Moderate temperature for code creativity
+      int timeout_ms = 5000;                   // Timeout for code generation requests
+      std::string language = "auto";           // Programming language: "auto", "python", "javascript", "cpp", etc.
+      std::string style = "clean";             // Code style: "clean", "commented", "minimal", "verbose"
+    };
+    CodeGenerationConfig code_generation;
+    
+    // AI Smart Summarization settings
+    struct SmartSummarizationConfig {
+      bool enabled = false;                     // Enable smart summarization (disabled by default)
+      int max_tokens = 800;                     // Maximum tokens for summarization
+      double temperature = 0.2;                // Low temperature for consistent summaries
+      int timeout_ms = 6000;                   // Timeout for summarization requests
+      size_t max_text_length = 5000;           // Maximum text length to summarize
+      std::string style = "bullet";            // Summary style: "bullet", "paragraph", "outline", "key-points"
+      bool include_metadata = true;            // Include note metadata in summary context
+    };
+    SmartSummarizationConfig smart_summarization;
+    
+    // AI Note Relationships settings
+    struct NoteRelationshipsConfig {
+      bool enabled = false;                     // Enable note relationships analysis (disabled by default)
+      int max_tokens = 600;                     // Maximum tokens for relationship analysis
+      double temperature = 0.1;                // Very low temperature for consistent analysis
+      int timeout_ms = 4000;                   // Timeout for relationship requests
+      size_t max_notes_to_analyze = 20;        // Maximum notes to consider for relationships
+      double similarity_threshold = 0.7;       // Minimum similarity score for relationships
+    };
+    NoteRelationshipsConfig note_relationships;
+    
+    // AI Smart Organization settings  
+    struct SmartOrganizationConfig {
+      bool enabled = false;                     // Enable smart organization (disabled by default)
+      int max_tokens = 800;                     // Maximum tokens for organization analysis
+      double temperature = 0.2;                // Low temperature for consistent categorization
+      int timeout_ms = 5000;                   // Timeout for organization requests
+      size_t max_notes_per_batch = 30;         // Maximum notes to analyze per batch
+      bool suggest_new_notebooks = true;       // Whether to suggest new notebook creation
+    };
+    SmartOrganizationConfig smart_organization;
+    
+    // AI Content Enhancement settings
+    struct ContentEnhancementConfig {
+      bool enabled = false;                     // Enable content enhancement (disabled by default)
+      int max_tokens = 900;                     // Maximum tokens for enhancement suggestions
+      double temperature = 0.3;                // Moderate temperature for creative suggestions
+      int timeout_ms = 6000;                   // Timeout for enhancement requests
+      size_t max_text_length = 3000;           // Maximum text length to enhance
+      std::string enhancement_focus = "clarity"; // Focus: "clarity", "depth", "structure", "engagement"
+    };
+    ContentEnhancementConfig content_enhancement;
+    
+    // AI Research Assistant settings
+    struct ResearchAssistantConfig {
+      bool enabled = false;                     // Enable research assistant (disabled by default)
+      int max_tokens = 700;                     // Maximum tokens for research suggestions
+      double temperature = 0.4;                // Higher temperature for creative research ideas
+      int timeout_ms = 5000;                   // Timeout for research requests
+      size_t max_topics_generated = 5;         // Maximum research topics to generate
+      std::string research_style = "academic"; // Style: "academic", "practical", "exploratory", "critical"
+    };
+    ResearchAssistantConfig research_assistant;
+    
+    // AI Writing Coach settings
+    struct WritingCoachConfig {
+      bool enabled = false;                     // Enable writing coach (disabled by default)
+      int max_tokens = 1000;                    // Maximum tokens for writing analysis
+      double temperature = 0.2;                // Low temperature for consistent feedback
+      int timeout_ms = 7000;                   // Timeout for writing analysis
+      size_t max_text_length = 4000;           // Maximum text length to analyze
+      std::string feedback_level = "comprehensive"; // Level: "basic", "detailed", "comprehensive"
+      bool include_style_suggestions = true;   // Include style and tone suggestions
+    };
+    WritingCoachConfig writing_coach;
+    
+    // AI Smart Content Generation settings (Phase 4)
+    struct SmartContentGenerationConfig {
+      bool enabled = false;                     // Enable smart content generation (disabled by default)
+      int max_tokens = 1500;                    // Maximum tokens for content generation
+      double temperature = 0.6;                // Higher temperature for creative content
+      int timeout_ms = 8000;                   // Timeout for content generation
+      std::string content_style = "informative"; // Style: "informative", "creative", "technical", "casual"
+      size_t max_content_length = 2000;        // Maximum generated content length
+      bool include_outline = true;             // Include outline in generated content
+    };
+    SmartContentGenerationConfig smart_content_generation;
+    
+    // AI Intelligent Template Suggestions settings (Phase 4)
+    struct IntelligentTemplateConfig {
+      bool enabled = false;                     // Enable intelligent template suggestions (disabled by default)
+      int max_tokens = 400;                     // Maximum tokens for template analysis
+      double temperature = 0.1;                // Very low temperature for consistent suggestions
+      int timeout_ms = 3000;                   // Timeout for template suggestions
+      size_t max_suggestions = 5;              // Maximum template suggestions to generate
+      bool analyze_existing_content = true;    // Analyze existing note content for suggestions
+    };
+    IntelligentTemplateConfig intelligent_templates;
+    
+    // AI Cross-Note Insights settings (Phase 4)
+    struct CrossNoteInsightsConfig {
+      bool enabled = false;                     // Enable cross-note insights (disabled by default)
+      int max_tokens = 1200;                    // Maximum tokens for insights analysis
+      double temperature = 0.3;                // Moderate temperature for balanced insights
+      int timeout_ms = 10000;                  // Timeout for cross-note analysis
+      size_t max_notes_analyzed = 50;          // Maximum notes to analyze for insights
+      std::string insight_focus = "patterns";  // Focus: "patterns", "gaps", "connections", "themes"
+    };
+    CrossNoteInsightsConfig cross_note_insights;
+    
+    // AI Smart Search Enhancement settings (Phase 4)
+    struct SmartSearchEnhancementConfig {
+      bool enabled = false;                     // Enable smart search enhancement (disabled by default)
+      int max_tokens = 300;                     // Maximum tokens for search query enhancement
+      double temperature = 0.2;                // Low temperature for consistent query interpretation
+      int timeout_ms = 2500;                   // Timeout for search enhancement
+      bool expand_synonyms = true;             // Include synonyms in search expansion
+      bool analyze_intent = true;              // Analyze search intent for better results
+    };
+    SmartSearchEnhancementConfig smart_search_enhancement;
+    
+    // AI Smart Note Merging settings (Phase 4)
+    struct SmartNoteMergingConfig {
+      bool enabled = false;                     // Enable smart note merging (disabled by default)
+      int max_tokens = 800;                     // Maximum tokens for merge analysis
+      double temperature = 0.1;                // Very low temperature for consistent analysis
+      int timeout_ms = 6000;                   // Timeout for merge analysis
+      double similarity_threshold = 0.8;       // Minimum similarity for merge suggestions
+      size_t max_merge_candidates = 10;        // Maximum notes to consider for merging
+    };
+    SmartNoteMergingConfig smart_note_merging;
+    
+    // AI Workflow Orchestrator settings (Phase 5)
+    struct WorkflowOrchestratorConfig {
+      bool enabled = false;                         // Enable workflow orchestration (disabled by default)
+      int max_tokens = 1500;                       // Maximum tokens per workflow step
+      double temperature = 0.2;                    // Low temperature for consistent workflows
+      int timeout_per_step_ms = 15000;             // Timeout per workflow step
+      int max_steps = 10;                          // Maximum steps in a workflow
+      bool allow_recursive_calls = false;          // Allow workflows to call other workflows
+      std::vector<std::string> allowed_operations = {"summarize", "tag", "title", "enhance"};  // Operations workflows can perform
+    };
+    WorkflowOrchestratorConfig workflow_orchestrator;
+    
+    // AI Project Assistant settings (Phase 5)
+    struct ProjectAssistantConfig {
+      bool enabled = false;                         // Enable project assistant (disabled by default)  
+      int max_tokens = 2048;                       // Maximum tokens for project analysis
+      double temperature = 0.3;                    // Medium temperature for creative project insights
+      int timeout_ms = 30000;                      // Timeout for project analysis
+      std::string project_scope = "current_notebook";  // Scope: "current_notebook", "all_notes", "selected_tags"
+      bool auto_generate_milestones = true;        // Automatically generate project milestones
+      int max_related_notes = 20;                  // Maximum notes to analyze for project context
+    };
+    ProjectAssistantConfig project_assistant;
+    
+    // AI Learning Path Generator settings (Phase 5) 
+    struct LearningPathGeneratorConfig {
+      bool enabled = false;                         // Enable learning path generation (disabled by default)
+      int max_tokens = 1800;                       // Maximum tokens for learning path generation  
+      double temperature = 0.4;                    // Medium-high temperature for creative learning paths
+      int timeout_ms = 25000;                      // Timeout for learning path generation
+      int max_prerequisites = 5;                   // Maximum prerequisite topics to suggest
+      int max_learning_steps = 15;                 // Maximum steps in learning path
+      bool include_resources = true;               // Include external resource suggestions
+    };
+    LearningPathGeneratorConfig learning_path_generator;
+    
+    // AI Knowledge Synthesis settings (Phase 5)
+    struct KnowledgeSynthesisConfig {
+      bool enabled = false;                         // Enable knowledge synthesis (disabled by default)
+      int max_tokens = 3000;                       // Maximum tokens for knowledge synthesis
+      double temperature = 0.25;                   // Low-medium temperature for accurate synthesis
+      int timeout_ms = 35000;                      // Timeout for knowledge synthesis
+      int max_source_notes = 25;                   // Maximum notes to synthesize
+      bool detect_contradictions = true;           // Detect contradictions between sources
+      bool suggest_gaps = true;                    // Suggest knowledge gaps
+    };
+    KnowledgeSynthesisConfig knowledge_synthesis;
+    
+    // AI Journal Insights settings (Phase 5)
+    struct JournalInsightsConfig {
+      bool enabled = false;                         // Enable journal insights (disabled by default)
+      int max_tokens = 1200;                       // Maximum tokens for journal analysis
+      double temperature = 0.3;                    // Medium temperature for insightful analysis
+      int timeout_ms = 20000;                      // Timeout for journal analysis  
+      int analysis_window_days = 30;               // Days to look back for patterns
+      bool track_mood_patterns = true;             // Track mood and emotional patterns
+      bool track_productivity_patterns = true;     // Track productivity patterns
+      bool suggest_habit_changes = true;           // Suggest habit and routine improvements
+    };
+    JournalInsightsConfig journal_insights;
   };
   std::optional<AiConfig> ai;
   

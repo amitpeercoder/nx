@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <spdlog/spdlog.h>
 
 namespace nx::sync {
 
@@ -311,8 +312,22 @@ Result<void> AutoSyncManager::autoResolveConflicts() {
     } else if (config_.auto_sync.conflict_strategy == "theirs") {
         return git_sync_->resolveConflicts({}, "theirs");
     } else if (config_.auto_sync.conflict_strategy == "smart") {
-        // For now, use "ours" strategy - could be enhanced with AI resolution
-        return git_sync_->resolveConflicts({}, "ours");
+        // Smart conflict resolution: intelligent strategy selection
+        // First attempt: try "ours" for non-destructive resolution
+        // If that fails, fall back to manual resolution
+        
+        logSyncEvent("Attempting smart conflict resolution with 'ours' strategy", true);
+        auto ours_result = git_sync_->resolveConflicts({}, "ours");
+        
+        if (ours_result.has_value()) {
+            logSyncEvent("Smart conflict resolution successful with 'ours' strategy", true);
+            return ours_result;
+        } else {
+            // 'ours' strategy failed, require manual resolution
+            logSyncEvent("Smart conflict resolution requires manual intervention", false);
+            return std::unexpected(makeError(ErrorCode::kGitError, 
+                "Conflicts require manual resolution. Use 'nx sync resolve' to resolve manually."));
+        }
     }
     
     return std::unexpected(makeError(ErrorCode::kGitError, "Unknown conflict resolution strategy"));
@@ -329,8 +344,11 @@ void AutoSyncManager::updateStatus(const std::function<void(SyncStatus&)>& updat
 }
 
 void AutoSyncManager::logSyncEvent(const std::string& event, bool success) {
-    // For now, just log to stderr - could integrate with proper logging
-    std::cerr << "[AutoSync] " << event << std::endl;
+    if (success) {
+        spdlog::info("[AutoSync] {}", event);
+    } else {
+        spdlog::warn("[AutoSync] FAILED: {}", event);
+    }
 }
 
 } // namespace nx::sync

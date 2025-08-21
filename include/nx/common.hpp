@@ -25,6 +25,7 @@ enum class ErrorCode {
   kNetworkError,
   kEncryptionError,
   kGitError,
+  kAiError,
   kConfigError,
   kExternalToolError,
   kSecurityError,

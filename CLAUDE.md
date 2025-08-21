@@ -155,11 +155,38 @@ nx suggest-links <id>                            # Find related notes
 nx outline "topic"                               # Generate structured outlines
 ```
 
-**TUI AI Explanation Feature**:
-- **Alt+?**: Generate brief explanations for terms before cursor (5-10 words)
+**TUI AI Features**:
+
+**Phase 1 & 2 - Core AI Features:**
+- **Ctrl+Q**: Generate brief explanations for terms before cursor (5-10 words)
 - **Ctrl+E**: Expand brief explanations to detailed descriptions (2-3 sentences)
-- **Context-aware**: Uses surrounding text for accurate explanations
-- **Cached**: Reduces API calls and improves performance
+- **Ctrl+W**: Smart completion based on context and content
+- **Ctrl+G**: Grammar & style check with configurable style preferences
+- **S**: Semantic search - find notes by meaning, not just keywords
+- **Ctrl+X**: Generate smart examples for concepts and terms
+- **Ctrl+C**: Code generation from natural language descriptions
+- **Ctrl+U**: Smart summarization of entire note with configurable styles
+
+**Phase 3 - Advanced AI Features:**
+- **Ctrl+R**: Note relationships analysis - discover connections between notes
+- **Ctrl+H**: Content enhancement suggestions based on configurable focus areas
+- **Ctrl+O**: Smart organization recommendations
+- **Ctrl+A**: Research assistant for topic exploration
+- **Ctrl+B**: Writing coach with comprehensive feedback
+
+**Phase 4 - AI Integration Features (NEW):**
+- **Ctrl+G**: Smart content generation based on topic and context
+- **Ctrl+T**: Intelligent template suggestions based on content analysis
+- **Ctrl+I**: Cross-note insights - find patterns and connections across your notes
+- **Ctrl+N**: Smart search enhancement - improve queries with AI-powered expansion
+- **Ctrl+M**: Smart note merging - detect opportunities to consolidate similar notes
+
+**AI System Features:**
+- **Context-aware**: Uses surrounding text for accurate AI assistance
+- **Intelligent text selection**: Prefers current selection, then paragraph, then full content
+- **Cached responses**: Reduces API calls and improves performance
+- **Status feedback**: Clear emoji indicators for AI operations and configuration state
+- **Comprehensive error handling**: Helpful messages for configuration and usage issues
 
 #### Interactive TUI
 ```bash

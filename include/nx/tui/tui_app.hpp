@@ -130,6 +130,7 @@ struct AppState {
   bool command_palette_open = false;
   bool new_note_modal_open = false;
   bool search_mode_active = false;
+  bool semantic_search_mode_active = false;  // Track if we're in semantic search mode
   bool edit_mode_active = false;
   bool tag_edit_modal_open = false;
   bool notebook_modal_open = false;
@@ -167,6 +168,7 @@ struct AppState {
   std::string template_variable_input;
   std::string current_variable_name;
   std::vector<std::string> pending_variables;  // Variables still needing input
+  std::string last_used_template_name;         // Track last used template for quick access
   
   // Edit mode state - Enhanced security architecture
   std::unique_ptr<EditorBuffer> editor_buffer;
@@ -449,6 +451,119 @@ private:
   void expandExistingExplanation();
   void clearExplanationState();
   AiExplanationService::Config createExplanationConfig() const;
+  
+  // AI Smart Completion handlers
+  void handleSmartCompletion();
+  Result<std::string> generateSmartCompletion(const std::string& line_up_to_cursor,
+                                              const std::string& context,
+                                              const nx::config::Config::AiConfig& ai_config);
+                                              
+  // AI Semantic Search handlers
+  void handleSemanticSearch();
+  Result<std::vector<nx::core::NoteId>> performSemanticSearch(const std::string& query,
+                                                              const nx::config::Config::AiConfig& ai_config);
+                                                              
+  // AI Grammar & Style Check handlers
+  void handleGrammarStyleCheck();
+  Result<std::string> performGrammarStyleCheck(const std::string& text,
+                                               const nx::config::Config::AiConfig& ai_config);
+                                               
+  // AI Smart Examples handlers
+  void handleSmartExamples();
+  Result<std::string> generateSmartExamples(const std::string& term,
+                                            const std::string& context,
+                                            const nx::config::Config::AiConfig& ai_config);
+                                            
+  // AI Code Generation handlers
+  void handleCodeGeneration();
+  Result<std::string> generateCode(const std::string& description,
+                                   const std::string& context,
+                                   const nx::config::Config::AiConfig& ai_config);
+                                   
+  // AI Smart Summarization handlers
+  void handleSmartSummarization();
+  Result<std::string> performSmartSummarization(const std::string& text,
+                                                const nx::config::Config::AiConfig& ai_config);
+                                                
+  // AI Note Relationships handlers  
+  void handleNoteRelationships();
+  Result<std::vector<std::pair<nx::core::NoteId, std::string>>> analyzeNoteRelationships(
+    const nx::core::Note& current_note, const nx::config::Config::AiConfig& ai_config);
+    
+  // AI Smart Organization handlers
+  void handleSmartOrganization();
+  Result<std::string> analyzeNoteOrganization(const std::vector<nx::core::Note>& notes,
+                                              const nx::config::Config::AiConfig& ai_config);
+                                              
+  // AI Content Enhancement handlers
+  void handleContentEnhancement();
+  Result<std::string> generateContentEnhancements(const std::string& content,
+                                                  const nx::config::Config::AiConfig& ai_config);
+                                                  
+  // AI Research Assistant handlers
+  void handleResearchAssistant();
+  Result<std::string> generateResearchSuggestions(const std::string& topic,
+                                                  const std::string& context,
+                                                  const nx::config::Config::AiConfig& ai_config);
+                                                  
+  // AI Writing Coach handlers  
+  void handleWritingCoach();
+  Result<std::string> analyzeWritingQuality(const std::string& text,
+                                            const nx::config::Config::AiConfig& ai_config);
+                                            
+  // AI Smart Content Generation handlers (Phase 4)
+  void handleSmartContentGeneration();
+  Result<std::string> generateSmartContent(const std::string& topic,
+                                          const std::string& context,
+                                          const nx::config::Config::AiConfig& ai_config);
+                                          
+  // AI Intelligent Templates handlers (Phase 4)
+  void handleIntelligentTemplates();
+  Result<std::vector<std::string>> suggestIntelligentTemplates(const std::string& content,
+                                                              const nx::config::Config::AiConfig& ai_config);
+                                                              
+  // AI Cross-Note Insights handlers (Phase 4)
+  void handleCrossNoteInsights();
+  Result<std::string> generateCrossNoteInsights(const std::vector<nx::core::Note>& notes,
+                                                const nx::config::Config::AiConfig& ai_config);
+                                                
+  // AI Smart Search Enhancement handlers (Phase 4)
+  void handleSmartSearchEnhancement();
+  Result<std::string> enhanceSearchQuery(const std::string& query,
+                                        const nx::config::Config::AiConfig& ai_config);
+                                        
+  // AI Smart Note Merging handlers (Phase 4)
+  void handleSmartNoteMerging();
+  Result<std::vector<std::pair<nx::core::NoteId, nx::core::NoteId>>> suggestNoteMerging(
+    const std::vector<nx::core::Note>& notes, const nx::config::Config::AiConfig& ai_config);
+  
+  // AI Workflow Orchestrator handlers (Phase 5)
+  void handleWorkflowOrchestrator();
+  Result<std::string> executeWorkflow(const std::string& workflow_definition,
+                                      const std::vector<nx::core::Note>& context_notes,
+                                      const nx::config::Config::AiConfig& ai_config);
+  
+  // AI Project Assistant handlers (Phase 5)
+  void handleProjectAssistant();
+  Result<std::string> analyzeProjectStructure(const std::vector<nx::core::Note>& project_notes,
+                                             const nx::config::Config::AiConfig& ai_config);
+  
+  // AI Learning Path Generator handlers (Phase 5)
+  void handleLearningPathGenerator();
+  Result<std::string> generateLearningPath(const std::string& topic,
+                                           const std::vector<nx::core::Note>& context_notes,
+                                           const nx::config::Config::AiConfig& ai_config);
+  
+  // AI Knowledge Synthesis handlers (Phase 5)
+  void handleKnowledgeSynthesis();
+  Result<std::string> synthesizeKnowledge(const std::vector<nx::core::Note>& source_notes,
+                                         const std::string& synthesis_goal,
+                                         const nx::config::Config::AiConfig& ai_config);
+  
+  // AI Journal Insights handlers (Phase 5)
+  void handleJournalInsights();
+  Result<std::string> analyzeJournalPatterns(const std::vector<nx::core::Note>& journal_notes,
+                                            const nx::config::Config::AiConfig& ai_config);
   
   // Layout calculation helpers
   int calculateVisibleTagsCount() const;

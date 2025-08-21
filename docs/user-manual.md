@@ -476,8 +476,38 @@ The TUI features a 3-pane layout:
 **Editor Mode**:
 - `Ctrl+S`: Save note
 - `Esc`: Exit editor mode
-- `Alt+?`: Generate brief AI explanation for term before cursor
+
+**AI Features (Phase 1-2)**:
+- `Ctrl+Q`: Generate brief AI explanation for term before cursor
 - `Ctrl+E`: Expand brief explanation to detailed explanation
+- `Ctrl+W`: Smart completion based on context and content
+- `Ctrl+G`: Grammar & style check with configurable preferences
+- `S`: Semantic search - find notes by meaning, not keywords
+- `Ctrl+X`: Generate smart examples for concepts and terms
+- `Ctrl+C`: Code generation from natural language descriptions
+- `Ctrl+U`: Smart summarization of entire note
+
+**AI Features (Phase 3)**:
+- `Ctrl+R`: Note relationships analysis - discover connections
+- `Ctrl+H`: Content enhancement suggestions
+- `Ctrl+O`: Smart organization recommendations
+- `Ctrl+A`: Research assistant for topic exploration
+- `Ctrl+B`: Writing coach with comprehensive feedback
+
+**AI Features (Phase 4)**:
+- `Ctrl+G`: Smart content generation based on topic and context
+- `Ctrl+T`: Intelligent template suggestions based on content analysis
+- `Ctrl+I`: Cross-note insights - find patterns across notes
+- `Ctrl+N`: Smart search enhancement with AI-powered expansion
+- `Ctrl+M`: Smart note merging - detect consolidation opportunities
+
+**AI Features (Phase 5 - NEW)**:
+- `Ctrl+F1`: Workflow orchestrator - automate multi-step processes
+- `Ctrl+F2`: Project structure analyzer - analyze and improve organization
+- `Ctrl+F3`: Learning path generator - create structured learning plans
+- `Ctrl+F4`: Knowledge synthesizer - combine insights from multiple notes
+- `Ctrl+F5`: Journal pattern analyzer - discover temporal patterns and insights
+
 - Standard editing keys (arrows, backspace, etc.)
 
 **Search**:

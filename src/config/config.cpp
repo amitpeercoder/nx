@@ -219,6 +219,524 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
         }
       }
       
+      // AI Explanations settings
+      if (auto explanations_table = (*ai_table)["explanations"].as_table()) {
+        if (auto value = (*explanations_table)["enabled"].value<bool>()) {
+          ai_config.explanations.enabled = *value;
+        }
+        if (auto value = (*explanations_table)["brief_max_words"].value<int>()) {
+          ai_config.explanations.brief_max_words = static_cast<size_t>(*value);
+        }
+        if (auto value = (*explanations_table)["expanded_max_words"].value<int>()) {
+          ai_config.explanations.expanded_max_words = static_cast<size_t>(*value);
+        }
+        if (auto value = (*explanations_table)["timeout_ms"].value<int>()) {
+          ai_config.explanations.timeout_ms = *value;
+        }
+        if (auto value = (*explanations_table)["cache_explanations"].value<bool>()) {
+          ai_config.explanations.cache_explanations = *value;
+        }
+        if (auto value = (*explanations_table)["max_cache_size"].value<int>()) {
+          ai_config.explanations.max_cache_size = static_cast<size_t>(*value);
+        }
+        if (auto value = (*explanations_table)["context_radius"].value<int>()) {
+          ai_config.explanations.context_radius = static_cast<size_t>(*value);
+        }
+      }
+      
+      // AI Smart Completion settings
+      if (auto completion_table = (*ai_table)["smart_completion"].as_table()) {
+        if (auto value = (*completion_table)["enabled"].value<bool>()) {
+          ai_config.smart_completion.enabled = *value;
+        }
+        if (auto value = (*completion_table)["max_tokens"].value<int>()) {
+          ai_config.smart_completion.max_tokens = *value;
+        }
+        if (auto value = (*completion_table)["temperature"].value<double>()) {
+          ai_config.smart_completion.temperature = *value;
+        }
+        if (auto value = (*completion_table)["max_completion_length"].value<int>()) {
+          ai_config.smart_completion.max_completion_length = static_cast<size_t>(*value);
+        }
+        if (auto value = (*completion_table)["timeout_ms"].value<int>()) {
+          ai_config.smart_completion.timeout_ms = *value;
+        }
+      }
+      
+      // AI Semantic Search settings
+      if (auto semantic_search_table = (*ai_table)["semantic_search"].as_table()) {
+        if (auto value = (*semantic_search_table)["enabled"].value<bool>()) {
+          ai_config.semantic_search.enabled = *value;
+        }
+        if (auto value = (*semantic_search_table)["max_tokens"].value<int>()) {
+          ai_config.semantic_search.max_tokens = *value;
+        }
+        if (auto value = (*semantic_search_table)["temperature"].value<double>()) {
+          ai_config.semantic_search.temperature = *value;
+        }
+        if (auto value = (*semantic_search_table)["timeout_ms"].value<int>()) {
+          ai_config.semantic_search.timeout_ms = *value;
+        }
+        if (auto value = (*semantic_search_table)["max_notes_per_query"].value<int>()) {
+          ai_config.semantic_search.max_notes_per_query = static_cast<size_t>(*value);
+        }
+      }
+      
+      // AI Grammar & Style Check settings
+      if (auto grammar_style_table = (*ai_table)["grammar_style_check"].as_table()) {
+        if (auto value = (*grammar_style_table)["enabled"].value<bool>()) {
+          ai_config.grammar_style_check.enabled = *value;
+        }
+        if (auto value = (*grammar_style_table)["max_tokens"].value<int>()) {
+          ai_config.grammar_style_check.max_tokens = *value;
+        }
+        if (auto value = (*grammar_style_table)["temperature"].value<double>()) {
+          ai_config.grammar_style_check.temperature = *value;
+        }
+        if (auto value = (*grammar_style_table)["timeout_ms"].value<int>()) {
+          ai_config.grammar_style_check.timeout_ms = *value;
+        }
+        if (auto value = (*grammar_style_table)["max_text_length"].value<int>()) {
+          ai_config.grammar_style_check.max_text_length = static_cast<size_t>(*value);
+        }
+        if (auto value = (*grammar_style_table)["style"].value<std::string>()) {
+          ai_config.grammar_style_check.style = *value;
+        }
+      }
+      
+      // AI Smart Examples settings
+      if (auto smart_examples_table = (*ai_table)["smart_examples"].as_table()) {
+        if (auto value = (*smart_examples_table)["enabled"].value<bool>()) {
+          ai_config.smart_examples.enabled = *value;
+        }
+        if (auto value = (*smart_examples_table)["max_tokens"].value<int>()) {
+          ai_config.smart_examples.max_tokens = *value;
+        }
+        if (auto value = (*smart_examples_table)["temperature"].value<double>()) {
+          ai_config.smart_examples.temperature = *value;
+        }
+        if (auto value = (*smart_examples_table)["timeout_ms"].value<int>()) {
+          ai_config.smart_examples.timeout_ms = *value;
+        }
+        if (auto value = (*smart_examples_table)["max_examples"].value<int>()) {
+          ai_config.smart_examples.max_examples = static_cast<size_t>(*value);
+        }
+        if (auto value = (*smart_examples_table)["example_type"].value<std::string>()) {
+          ai_config.smart_examples.example_type = *value;
+        }
+      }
+      
+      // AI Code Generation settings
+      if (auto code_generation_table = (*ai_table)["code_generation"].as_table()) {
+        if (auto value = (*code_generation_table)["enabled"].value<bool>()) {
+          ai_config.code_generation.enabled = *value;
+        }
+        if (auto value = (*code_generation_table)["max_tokens"].value<int>()) {
+          ai_config.code_generation.max_tokens = *value;
+        }
+        if (auto value = (*code_generation_table)["temperature"].value<double>()) {
+          ai_config.code_generation.temperature = *value;
+        }
+        if (auto value = (*code_generation_table)["timeout_ms"].value<int>()) {
+          ai_config.code_generation.timeout_ms = *value;
+        }
+        if (auto value = (*code_generation_table)["language"].value<std::string>()) {
+          ai_config.code_generation.language = *value;
+        }
+        if (auto value = (*code_generation_table)["style"].value<std::string>()) {
+          ai_config.code_generation.style = *value;
+        }
+      }
+      
+      // AI Smart Summarization settings
+      if (auto smart_summarization_table = (*ai_table)["smart_summarization"].as_table()) {
+        if (auto value = (*smart_summarization_table)["enabled"].value<bool>()) {
+          ai_config.smart_summarization.enabled = *value;
+        }
+        if (auto value = (*smart_summarization_table)["max_tokens"].value<int>()) {
+          ai_config.smart_summarization.max_tokens = *value;
+        }
+        if (auto value = (*smart_summarization_table)["temperature"].value<double>()) {
+          ai_config.smart_summarization.temperature = *value;
+        }
+        if (auto value = (*smart_summarization_table)["timeout_ms"].value<int>()) {
+          ai_config.smart_summarization.timeout_ms = *value;
+        }
+        if (auto value = (*smart_summarization_table)["max_text_length"].value<int>()) {
+          ai_config.smart_summarization.max_text_length = static_cast<size_t>(*value);
+        }
+        if (auto value = (*smart_summarization_table)["style"].value<std::string>()) {
+          ai_config.smart_summarization.style = *value;
+        }
+        if (auto value = (*smart_summarization_table)["include_metadata"].value<bool>()) {
+          ai_config.smart_summarization.include_metadata = *value;
+        }
+      }
+      
+      // AI Note Relationships settings
+      if (auto note_relationships_table = (*ai_table)["note_relationships"].as_table()) {
+        if (auto value = (*note_relationships_table)["enabled"].value<bool>()) {
+          ai_config.note_relationships.enabled = *value;
+        }
+        if (auto value = (*note_relationships_table)["max_tokens"].value<int>()) {
+          ai_config.note_relationships.max_tokens = *value;
+        }
+        if (auto value = (*note_relationships_table)["temperature"].value<double>()) {
+          ai_config.note_relationships.temperature = *value;
+        }
+        if (auto value = (*note_relationships_table)["timeout_ms"].value<int>()) {
+          ai_config.note_relationships.timeout_ms = *value;
+        }
+        if (auto value = (*note_relationships_table)["max_notes_to_analyze"].value<int>()) {
+          ai_config.note_relationships.max_notes_to_analyze = static_cast<size_t>(*value);
+        }
+        if (auto value = (*note_relationships_table)["similarity_threshold"].value<double>()) {
+          ai_config.note_relationships.similarity_threshold = *value;
+        }
+      }
+      
+      // AI Smart Organization settings
+      if (auto smart_organization_table = (*ai_table)["smart_organization"].as_table()) {
+        if (auto value = (*smart_organization_table)["enabled"].value<bool>()) {
+          ai_config.smart_organization.enabled = *value;
+        }
+        if (auto value = (*smart_organization_table)["max_tokens"].value<int>()) {
+          ai_config.smart_organization.max_tokens = *value;
+        }
+        if (auto value = (*smart_organization_table)["temperature"].value<double>()) {
+          ai_config.smart_organization.temperature = *value;
+        }
+        if (auto value = (*smart_organization_table)["timeout_ms"].value<int>()) {
+          ai_config.smart_organization.timeout_ms = *value;
+        }
+        if (auto value = (*smart_organization_table)["max_notes_per_batch"].value<int>()) {
+          ai_config.smart_organization.max_notes_per_batch = static_cast<size_t>(*value);
+        }
+        if (auto value = (*smart_organization_table)["suggest_new_notebooks"].value<bool>()) {
+          ai_config.smart_organization.suggest_new_notebooks = *value;
+        }
+      }
+      
+      // AI Content Enhancement settings
+      if (auto content_enhancement_table = (*ai_table)["content_enhancement"].as_table()) {
+        if (auto value = (*content_enhancement_table)["enabled"].value<bool>()) {
+          ai_config.content_enhancement.enabled = *value;
+        }
+        if (auto value = (*content_enhancement_table)["max_tokens"].value<int>()) {
+          ai_config.content_enhancement.max_tokens = *value;
+        }
+        if (auto value = (*content_enhancement_table)["temperature"].value<double>()) {
+          ai_config.content_enhancement.temperature = *value;
+        }
+        if (auto value = (*content_enhancement_table)["timeout_ms"].value<int>()) {
+          ai_config.content_enhancement.timeout_ms = *value;
+        }
+        if (auto value = (*content_enhancement_table)["max_text_length"].value<int>()) {
+          ai_config.content_enhancement.max_text_length = static_cast<size_t>(*value);
+        }
+        if (auto value = (*content_enhancement_table)["enhancement_focus"].value<std::string>()) {
+          ai_config.content_enhancement.enhancement_focus = *value;
+        }
+      }
+      
+      // AI Research Assistant settings
+      if (auto research_assistant_table = (*ai_table)["research_assistant"].as_table()) {
+        if (auto value = (*research_assistant_table)["enabled"].value<bool>()) {
+          ai_config.research_assistant.enabled = *value;
+        }
+        if (auto value = (*research_assistant_table)["max_tokens"].value<int>()) {
+          ai_config.research_assistant.max_tokens = *value;
+        }
+        if (auto value = (*research_assistant_table)["temperature"].value<double>()) {
+          ai_config.research_assistant.temperature = *value;
+        }
+        if (auto value = (*research_assistant_table)["timeout_ms"].value<int>()) {
+          ai_config.research_assistant.timeout_ms = *value;
+        }
+        if (auto value = (*research_assistant_table)["max_topics_generated"].value<int>()) {
+          ai_config.research_assistant.max_topics_generated = static_cast<size_t>(*value);
+        }
+        if (auto value = (*research_assistant_table)["research_style"].value<std::string>()) {
+          ai_config.research_assistant.research_style = *value;
+        }
+      }
+      
+      // AI Writing Coach settings
+      if (auto writing_coach_table = (*ai_table)["writing_coach"].as_table()) {
+        if (auto value = (*writing_coach_table)["enabled"].value<bool>()) {
+          ai_config.writing_coach.enabled = *value;
+        }
+        if (auto value = (*writing_coach_table)["max_tokens"].value<int>()) {
+          ai_config.writing_coach.max_tokens = *value;
+        }
+        if (auto value = (*writing_coach_table)["temperature"].value<double>()) {
+          ai_config.writing_coach.temperature = *value;
+        }
+        if (auto value = (*writing_coach_table)["timeout_ms"].value<int>()) {
+          ai_config.writing_coach.timeout_ms = *value;
+        }
+        if (auto value = (*writing_coach_table)["max_text_length"].value<int>()) {
+          ai_config.writing_coach.max_text_length = static_cast<size_t>(*value);
+        }
+        if (auto value = (*writing_coach_table)["feedback_level"].value<std::string>()) {
+          ai_config.writing_coach.feedback_level = *value;
+        }
+        if (auto value = (*writing_coach_table)["include_style_suggestions"].value<bool>()) {
+          ai_config.writing_coach.include_style_suggestions = *value;
+        }
+      }
+      
+      // Smart Content Generation configuration
+      if (auto content_gen_table = ai_table->get("smart_content_generation")->as_table()) {
+        if (auto value = (*content_gen_table)["enabled"].value<bool>()) {
+          ai_config.smart_content_generation.enabled = *value;
+        }
+        if (auto value = (*content_gen_table)["max_tokens"].value<int>()) {
+          ai_config.smart_content_generation.max_tokens = *value;
+        }
+        if (auto value = (*content_gen_table)["temperature"].value<double>()) {
+          ai_config.smart_content_generation.temperature = *value;
+        }
+        if (auto value = (*content_gen_table)["timeout_ms"].value<int>()) {
+          ai_config.smart_content_generation.timeout_ms = *value;
+        }
+        if (auto value = (*content_gen_table)["content_style"].value<std::string>()) {
+          ai_config.smart_content_generation.content_style = *value;
+        }
+        if (auto value = (*content_gen_table)["max_content_length"].value<int>()) {
+          ai_config.smart_content_generation.max_content_length = static_cast<size_t>(*value);
+        }
+        if (auto value = (*content_gen_table)["include_outline"].value<bool>()) {
+          ai_config.smart_content_generation.include_outline = *value;
+        }
+      }
+      
+      // Intelligent Templates configuration
+      if (auto templates_table = ai_table->get("intelligent_templates")->as_table()) {
+        if (auto value = (*templates_table)["enabled"].value<bool>()) {
+          ai_config.intelligent_templates.enabled = *value;
+        }
+        if (auto value = (*templates_table)["max_tokens"].value<int>()) {
+          ai_config.intelligent_templates.max_tokens = *value;
+        }
+        if (auto value = (*templates_table)["temperature"].value<double>()) {
+          ai_config.intelligent_templates.temperature = *value;
+        }
+        if (auto value = (*templates_table)["timeout_ms"].value<int>()) {
+          ai_config.intelligent_templates.timeout_ms = *value;
+        }
+        if (auto value = (*templates_table)["max_suggestions"].value<int>()) {
+          ai_config.intelligent_templates.max_suggestions = static_cast<size_t>(*value);
+        }
+        if (auto value = (*templates_table)["analyze_existing_content"].value<bool>()) {
+          ai_config.intelligent_templates.analyze_existing_content = *value;
+        }
+      }
+      
+      // Cross-Note Insights configuration
+      if (auto insights_table = ai_table->get("cross_note_insights")->as_table()) {
+        if (auto value = (*insights_table)["enabled"].value<bool>()) {
+          ai_config.cross_note_insights.enabled = *value;
+        }
+        if (auto value = (*insights_table)["max_tokens"].value<int>()) {
+          ai_config.cross_note_insights.max_tokens = *value;
+        }
+        if (auto value = (*insights_table)["temperature"].value<double>()) {
+          ai_config.cross_note_insights.temperature = *value;
+        }
+        if (auto value = (*insights_table)["timeout_ms"].value<int>()) {
+          ai_config.cross_note_insights.timeout_ms = *value;
+        }
+        if (auto value = (*insights_table)["max_notes_analyzed"].value<int>()) {
+          ai_config.cross_note_insights.max_notes_analyzed = static_cast<size_t>(*value);
+        }
+        if (auto value = (*insights_table)["insight_focus"].value<std::string>()) {
+          ai_config.cross_note_insights.insight_focus = *value;
+        }
+      }
+      
+      // Smart Search Enhancement configuration
+      if (auto search_table = ai_table->get("smart_search_enhancement")->as_table()) {
+        if (auto value = (*search_table)["enabled"].value<bool>()) {
+          ai_config.smart_search_enhancement.enabled = *value;
+        }
+        if (auto value = (*search_table)["max_tokens"].value<int>()) {
+          ai_config.smart_search_enhancement.max_tokens = *value;
+        }
+        if (auto value = (*search_table)["temperature"].value<double>()) {
+          ai_config.smart_search_enhancement.temperature = *value;
+        }
+        if (auto value = (*search_table)["timeout_ms"].value<int>()) {
+          ai_config.smart_search_enhancement.timeout_ms = *value;
+        }
+        if (auto value = (*search_table)["expand_synonyms"].value<bool>()) {
+          ai_config.smart_search_enhancement.expand_synonyms = *value;
+        }
+        if (auto value = (*search_table)["analyze_intent"].value<bool>()) {
+          ai_config.smart_search_enhancement.analyze_intent = *value;
+        }
+      }
+      
+      // Smart Note Merging configuration
+      if (auto merging_table = ai_table->get("smart_note_merging")->as_table()) {
+        if (auto value = (*merging_table)["enabled"].value<bool>()) {
+          ai_config.smart_note_merging.enabled = *value;
+        }
+        if (auto value = (*merging_table)["max_tokens"].value<int>()) {
+          ai_config.smart_note_merging.max_tokens = *value;
+        }
+        if (auto value = (*merging_table)["temperature"].value<double>()) {
+          ai_config.smart_note_merging.temperature = *value;
+        }
+        if (auto value = (*merging_table)["timeout_ms"].value<int>()) {
+          ai_config.smart_note_merging.timeout_ms = *value;
+        }
+        if (auto value = (*merging_table)["similarity_threshold"].value<double>()) {
+          ai_config.smart_note_merging.similarity_threshold = *value;
+        }
+        if (auto value = (*merging_table)["max_merge_candidates"].value<int>()) {
+          ai_config.smart_note_merging.max_merge_candidates = static_cast<size_t>(*value);
+        }
+      }
+      
+      // Phase 5 AI configurations
+      
+      // Workflow Orchestrator configuration
+      if (auto orchestrator_table = (*ai_table)["workflow_orchestrator"].as_table()) {
+        if (auto value = (*orchestrator_table)["enabled"].value<bool>()) {
+          ai_config.workflow_orchestrator.enabled = *value;
+        }
+        if (auto value = (*orchestrator_table)["max_tokens"].value<int>()) {
+          ai_config.workflow_orchestrator.max_tokens = *value;
+        }
+        if (auto value = (*orchestrator_table)["temperature"].value<double>()) {
+          ai_config.workflow_orchestrator.temperature = *value;
+        }
+        if (auto value = (*orchestrator_table)["timeout_per_step_ms"].value<int>()) {
+          ai_config.workflow_orchestrator.timeout_per_step_ms = *value;
+        }
+        if (auto value = (*orchestrator_table)["max_steps"].value<int>()) {
+          ai_config.workflow_orchestrator.max_steps = *value;
+        }
+        if (auto value = (*orchestrator_table)["allow_recursive_calls"].value<bool>()) {
+          ai_config.workflow_orchestrator.allow_recursive_calls = *value;
+        }
+        if (auto array = (*orchestrator_table)["allowed_operations"].as_array()) {
+          std::vector<std::string> operations;
+          for (const auto& item : *array) {
+            if (auto str = item.value<std::string>()) {
+              operations.push_back(*str);
+            }
+          }
+          if (!operations.empty()) {
+            ai_config.workflow_orchestrator.allowed_operations = std::move(operations);
+          }
+        }
+      }
+      
+      // Project Assistant configuration  
+      if (auto project_table = (*ai_table)["project_assistant"].as_table()) {
+        if (auto value = (*project_table)["enabled"].value<bool>()) {
+          ai_config.project_assistant.enabled = *value;
+        }
+        if (auto value = (*project_table)["max_tokens"].value<int>()) {
+          ai_config.project_assistant.max_tokens = *value;
+        }
+        if (auto value = (*project_table)["temperature"].value<double>()) {
+          ai_config.project_assistant.temperature = *value;
+        }
+        if (auto value = (*project_table)["timeout_ms"].value<int>()) {
+          ai_config.project_assistant.timeout_ms = *value;
+        }
+        if (auto value = (*project_table)["project_scope"].value<std::string>()) {
+          ai_config.project_assistant.project_scope = *value;
+        }
+        if (auto value = (*project_table)["auto_generate_milestones"].value<bool>()) {
+          ai_config.project_assistant.auto_generate_milestones = *value;
+        }
+        if (auto value = (*project_table)["max_related_notes"].value<int>()) {
+          ai_config.project_assistant.max_related_notes = *value;
+        }
+      }
+      
+      // Learning Path Generator configuration
+      if (auto learning_table = (*ai_table)["learning_path_generator"].as_table()) {
+        if (auto value = (*learning_table)["enabled"].value<bool>()) {
+          ai_config.learning_path_generator.enabled = *value;
+        }
+        if (auto value = (*learning_table)["max_tokens"].value<int>()) {
+          ai_config.learning_path_generator.max_tokens = *value;
+        }
+        if (auto value = (*learning_table)["temperature"].value<double>()) {
+          ai_config.learning_path_generator.temperature = *value;
+        }
+        if (auto value = (*learning_table)["timeout_ms"].value<int>()) {
+          ai_config.learning_path_generator.timeout_ms = *value;
+        }
+        if (auto value = (*learning_table)["max_prerequisites"].value<int>()) {
+          ai_config.learning_path_generator.max_prerequisites = *value;
+        }
+        if (auto value = (*learning_table)["max_learning_steps"].value<int>()) {
+          ai_config.learning_path_generator.max_learning_steps = *value;
+        }
+        if (auto value = (*learning_table)["include_resources"].value<bool>()) {
+          ai_config.learning_path_generator.include_resources = *value;
+        }
+      }
+      
+      // Knowledge Synthesis configuration
+      if (auto synthesis_table = (*ai_table)["knowledge_synthesis"].as_table()) {
+        if (auto value = (*synthesis_table)["enabled"].value<bool>()) {
+          ai_config.knowledge_synthesis.enabled = *value;
+        }
+        if (auto value = (*synthesis_table)["max_tokens"].value<int>()) {
+          ai_config.knowledge_synthesis.max_tokens = *value;
+        }
+        if (auto value = (*synthesis_table)["temperature"].value<double>()) {
+          ai_config.knowledge_synthesis.temperature = *value;
+        }
+        if (auto value = (*synthesis_table)["timeout_ms"].value<int>()) {
+          ai_config.knowledge_synthesis.timeout_ms = *value;
+        }
+        if (auto value = (*synthesis_table)["max_source_notes"].value<int>()) {
+          ai_config.knowledge_synthesis.max_source_notes = *value;
+        }
+        if (auto value = (*synthesis_table)["detect_contradictions"].value<bool>()) {
+          ai_config.knowledge_synthesis.detect_contradictions = *value;
+        }
+        if (auto value = (*synthesis_table)["suggest_gaps"].value<bool>()) {
+          ai_config.knowledge_synthesis.suggest_gaps = *value;
+        }
+      }
+      
+      // Journal Insights configuration  
+      if (auto journal_table = (*ai_table)["journal_insights"].as_table()) {
+        if (auto value = (*journal_table)["enabled"].value<bool>()) {
+          ai_config.journal_insights.enabled = *value;
+        }
+        if (auto value = (*journal_table)["max_tokens"].value<int>()) {
+          ai_config.journal_insights.max_tokens = *value;
+        }
+        if (auto value = (*journal_table)["temperature"].value<double>()) {
+          ai_config.journal_insights.temperature = *value;
+        }
+        if (auto value = (*journal_table)["timeout_ms"].value<int>()) {
+          ai_config.journal_insights.timeout_ms = *value;
+        }
+        if (auto value = (*journal_table)["analysis_window_days"].value<int>()) {
+          ai_config.journal_insights.analysis_window_days = *value;
+        }
+        if (auto value = (*journal_table)["track_mood_patterns"].value<bool>()) {
+          ai_config.journal_insights.track_mood_patterns = *value;
+        }
+        if (auto value = (*journal_table)["track_productivity_patterns"].value<bool>()) {
+          ai_config.journal_insights.track_productivity_patterns = *value;
+        }
+        if (auto value = (*journal_table)["suggest_habit_changes"].value<bool>()) {
+          ai_config.journal_insights.suggest_habit_changes = *value;
+        }
+      }
+      
       ai = ai_config;
     }
     
@@ -329,6 +847,240 @@ Result<void> Config::save(const std::filesystem::path& config_path) const {
       redaction_table.insert_or_assign("strip_urls", ai->strip_urls);
       redaction_table.insert_or_assign("mask_numbers", ai->mask_numbers);
       ai_table.insert_or_assign("redaction", redaction_table);
+      
+      // AI Explanations configuration
+      auto explanations_table = toml::table{};
+      explanations_table.insert_or_assign("enabled", ai->explanations.enabled);
+      explanations_table.insert_or_assign("brief_max_words", static_cast<int>(ai->explanations.brief_max_words));
+      explanations_table.insert_or_assign("expanded_max_words", static_cast<int>(ai->explanations.expanded_max_words));
+      explanations_table.insert_or_assign("timeout_ms", ai->explanations.timeout_ms);
+      explanations_table.insert_or_assign("cache_explanations", ai->explanations.cache_explanations);
+      explanations_table.insert_or_assign("max_cache_size", static_cast<int>(ai->explanations.max_cache_size));
+      explanations_table.insert_or_assign("context_radius", static_cast<int>(ai->explanations.context_radius));
+      ai_table.insert_or_assign("explanations", explanations_table);
+      
+      // AI Smart Completion configuration
+      auto smart_completion_table = toml::table{};
+      smart_completion_table.insert_or_assign("enabled", ai->smart_completion.enabled);
+      smart_completion_table.insert_or_assign("max_tokens", ai->smart_completion.max_tokens);
+      smart_completion_table.insert_or_assign("temperature", ai->smart_completion.temperature);
+      smart_completion_table.insert_or_assign("max_completion_length", static_cast<int>(ai->smart_completion.max_completion_length));
+      smart_completion_table.insert_or_assign("timeout_ms", ai->smart_completion.timeout_ms);
+      ai_table.insert_or_assign("smart_completion", smart_completion_table);
+      
+      // AI Semantic Search configuration
+      auto semantic_search_table = toml::table{};
+      semantic_search_table.insert_or_assign("enabled", ai->semantic_search.enabled);
+      semantic_search_table.insert_or_assign("max_tokens", ai->semantic_search.max_tokens);
+      semantic_search_table.insert_or_assign("temperature", ai->semantic_search.temperature);
+      semantic_search_table.insert_or_assign("timeout_ms", ai->semantic_search.timeout_ms);
+      semantic_search_table.insert_or_assign("max_notes_per_query", static_cast<int>(ai->semantic_search.max_notes_per_query));
+      ai_table.insert_or_assign("semantic_search", semantic_search_table);
+      
+      // AI Grammar & Style Check configuration
+      auto grammar_style_table = toml::table{};
+      grammar_style_table.insert_or_assign("enabled", ai->grammar_style_check.enabled);
+      grammar_style_table.insert_or_assign("max_tokens", ai->grammar_style_check.max_tokens);
+      grammar_style_table.insert_or_assign("temperature", ai->grammar_style_check.temperature);
+      grammar_style_table.insert_or_assign("timeout_ms", ai->grammar_style_check.timeout_ms);
+      grammar_style_table.insert_or_assign("max_text_length", static_cast<int>(ai->grammar_style_check.max_text_length));
+      grammar_style_table.insert_or_assign("style", ai->grammar_style_check.style);
+      ai_table.insert_or_assign("grammar_style_check", grammar_style_table);
+      
+      // AI Smart Examples configuration
+      auto smart_examples_table = toml::table{};
+      smart_examples_table.insert_or_assign("enabled", ai->smart_examples.enabled);
+      smart_examples_table.insert_or_assign("max_tokens", ai->smart_examples.max_tokens);
+      smart_examples_table.insert_or_assign("temperature", ai->smart_examples.temperature);
+      smart_examples_table.insert_or_assign("timeout_ms", ai->smart_examples.timeout_ms);
+      smart_examples_table.insert_or_assign("max_examples", static_cast<int>(ai->smart_examples.max_examples));
+      smart_examples_table.insert_or_assign("example_type", ai->smart_examples.example_type);
+      ai_table.insert_or_assign("smart_examples", smart_examples_table);
+      
+      // AI Code Generation configuration
+      auto code_generation_table = toml::table{};
+      code_generation_table.insert_or_assign("enabled", ai->code_generation.enabled);
+      code_generation_table.insert_or_assign("max_tokens", ai->code_generation.max_tokens);
+      code_generation_table.insert_or_assign("temperature", ai->code_generation.temperature);
+      code_generation_table.insert_or_assign("timeout_ms", ai->code_generation.timeout_ms);
+      code_generation_table.insert_or_assign("language", ai->code_generation.language);
+      code_generation_table.insert_or_assign("style", ai->code_generation.style);
+      ai_table.insert_or_assign("code_generation", code_generation_table);
+      
+      // AI Smart Summarization configuration
+      auto smart_summarization_table = toml::table{};
+      smart_summarization_table.insert_or_assign("enabled", ai->smart_summarization.enabled);
+      smart_summarization_table.insert_or_assign("max_tokens", ai->smart_summarization.max_tokens);
+      smart_summarization_table.insert_or_assign("temperature", ai->smart_summarization.temperature);
+      smart_summarization_table.insert_or_assign("timeout_ms", ai->smart_summarization.timeout_ms);
+      smart_summarization_table.insert_or_assign("max_text_length", static_cast<int>(ai->smart_summarization.max_text_length));
+      smart_summarization_table.insert_or_assign("style", ai->smart_summarization.style);
+      smart_summarization_table.insert_or_assign("include_metadata", ai->smart_summarization.include_metadata);
+      ai_table.insert_or_assign("smart_summarization", smart_summarization_table);
+      
+      // AI Note Relationships configuration
+      auto note_relationships_table = toml::table{};
+      note_relationships_table.insert_or_assign("enabled", ai->note_relationships.enabled);
+      note_relationships_table.insert_or_assign("max_tokens", ai->note_relationships.max_tokens);
+      note_relationships_table.insert_or_assign("temperature", ai->note_relationships.temperature);
+      note_relationships_table.insert_or_assign("timeout_ms", ai->note_relationships.timeout_ms);
+      note_relationships_table.insert_or_assign("max_notes_to_analyze", static_cast<int>(ai->note_relationships.max_notes_to_analyze));
+      note_relationships_table.insert_or_assign("similarity_threshold", ai->note_relationships.similarity_threshold);
+      ai_table.insert_or_assign("note_relationships", note_relationships_table);
+      
+      // AI Smart Organization configuration
+      auto smart_organization_table = toml::table{};
+      smart_organization_table.insert_or_assign("enabled", ai->smart_organization.enabled);
+      smart_organization_table.insert_or_assign("max_tokens", ai->smart_organization.max_tokens);
+      smart_organization_table.insert_or_assign("temperature", ai->smart_organization.temperature);
+      smart_organization_table.insert_or_assign("timeout_ms", ai->smart_organization.timeout_ms);
+      smart_organization_table.insert_or_assign("max_notes_per_batch", static_cast<int>(ai->smart_organization.max_notes_per_batch));
+      smart_organization_table.insert_or_assign("suggest_new_notebooks", ai->smart_organization.suggest_new_notebooks);
+      ai_table.insert_or_assign("smart_organization", smart_organization_table);
+      
+      // AI Content Enhancement configuration
+      auto content_enhancement_table = toml::table{};
+      content_enhancement_table.insert_or_assign("enabled", ai->content_enhancement.enabled);
+      content_enhancement_table.insert_or_assign("max_tokens", ai->content_enhancement.max_tokens);
+      content_enhancement_table.insert_or_assign("temperature", ai->content_enhancement.temperature);
+      content_enhancement_table.insert_or_assign("timeout_ms", ai->content_enhancement.timeout_ms);
+      content_enhancement_table.insert_or_assign("max_text_length", static_cast<int>(ai->content_enhancement.max_text_length));
+      content_enhancement_table.insert_or_assign("enhancement_focus", ai->content_enhancement.enhancement_focus);
+      ai_table.insert_or_assign("content_enhancement", content_enhancement_table);
+      
+      // AI Research Assistant configuration
+      auto research_assistant_table = toml::table{};
+      research_assistant_table.insert_or_assign("enabled", ai->research_assistant.enabled);
+      research_assistant_table.insert_or_assign("max_tokens", ai->research_assistant.max_tokens);
+      research_assistant_table.insert_or_assign("temperature", ai->research_assistant.temperature);
+      research_assistant_table.insert_or_assign("timeout_ms", ai->research_assistant.timeout_ms);
+      research_assistant_table.insert_or_assign("max_topics_generated", static_cast<int>(ai->research_assistant.max_topics_generated));
+      research_assistant_table.insert_or_assign("research_style", ai->research_assistant.research_style);
+      ai_table.insert_or_assign("research_assistant", research_assistant_table);
+      
+      // AI Writing Coach configuration
+      auto writing_coach_table = toml::table{};
+      writing_coach_table.insert_or_assign("enabled", ai->writing_coach.enabled);
+      writing_coach_table.insert_or_assign("max_tokens", ai->writing_coach.max_tokens);
+      writing_coach_table.insert_or_assign("temperature", ai->writing_coach.temperature);
+      writing_coach_table.insert_or_assign("timeout_ms", ai->writing_coach.timeout_ms);
+      writing_coach_table.insert_or_assign("max_text_length", static_cast<int>(ai->writing_coach.max_text_length));
+      writing_coach_table.insert_or_assign("feedback_level", ai->writing_coach.feedback_level);
+      writing_coach_table.insert_or_assign("include_style_suggestions", ai->writing_coach.include_style_suggestions);
+      ai_table.insert_or_assign("writing_coach", writing_coach_table);
+      
+      // AI Smart Content Generation configuration (Phase 4)
+      auto smart_content_generation_table = toml::table{};
+      smart_content_generation_table.insert_or_assign("enabled", ai->smart_content_generation.enabled);
+      smart_content_generation_table.insert_or_assign("max_tokens", ai->smart_content_generation.max_tokens);
+      smart_content_generation_table.insert_or_assign("temperature", ai->smart_content_generation.temperature);
+      smart_content_generation_table.insert_or_assign("timeout_ms", ai->smart_content_generation.timeout_ms);
+      smart_content_generation_table.insert_or_assign("content_style", ai->smart_content_generation.content_style);
+      smart_content_generation_table.insert_or_assign("max_content_length", static_cast<int>(ai->smart_content_generation.max_content_length));
+      smart_content_generation_table.insert_or_assign("include_outline", ai->smart_content_generation.include_outline);
+      ai_table.insert_or_assign("smart_content_generation", smart_content_generation_table);
+      
+      // AI Intelligent Templates configuration (Phase 4)
+      auto intelligent_templates_table = toml::table{};
+      intelligent_templates_table.insert_or_assign("enabled", ai->intelligent_templates.enabled);
+      intelligent_templates_table.insert_or_assign("max_tokens", ai->intelligent_templates.max_tokens);
+      intelligent_templates_table.insert_or_assign("temperature", ai->intelligent_templates.temperature);
+      intelligent_templates_table.insert_or_assign("timeout_ms", ai->intelligent_templates.timeout_ms);
+      intelligent_templates_table.insert_or_assign("max_suggestions", static_cast<int>(ai->intelligent_templates.max_suggestions));
+      intelligent_templates_table.insert_or_assign("analyze_existing_content", ai->intelligent_templates.analyze_existing_content);
+      ai_table.insert_or_assign("intelligent_templates", intelligent_templates_table);
+      
+      // AI Cross-Note Insights configuration (Phase 4)
+      auto cross_note_insights_table = toml::table{};
+      cross_note_insights_table.insert_or_assign("enabled", ai->cross_note_insights.enabled);
+      cross_note_insights_table.insert_or_assign("max_tokens", ai->cross_note_insights.max_tokens);
+      cross_note_insights_table.insert_or_assign("temperature", ai->cross_note_insights.temperature);
+      cross_note_insights_table.insert_or_assign("timeout_ms", ai->cross_note_insights.timeout_ms);
+      cross_note_insights_table.insert_or_assign("max_notes_analyzed", static_cast<int>(ai->cross_note_insights.max_notes_analyzed));
+      cross_note_insights_table.insert_or_assign("insight_focus", ai->cross_note_insights.insight_focus);
+      ai_table.insert_or_assign("cross_note_insights", cross_note_insights_table);
+      
+      // AI Smart Search Enhancement configuration (Phase 4)
+      auto smart_search_enhancement_table = toml::table{};
+      smart_search_enhancement_table.insert_or_assign("enabled", ai->smart_search_enhancement.enabled);
+      smart_search_enhancement_table.insert_or_assign("max_tokens", ai->smart_search_enhancement.max_tokens);
+      smart_search_enhancement_table.insert_or_assign("temperature", ai->smart_search_enhancement.temperature);
+      smart_search_enhancement_table.insert_or_assign("timeout_ms", ai->smart_search_enhancement.timeout_ms);
+      smart_search_enhancement_table.insert_or_assign("expand_synonyms", ai->smart_search_enhancement.expand_synonyms);
+      smart_search_enhancement_table.insert_or_assign("analyze_intent", ai->smart_search_enhancement.analyze_intent);
+      ai_table.insert_or_assign("smart_search_enhancement", smart_search_enhancement_table);
+      
+      // AI Smart Note Merging configuration (Phase 4)
+      auto smart_note_merging_table = toml::table{};
+      smart_note_merging_table.insert_or_assign("enabled", ai->smart_note_merging.enabled);
+      smart_note_merging_table.insert_or_assign("max_tokens", ai->smart_note_merging.max_tokens);
+      smart_note_merging_table.insert_or_assign("temperature", ai->smart_note_merging.temperature);
+      smart_note_merging_table.insert_or_assign("timeout_ms", ai->smart_note_merging.timeout_ms);
+      smart_note_merging_table.insert_or_assign("similarity_threshold", ai->smart_note_merging.similarity_threshold);
+      smart_note_merging_table.insert_or_assign("max_merge_candidates", static_cast<int>(ai->smart_note_merging.max_merge_candidates));
+      ai_table.insert_or_assign("smart_note_merging", smart_note_merging_table);
+      
+      // Phase 5 AI configuration serialization
+      
+      // AI Workflow Orchestrator configuration (Phase 5)
+      auto workflow_orchestrator_table = toml::table{};
+      workflow_orchestrator_table.insert_or_assign("enabled", ai->workflow_orchestrator.enabled);
+      workflow_orchestrator_table.insert_or_assign("max_tokens", ai->workflow_orchestrator.max_tokens);
+      workflow_orchestrator_table.insert_or_assign("temperature", ai->workflow_orchestrator.temperature);
+      workflow_orchestrator_table.insert_or_assign("timeout_per_step_ms", ai->workflow_orchestrator.timeout_per_step_ms);
+      workflow_orchestrator_table.insert_or_assign("max_steps", ai->workflow_orchestrator.max_steps);
+      workflow_orchestrator_table.insert_or_assign("allow_recursive_calls", ai->workflow_orchestrator.allow_recursive_calls);
+      auto allowed_operations_array = toml::array{};
+      for (const auto& op : ai->workflow_orchestrator.allowed_operations) {
+        allowed_operations_array.push_back(op);
+      }
+      workflow_orchestrator_table.insert_or_assign("allowed_operations", allowed_operations_array);
+      ai_table.insert_or_assign("workflow_orchestrator", workflow_orchestrator_table);
+      
+      // AI Project Assistant configuration (Phase 5)  
+      auto project_assistant_table = toml::table{};
+      project_assistant_table.insert_or_assign("enabled", ai->project_assistant.enabled);
+      project_assistant_table.insert_or_assign("max_tokens", ai->project_assistant.max_tokens);
+      project_assistant_table.insert_or_assign("temperature", ai->project_assistant.temperature);
+      project_assistant_table.insert_or_assign("timeout_ms", ai->project_assistant.timeout_ms);
+      project_assistant_table.insert_or_assign("project_scope", ai->project_assistant.project_scope);
+      project_assistant_table.insert_or_assign("auto_generate_milestones", ai->project_assistant.auto_generate_milestones);
+      project_assistant_table.insert_or_assign("max_related_notes", ai->project_assistant.max_related_notes);
+      ai_table.insert_or_assign("project_assistant", project_assistant_table);
+      
+      // AI Learning Path Generator configuration (Phase 5)
+      auto learning_path_generator_table = toml::table{};
+      learning_path_generator_table.insert_or_assign("enabled", ai->learning_path_generator.enabled);
+      learning_path_generator_table.insert_or_assign("max_tokens", ai->learning_path_generator.max_tokens);
+      learning_path_generator_table.insert_or_assign("temperature", ai->learning_path_generator.temperature);
+      learning_path_generator_table.insert_or_assign("timeout_ms", ai->learning_path_generator.timeout_ms);
+      learning_path_generator_table.insert_or_assign("max_prerequisites", ai->learning_path_generator.max_prerequisites);
+      learning_path_generator_table.insert_or_assign("max_learning_steps", ai->learning_path_generator.max_learning_steps);
+      learning_path_generator_table.insert_or_assign("include_resources", ai->learning_path_generator.include_resources);
+      ai_table.insert_or_assign("learning_path_generator", learning_path_generator_table);
+      
+      // AI Knowledge Synthesis configuration (Phase 5)
+      auto knowledge_synthesis_table = toml::table{};
+      knowledge_synthesis_table.insert_or_assign("enabled", ai->knowledge_synthesis.enabled);
+      knowledge_synthesis_table.insert_or_assign("max_tokens", ai->knowledge_synthesis.max_tokens);
+      knowledge_synthesis_table.insert_or_assign("temperature", ai->knowledge_synthesis.temperature);
+      knowledge_synthesis_table.insert_or_assign("timeout_ms", ai->knowledge_synthesis.timeout_ms);
+      knowledge_synthesis_table.insert_or_assign("max_source_notes", ai->knowledge_synthesis.max_source_notes);
+      knowledge_synthesis_table.insert_or_assign("detect_contradictions", ai->knowledge_synthesis.detect_contradictions);
+      knowledge_synthesis_table.insert_or_assign("suggest_gaps", ai->knowledge_synthesis.suggest_gaps);
+      ai_table.insert_or_assign("knowledge_synthesis", knowledge_synthesis_table);
+      
+      // AI Journal Insights configuration (Phase 5)
+      auto journal_insights_table = toml::table{};
+      journal_insights_table.insert_or_assign("enabled", ai->journal_insights.enabled);
+      journal_insights_table.insert_or_assign("max_tokens", ai->journal_insights.max_tokens);
+      journal_insights_table.insert_or_assign("temperature", ai->journal_insights.temperature);
+      journal_insights_table.insert_or_assign("timeout_ms", ai->journal_insights.timeout_ms);
+      journal_insights_table.insert_or_assign("analysis_window_days", ai->journal_insights.analysis_window_days);
+      journal_insights_table.insert_or_assign("track_mood_patterns", ai->journal_insights.track_mood_patterns);
+      journal_insights_table.insert_or_assign("track_productivity_patterns", ai->journal_insights.track_productivity_patterns);
+      journal_insights_table.insert_or_assign("suggest_habit_changes", ai->journal_insights.suggest_habit_changes);
+      ai_table.insert_or_assign("journal_insights", journal_insights_table);
       
       config_data.insert_or_assign("ai", ai_table);
     }
