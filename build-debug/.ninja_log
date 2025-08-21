@@ -230,3 +230,14 @@
 5380	6535	1755760692964013386	tests/integration_tests	8b0eb7f639ef6ecf
 5380	6535	1755760692964013386	tests/integration_tests[1]_tests.cmake	8b0eb7f639ef6ecf
 5380	6535	1755760692964013386	/Users/amitpeer/Documents/Code/nx/build-debug/tests/integration_tests[1]_tests.cmake	8b0eb7f639ef6ecf
+10	3695	1755761011367200774	tests/CMakeFiles/nx_core.dir/__/src/tui/tui_app.cpp.o	75f9ae85b48eb426
+10	3726	1755761011367484733	CMakeFiles/nx.dir/src/tui/tui_app.cpp.o	e54b9bcc64c88be8
+3727	3843	1755761015083797353	nx	91f784b56deaeeed
+3695	5431	1755761015052167173	tests/libnx_core.a	5c3b0915c90995bb
+5432	5982	1755761016788892442	tests/nx_benchmark	ad6bb3fe87b8d51e
+5431	6407	1755761017763067945	tests/unit_tests	9f308006b1dfbfdf
+5431	6407	1755761017763067945	tests/unit_tests[1]_tests.cmake	9f308006b1dfbfdf
+5431	6407	1755761017763067945	/Users/amitpeer/Documents/Code/nx/build-debug/tests/unit_tests[1]_tests.cmake	9f308006b1dfbfdf
+5432	6565	1755761017921236758	tests/integration_tests	8b0eb7f639ef6ecf
+5432	6565	1755761017921236758	tests/integration_tests[1]_tests.cmake	8b0eb7f639ef6ecf
+5432	6565	1755761017921236758	/Users/amitpeer/Documents/Code/nx/build-debug/tests/integration_tests[1]_tests.cmake	8b0eb7f639ef6ecf

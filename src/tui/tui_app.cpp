@@ -931,14 +931,6 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       return;
     }
     
-    // Word wrap toggle - support multiple Alt+W patterns
-    if (event.character() == "\x1b" "w" ||  // ESC+w for Alt+W
-        event.character() == "w") {         // Simple 'w' key for easier testing
-      state_.word_wrap_enabled = !state_.word_wrap_enabled;
-      setStatusMessage(state_.word_wrap_enabled ? 
-        "📝 Word wrap enabled" : "📄 Word wrap disabled");
-      return;
-    }
     
     // Handle text input and cursor movement
     handleEditModeInput(event);
@@ -1461,6 +1453,15 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
         setStatusMessage("Selected note");
       }
     }
+    return;
+  }
+  
+  // Word wrap toggle - support multiple Alt+W patterns
+  if (event.character() == "\x1b" "w" ||  // ESC+w for Alt+W
+      event.character() == "w") {         // Simple 'w' key for easier testing
+    state_.word_wrap_enabled = !state_.word_wrap_enabled;
+    setStatusMessage(state_.word_wrap_enabled ? 
+      "📝 Word wrap enabled" : "📄 Word wrap disabled");
     return;
   }
   
@@ -2978,6 +2979,7 @@ Element TUIApp::renderPreviewPane() const {
           if (state_.word_wrap_enabled) {
             // Calculate available width for wrapping
             int panel_width = calculatePreviewPanelWidth();
+            
             
             // Wrap the line
             auto wrapped_lines = WordWrapper::wrapLine(line, static_cast<size_t>(panel_width));
