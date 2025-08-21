@@ -487,7 +487,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Smart Content Generation configuration
-      if (auto content_gen_table = ai_table->get("smart_content_generation")->as_table()) {
+      if (auto content_gen_table = (*ai_table)["smart_content_generation"].as_table()) {
         if (auto value = (*content_gen_table)["enabled"].value<bool>()) {
           ai_config.smart_content_generation.enabled = *value;
         }
@@ -512,7 +512,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Intelligent Templates configuration
-      if (auto templates_table = ai_table->get("intelligent_templates")->as_table()) {
+      if (auto templates_table = (*ai_table)["intelligent_templates"].as_table()) {
         if (auto value = (*templates_table)["enabled"].value<bool>()) {
           ai_config.intelligent_templates.enabled = *value;
         }
@@ -534,7 +534,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Cross-Note Insights configuration
-      if (auto insights_table = ai_table->get("cross_note_insights")->as_table()) {
+      if (auto insights_table = (*ai_table)["cross_note_insights"].as_table()) {
         if (auto value = (*insights_table)["enabled"].value<bool>()) {
           ai_config.cross_note_insights.enabled = *value;
         }
@@ -556,7 +556,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Smart Search Enhancement configuration
-      if (auto search_table = ai_table->get("smart_search_enhancement")->as_table()) {
+      if (auto search_table = (*ai_table)["smart_search_enhancement"].as_table()) {
         if (auto value = (*search_table)["enabled"].value<bool>()) {
           ai_config.smart_search_enhancement.enabled = *value;
         }
@@ -578,7 +578,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Smart Note Merging configuration
-      if (auto merging_table = ai_table->get("smart_note_merging")->as_table()) {
+      if (auto merging_table = (*ai_table)["smart_note_merging"].as_table()) {
         if (auto value = (*merging_table)["enabled"].value<bool>()) {
           ai_config.smart_note_merging.enabled = *value;
         }
@@ -740,7 +740,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       // Phase 6 AI configurations
       
       // Multi-modal AI configuration (Phase 6)
-      if (auto multi_modal_table = ai_table->get("multi_modal")->as_table()) {
+      if (auto multi_modal_table = (*ai_table)["multi_modal"].as_table()) {
         if (auto value = (*multi_modal_table)["enabled"].value<bool>()) {
           ai_config.multi_modal.enabled = *value;
         }
@@ -768,7 +768,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Voice integration configuration (Phase 6)
-      if (auto voice_table = ai_table->get("voice_integration")->as_table()) {
+      if (auto voice_table = (*ai_table)["voice_integration"].as_table()) {
         if (auto value = (*voice_table)["enabled"].value<bool>()) {
           ai_config.voice_integration.enabled = *value;
         }
@@ -796,7 +796,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Context awareness configuration (Phase 6)
-      if (auto context_table = ai_table->get("context_awareness")->as_table()) {
+      if (auto context_table = (*ai_table)["context_awareness"].as_table()) {
         if (auto value = (*context_table)["enabled"].value<bool>()) {
           ai_config.context_awareness.enabled = *value;
         }
@@ -827,7 +827,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Workspace AI configuration (Phase 6)
-      if (auto workspace_table = ai_table->get("workspace_ai")->as_table()) {
+      if (auto workspace_table = (*ai_table)["workspace_ai"].as_table()) {
         if (auto value = (*workspace_table)["enabled"].value<bool>()) {
           ai_config.workspace_ai.enabled = *value;
         }
@@ -855,7 +855,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Predictive AI configuration (Phase 6)
-      if (auto predictive_table = ai_table->get("predictive_ai")->as_table()) {
+      if (auto predictive_table = (*ai_table)["predictive_ai"].as_table()) {
         if (auto value = (*predictive_table)["enabled"].value<bool>()) {
           ai_config.predictive_ai.enabled = *value;
         }
@@ -885,7 +885,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       // Phase 7 AI configuration loading
       
       // Collaborative AI configuration (Phase 7)
-      if (auto collaborative_table = ai_table->get("collaborative_ai")->as_table()) {
+      if (auto collaborative_table = (*ai_table)["collaborative_ai"].as_table()) {
         if (auto value = (*collaborative_table)["enabled"].value<bool>()) {
           ai_config.collaborative_ai.enabled = *value;
         }
@@ -913,7 +913,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Knowledge graph configuration (Phase 7)
-      if (auto graph_table = ai_table->get("knowledge_graph")->as_table()) {
+      if (auto graph_table = (*ai_table)["knowledge_graph"].as_table()) {
         if (auto value = (*graph_table)["enabled"].value<bool>()) {
           ai_config.knowledge_graph.enabled = *value;
         }
@@ -941,7 +941,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Expert systems configuration (Phase 7)
-      if (auto expert_table = ai_table->get("expert_systems")->as_table()) {
+      if (auto expert_table = (*ai_table)["expert_systems"].as_table()) {
         if (auto value = (*expert_table)["enabled"].value<bool>()) {
           ai_config.expert_systems.enabled = *value;
         }
@@ -969,7 +969,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Intelligent workflows configuration (Phase 7)
-      if (auto workflow_table = ai_table->get("intelligent_workflows")->as_table()) {
+      if (auto workflow_table = (*ai_table)["intelligent_workflows"].as_table()) {
         if (auto value = (*workflow_table)["enabled"].value<bool>()) {
           ai_config.intelligent_workflows.enabled = *value;
         }
@@ -997,7 +997,7 @@ Result<void> Config::load(const std::filesystem::path& config_path) {
       }
       
       // Meta-learning configuration (Phase 7)
-      if (auto meta_table = ai_table->get("meta_learning")->as_table()) {
+      if (auto meta_table = (*ai_table)["meta_learning"].as_table()) {
         if (auto value = (*meta_table)["enabled"].value<bool>()) {
           ai_config.meta_learning.enabled = *value;
         }

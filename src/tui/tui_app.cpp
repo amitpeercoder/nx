@@ -841,11 +841,11 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       return;
     }
     
-    // TODO: Alt+3 for smart note merging - temporarily disabled due to crash
-    // if (event.character() == "\x1b" "3") { // ESC+3 for Alt+3
-    //   handleSmartNoteMerging();
-    //   return;
-    // }
+    // Alt+3 for smart note merging
+    if (event.character() == "\x1b" "3") { // ESC+3 for Alt+3
+      handleSmartNoteMerging();
+      return;
+    }
     
     // Phase 5 AI Features
     if (event == ftxui::Event::Character('\x10')) { // Ctrl+P (ASCII 16) for project assistant
@@ -914,21 +914,21 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       // We'll implement F13-F15 using Alt+key combinations instead
     }
     
-    // TODO: Alt+number combinations for remaining Phase 7 features - temporarily disabled due to crash
-    // if (event.character() == "\x1b" "1") { // ESC+1 for Alt+1 - expert systems (was Shift+E)
-    //   handleExpertSystems();
-    //   return;
-    // }
-    // 
-    // if (event.character() == "\x1b" "2") { // ESC+2 for Alt+2 - intelligent workflows (was Shift+S)
-    //   handleIntelligentWorkflows();
-    //   return;
-    // }
-    // 
-    // if (event.character() == "\x1b" "4") { // ESC+4 for Alt+4 - meta-learning (was Shift+M)
-    //   handleMetaLearning();
-    //   return;
-    // }
+    // Phase 7 Alt+number combinations for enhanced AI features
+    if (event.character() == "\x1b" "1") { // ESC+1 for Alt+1 - expert systems (was Shift+E)
+      handleExpertSystems();
+      return;
+    }
+    
+    if (event.character() == "\x1b" "2") { // ESC+2 for Alt+2 - intelligent workflows (was Shift+S)
+      handleIntelligentWorkflows();
+      return;
+    }
+    
+    if (event.character() == "\x1b" "4") { // ESC+4 for Alt+4 - meta-learning (was Shift+M)
+      handleMetaLearning();
+      return;
+    }
     
     // Handle text input and cursor movement
     handleEditModeInput(event);
