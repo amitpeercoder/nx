@@ -4999,14 +4999,15 @@ int TUIApp::calculatePreviewPanelWidth() const {
       {
         int tags_width = (terminal_width * panel_sizing_.tags_width / 100);
         int notes_width = (terminal_width * panel_sizing_.notes_width / 100);
-        // Account for: 2 separators + borders + padding
-        width = terminal_width - tags_width - notes_width - 7;
+        // Reduce padding - was too conservative with -7
+        width = terminal_width - tags_width - notes_width - 4; // Only account for 2 separators + minimal padding
       }
       break;
   }
   
+  
   // Ensure minimum width for readability
-  return std::max(20, width);
+  return std::max(30, width); // Increased minimum from 20 to 30
 }
 
 int TUIApp::calculateEditorPanelWidth() const {

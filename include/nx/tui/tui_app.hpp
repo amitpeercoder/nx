@@ -214,9 +214,9 @@ struct AppState {
  * @brief Panel sizing configuration
  */
 struct PanelSizing {
-  int tags_width = 25;
-  int notes_width = 50;
-  int preview_width = 25;
+  int tags_width = 20;   // Reduced from 25% to make more room for preview
+  int notes_width = 35;  // Reduced from 50% to make more room for preview  
+  int preview_width = 45; // Increased from 25% to 45% for better word wrapping
   
   // Minimum widths (in percentage points)
   static constexpr int MIN_NOTES_WIDTH = 25;    // Notes panel needs at least 25% 
