@@ -416,6 +416,10 @@ private:
   ftxui::Element createStyledLine(const std::string& line, const HighlightResult& highlight) const;
   ftxui::Element createStyledLineWithCursor(const std::string& line, const HighlightResult& highlight, size_t cursor_pos) const;
   ftxui::Element highlightSearchInLine(const std::string& line, const std::string& query) const;
+  HighlightResult splitHighlightForWrappedLine(const HighlightResult& original_highlight, 
+                                               const std::vector<std::string>& wrapped_lines, 
+                                               size_t line_index, 
+                                               const std::string& original_line) const;
   
   // Edit mode helpers
   void initializeEditor();

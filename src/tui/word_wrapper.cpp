@@ -1,4 +1,5 @@
 #include "nx/tui/word_wrapper.hpp"
+#include "nx/tui/unicode_handler.hpp"
 #include <algorithm>
 #include <cctype>
 #include <sstream>
@@ -136,18 +137,23 @@ std::vector<std::string> WordWrapper::wrapLines(
 }
 
 size_t WordWrapper::calculateDisplayWidth(const std::string& text) {
-    // Simple implementation - count characters
-    // TODO: Could be enhanced with proper Unicode width calculation
+    // Handle tab characters separately since UnicodeHandler doesn't expand them
+    if (text.find('\t') == std::string::npos) {
+        // No tabs, use Unicode handler for proper width calculation
+        return UnicodeHandler::calculateDisplayWidth(text);
+    }
+    
+    // Expand tabs manually and calculate width
     size_t width = 0;
     for (char c : text) {
         if (c == '\t') {
             // Tab expands to next multiple of 4
             width = (width + 4) & ~static_cast<size_t>(3);
-        } else if (static_cast<unsigned char>(c) >= 32) {
-            // Printable character
-            width++;
+        } else {
+            // Use Unicode handler for single character width
+            std::string single_char(1, c);
+            width += UnicodeHandler::calculateDisplayWidth(single_char);
         }
-        // Skip control characters
     }
     return width;
 }

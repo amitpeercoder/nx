@@ -2988,16 +2988,9 @@ Element TUIApp::renderPreviewPane() const {
               // Apply markdown highlighting to the original line
               HighlightResult highlight = state_.markdown_highlighter->highlightLine(line, static_cast<size_t>(line_count));
               
-              // For wrapped segments, we'll use simplified highlighting
-              // TODO: Could be enhanced to properly split highlight segments
-              Element line_element;
-              if (i == 0) {
-                // First segment keeps the full styling
-                line_element = createStyledLine(wrapped_line, highlight);
-              } else {
-                // Continuation lines use simple text for now
-                line_element = text(wrapped_line);
-              }
+              // Split highlight segments for wrapped lines
+              auto wrapped_highlight = splitHighlightForWrappedLine(highlight, wrapped_lines, i, line);
+              Element line_element = createStyledLine(wrapped_line, wrapped_highlight);
               
               // Apply search highlighting on top if there's an active search query
               if (!state_.search_query.empty()) {
@@ -3493,6 +3486,57 @@ ftxui::Element TUIApp::highlightSearchInLine(const std::string& line, const std:
   }
   
   return elements.empty() ? text(line) : hbox(elements);
+}
+
+HighlightResult TUIApp::splitHighlightForWrappedLine(const HighlightResult& original_highlight, 
+                                                     const std::vector<std::string>& wrapped_lines, 
+                                                     size_t line_index, 
+                                                     const std::string& original_line) const {
+  if (original_highlight.segments.empty() || line_index >= wrapped_lines.size()) {
+    return HighlightResult{}; // Return empty highlight if no segments or invalid line index
+  }
+  
+  // Calculate the start position of this wrapped line segment in the original line
+  size_t char_offset = 0;
+  for (size_t i = 0; i < line_index; ++i) {
+    char_offset += wrapped_lines[i].length();
+    // Account for removed spaces between wrapped segments
+    if (i < wrapped_lines.size() - 1) {
+      // Find where the next segment starts in original to account for trimmed spaces
+      size_t next_start = char_offset;
+      while (next_start < original_line.length() && std::isspace(original_line[next_start])) {
+        next_start++;
+      }
+      char_offset = next_start;
+    }
+  }
+  
+  const std::string& current_segment = wrapped_lines[line_index];
+  size_t segment_end = char_offset + current_segment.length();
+  
+  // Create new highlight result for this segment
+  HighlightResult result;
+  
+  // Find all highlight segments that overlap with this wrapped line segment
+  for (const auto& segment : original_highlight.segments) {
+    // Check if this highlight segment overlaps with our wrapped line segment
+    if (segment.end_pos > char_offset && segment.start_pos < segment_end) {
+      StyledSegment new_segment(0, 0, segment.style, segment.element_type);
+      
+      // Adjust positions to be relative to the wrapped line segment
+      new_segment.start_pos = (segment.start_pos > char_offset) ? 
+                              segment.start_pos - char_offset : 0;
+      new_segment.end_pos = std::min(segment.end_pos - char_offset, current_segment.length());
+      
+      // Only add if the segment has valid bounds
+      if (new_segment.start_pos < current_segment.length() && 
+          new_segment.end_pos > new_segment.start_pos) {
+        result.segments.push_back(new_segment);
+      }
+    }
+  }
+  
+  return result;
 }
 
 Element TUIApp::renderEditor() const {

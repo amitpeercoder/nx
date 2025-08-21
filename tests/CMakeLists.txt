@@ -60,6 +60,7 @@ add_library(nx_core STATIC
     ../src/tui/editor_autocomplete.cpp
     ../src/tui/markdown_highlighter.cpp
     ../src/tui/markdown_shortcuts.cpp
+    ../src/tui/word_wrapper.cpp
     ../src/tui/ai_explanation.cpp
     ../src/sync/git_sync.cpp
     ../src/crypto/age_crypto.cpp
