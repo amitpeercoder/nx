@@ -132,13 +132,15 @@ struct AppState {
   bool search_mode_active = false;
   bool semantic_search_mode_active = false;  // Track if we're in semantic search mode
   bool edit_mode_active = false;
-  bool word_wrap_enabled = false;  // Word wrap toggle for preview
+  bool word_wrap_enabled = true;   // Word wrap toggle for preview (default enabled)
   bool tag_edit_modal_open = false;
   bool notebook_modal_open = false;
   bool move_note_modal_open = false;
   std::string status_message;
   std::string tag_search_query;
   std::string command_palette_query;
+  int command_palette_selected_index = 0;
+  int command_palette_scroll_offset = 0;
   std::string tag_edit_input;
   nx::core::NoteId tag_edit_note_id;
   
@@ -186,6 +188,17 @@ struct AppState {
   int edit_cursor_col = 0;
   int edit_scroll_offset = 0;  // For editor scrolling (legacy - will be replaced)
   bool edit_has_changes = false;
+  
+  // Text selection state
+  bool text_selection_active = false;
+  int selection_start_line = 0;
+  int selection_start_col = 0;
+  int selection_end_line = 0;
+  int selection_end_col = 0;
+  
+  // Performance optimization: highlight caching
+  mutable std::map<std::string, HighlightResult> highlight_cache;
+  mutable size_t highlight_cache_version = 0;
   
   // Search state
   bool search_dialog_open = false;
@@ -415,6 +428,7 @@ private:
   ftxui::Decorator textStyleToDecorator(const TextStyle& style) const;
   ftxui::Element createStyledLine(const std::string& line, const HighlightResult& highlight) const;
   ftxui::Element createStyledLineWithCursor(const std::string& line, const HighlightResult& highlight, size_t cursor_pos) const;
+  ftxui::Element createStyledLineWithSelection(const std::string& line, const HighlightResult& highlight, size_t cursor_pos, int line_index) const;
   ftxui::Element highlightSearchInLine(const std::string& line, const std::string& query) const;
   HighlightResult splitHighlightForWrappedLine(const HighlightResult& original_highlight, 
                                                const std::vector<std::string>& wrapped_lines, 
@@ -425,6 +439,18 @@ private:
   void initializeEditor();
   void handleEditModeInput(const ftxui::Event& event);
   void saveEditedNote();
+  
+  // Text selection helpers
+  void startSelection(int line, int col);
+  void updateSelection(int line, int col);
+  void clearSelection();
+  bool isPositionSelected(int line, int col) const;
+  std::string getSelectedText() const;
+  
+  // Performance optimization helpers
+  HighlightResult getCachedHighlight(const std::string& line, size_t line_index) const;
+  void clearHighlightCache() const;
+  void markEditorContentChanged();
   
   // Status and error handling
   void setStatusMessage(const std::string& message);
@@ -621,6 +647,7 @@ private:
   int calculateVisibleNavigationItemsCount() const;
   int calculateVisibleNotesCount() const;
   int calculateVisibleEditorLinesCount() const;
+  void scrollToSearchResult(const std::string& content, const std::string& query);
   int calculatePreviewPanelWidth() const;
   int calculateEditorPanelWidth() const;
 };

@@ -228,57 +228,129 @@ Component TUIApp::createMainComponent() {
     
     // Overlay modals
     if (state_.command_palette_open) {
+      // Create opaque background for command palette
+      auto terminal_height = screen_.dimy();
+      auto terminal_width = screen_.dimx();
+      
       main_view = dbox({
-        main_view,
+        // Solid black background covering entire screen
+        filler() | size(HEIGHT, EQUAL, terminal_height) | 
+                   size(WIDTH, EQUAL, terminal_width) | 
+                   bgcolor(Color::Black),
+        
+        // Command palette on top
         renderCommandPalette() | center
       });
     }
     
     if (state_.show_help) {
+      // Create a solid opaque background that covers everything
+      auto terminal_height = screen_.dimy();
+      auto terminal_width = screen_.dimx();
+      
       main_view = dbox({
-        main_view,
+        // Solid black background covering entire screen
+        filler() | size(HEIGHT, EQUAL, terminal_height) | 
+                   size(WIDTH, EQUAL, terminal_width) | 
+                   bgcolor(Color::Black),
+        
+        // Help modal on top
         renderHelpModal() | center
       });
     }
     
     if (state_.new_note_modal_open) {
+      // Create opaque background for new note modal
+      auto terminal_height = screen_.dimy();
+      auto terminal_width = screen_.dimx();
+      
       main_view = dbox({
-        main_view,
+        // Solid black background covering entire screen
+        filler() | size(HEIGHT, EQUAL, terminal_height) | 
+                   size(WIDTH, EQUAL, terminal_width) | 
+                   bgcolor(Color::Black),
+        
+        // New note modal on top
         renderNewNoteModal() | center
       });
     }
     
     if (state_.tag_edit_modal_open) {
+      // Create opaque background for tag edit modal
+      auto terminal_height = screen_.dimy();
+      auto terminal_width = screen_.dimx();
+      
       main_view = dbox({
-        main_view,
+        // Solid black background covering entire screen
+        filler() | size(HEIGHT, EQUAL, terminal_height) | 
+                   size(WIDTH, EQUAL, terminal_width) | 
+                   bgcolor(Color::Black),
+        
+        // Tag edit modal on top
         renderTagEditModal() | center
       });
     }
     
     if (state_.notebook_modal_open) {
+      // Create opaque background for notebook modal
+      auto terminal_height = screen_.dimy();
+      auto terminal_width = screen_.dimx();
+      
       main_view = dbox({
-        main_view,
+        // Solid black background covering entire screen
+        filler() | size(HEIGHT, EQUAL, terminal_height) | 
+                   size(WIDTH, EQUAL, terminal_width) | 
+                   bgcolor(Color::Black),
+        
+        // Notebook modal on top
         renderNotebookModal() | center
       });
     }
     
     if (state_.move_note_modal_open) {
+      // Create opaque background for move note modal
+      auto terminal_height = screen_.dimy();
+      auto terminal_width = screen_.dimx();
+      
       main_view = dbox({
-        main_view,
+        // Solid black background covering entire screen
+        filler() | size(HEIGHT, EQUAL, terminal_height) | 
+                   size(WIDTH, EQUAL, terminal_width) | 
+                   bgcolor(Color::Black),
+        
+        // Move note modal on top
         renderMoveNoteModal() | center
       });
     }
     
     if (state_.template_browser_open) {
+      // Create opaque background for template browser
+      auto terminal_height = screen_.dimy();
+      auto terminal_width = screen_.dimx();
+      
       main_view = dbox({
-        main_view,
+        // Solid black background covering entire screen
+        filler() | size(HEIGHT, EQUAL, terminal_height) | 
+                   size(WIDTH, EQUAL, terminal_width) | 
+                   bgcolor(Color::Black),
+        
+        // Template browser on top
         renderTemplateBrowser() | center
       });
     }
     
     if (state_.template_variables_modal_open) {
+      // Create opaque background for template variables modal
+      auto terminal_height = screen_.dimy();
+      auto terminal_width = screen_.dimx();
+      
       main_view = dbox({
-        main_view,
+        // Solid black background covering entire screen
+        filler() | size(HEIGHT, EQUAL, terminal_height) | 
+                   size(WIDTH, EQUAL, terminal_width) | 
+                   bgcolor(Color::Black),
+        
+        // Template variables modal on top
         renderTemplateVariablesModal() | center
       });
     }
@@ -689,10 +761,18 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
   if (state_.edit_mode_active) {
     
     if (event == ftxui::Event::Escape) {
+      // First try to clear selection if active
+      if (state_.text_selection_active) {
+        clearSelection();
+        setStatusMessage("Selection cleared");
+        return;
+      }
+      
       // Cancel edit mode
       state_.edit_mode_active = false;
       state_.editor_buffer->clear();
       state_.edit_has_changes = false;
+      clearSelection();
       setStatusMessage("Edit cancelled");
       return;
     }
@@ -1168,15 +1248,44 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
     if (event == ftxui::Event::Escape || event == ftxui::Event::Character(':')) {
       state_.command_palette_open = false;
       state_.command_palette_query.clear();
+      state_.command_palette_selected_index = 0;
+      state_.command_palette_scroll_offset = 0;
+      return;
+    }
+    if (event == ftxui::Event::ArrowUp) {
+      auto filtered_commands = getFilteredCommands(state_.command_palette_query);
+      if (!filtered_commands.empty()) {
+        state_.command_palette_selected_index = std::max(0, state_.command_palette_selected_index - 1);
+        
+        // Adjust scroll offset if selection moves above visible area
+        if (state_.command_palette_selected_index < state_.command_palette_scroll_offset) {
+          state_.command_palette_scroll_offset = state_.command_palette_selected_index;
+        }
+      }
+      return;
+    }
+    if (event == ftxui::Event::ArrowDown) {
+      auto filtered_commands = getFilteredCommands(state_.command_palette_query);
+      if (!filtered_commands.empty()) {
+        state_.command_palette_selected_index = std::min(static_cast<int>(filtered_commands.size() - 1), state_.command_palette_selected_index + 1);
+        
+        // Adjust scroll offset if selection moves below visible area
+        const int visible_items = 8;
+        if (state_.command_palette_selected_index >= state_.command_palette_scroll_offset + visible_items) {
+          state_.command_palette_scroll_offset = state_.command_palette_selected_index - visible_items + 1;
+        }
+      }
       return;
     }
     if (event == ftxui::Event::Return) {
-      // Execute the first matching command
+      // Execute the selected command
       auto filtered_commands = getFilteredCommands(state_.command_palette_query);
-      if (!filtered_commands.empty()) {
-        filtered_commands[0].action();
+      if (!filtered_commands.empty() && state_.command_palette_selected_index < static_cast<int>(filtered_commands.size())) {
+        filtered_commands[state_.command_palette_selected_index].action();
         state_.command_palette_open = false;
         state_.command_palette_query.clear();
+        state_.command_palette_selected_index = 0;
+        state_.command_palette_scroll_offset = 0;
       }
       return;
     }
@@ -1192,6 +1301,8 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
       auto validation_result = UnicodeHandler::validateUtf8(input);
       if (validation_result) {
         state_.command_palette_query += input;
+        state_.command_palette_selected_index = 0; // Reset selection when typing
+        state_.command_palette_scroll_offset = 0; // Reset scroll when typing
       }
       return;
     }
@@ -1789,6 +1900,17 @@ void TUIApp::onKeyPress(const ftxui::Event& event) {
 
 void TUIApp::onNoteSelected(int index) {
   state_.selected_note_index = index;
+  
+  // Auto-scroll to search results if search is active and note is valid
+  if (!state_.search_query.empty() && index >= 0 && 
+      static_cast<size_t>(index) < state_.notes.size()) {
+    
+    const auto& note = state_.notes[static_cast<size_t>(index)];
+    auto note_result = note_store_.load(note.metadata().id());
+    if (note_result) {
+      scrollToSearchResult(note_result->content(), state_.search_query);
+    }
+  }
 }
 
 void TUIApp::onTagToggled(const std::string& tag) {
@@ -2259,6 +2381,115 @@ void TUIApp::registerCommands() {
     "d"
   });
   
+  commands_.push_back({
+    "move-note", "Move note to notebook", "File",
+    [this]() {
+      if (!state_.notes.empty() && state_.selected_note_index >= 0 && static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
+        auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
+        openMoveNoteModal();
+      }
+    },
+    "m"
+  });
+  
+  // Search operations
+  commands_.push_back({
+    "search", "Start search", "Search",
+    [this]() { 
+      state_.search_query.clear();
+      setStatusMessage("Search mode - type to filter notes (/ key)");
+    },
+    "/"
+  });
+  
+  commands_.push_back({
+    "clear-search", "Clear search", "Search", 
+    [this]() {
+      state_.search_query.clear();
+      refreshData();
+      setStatusMessage("Search cleared");
+    },
+    ""
+  });
+  
+  // Template operations  
+  commands_.push_back({
+    "template-browser", "Open template browser", "Templates",
+    [this]() { 
+      openTemplateBrowser();
+    },
+    "T"
+  });
+  
+  // Notebook operations
+  commands_.push_back({
+    "create-notebook", "Create new notebook", "Notebooks",
+    [this]() {
+      openNotebookModal(AppState::NotebookModalMode::Create, "");
+    },
+    "Ctrl+N"
+  });
+  
+  commands_.push_back({
+    "clear-filters", "Clear all filters", "Notebooks",
+    [this]() {
+      clearAllFilters();
+      setStatusMessage("All filters cleared");
+    },
+    "C"
+  });
+  
+  // Tag operations
+  commands_.push_back({
+    "edit-tags", "Edit note tags", "Tags",
+    [this]() {
+      if (!state_.notes.empty() && state_.selected_note_index >= 0 && static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
+        auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
+        openTagEditModal(note_id);
+      }
+    },
+    ""
+  });
+  
+  // AI operations  
+  commands_.push_back({
+    "ai-auto-tag", "AI auto-tag note", "AI",
+    [this]() {
+      if (!state_.notes.empty() && state_.selected_note_index >= 0 && static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
+        auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
+        aiAutoTagSelectedNote();
+      }
+    },
+    "a"
+  });
+  
+  commands_.push_back({
+    "ai-auto-title", "AI auto-title note", "AI", 
+    [this]() {
+      if (!state_.notes.empty() && state_.selected_note_index >= 0 && static_cast<size_t>(state_.selected_note_index) < state_.notes.size()) {
+        auto note_id = state_.notes[static_cast<size_t>(state_.selected_note_index)].metadata().id();
+        setStatusMessage("🚧 AI auto-title feature coming soon!");
+      }
+    },
+    "A"
+  });
+  
+  commands_.push_back({
+    "ai-tag-all", "AI tag all notes", "AI",
+    [this]() { suggestTagsForAllNotes(); },
+    "Ctrl+T"
+  });
+  
+  // Display operations
+  commands_.push_back({
+    "toggle-word-wrap", "Toggle word wrap", "Display",
+    [this]() {
+      state_.word_wrap_enabled = !state_.word_wrap_enabled;
+      setStatusMessage(state_.word_wrap_enabled ? "Word wrap enabled" : "Word wrap disabled");
+    },
+    "w"
+  });
+  
   // View operations
   commands_.push_back({
     "refresh", "Refresh data", "View",
@@ -2301,6 +2532,83 @@ void TUIApp::registerCommands() {
       setStatusMessage("Sorted by title");
     },
     ""
+  });
+  
+  // Advanced AI features (Phase 6-7) - Placeholder commands for future implementation
+  commands_.push_back({
+    "ai-multimodal", "Multi-modal AI analysis", "AI Advanced",
+    [this]() { setStatusMessage("Multi-modal AI analysis (F6) - Coming soon!"); },
+    "F6"
+  });
+  
+  commands_.push_back({
+    "ai-voice", "Voice integration", "AI Advanced", 
+    [this]() { setStatusMessage("Voice integration (F7) - Coming soon!"); },
+    "F7"
+  });
+  
+  commands_.push_back({
+    "ai-contextual", "Contextual awareness", "AI Advanced",
+    [this]() { setStatusMessage("Contextual awareness (F8) - Coming soon!"); }, 
+    "F8"
+  });
+  
+  commands_.push_back({
+    "ai-workspace", "Workspace AI", "AI Advanced",
+    [this]() { setStatusMessage("Workspace AI (F9) - Coming soon!"); },
+    "F9" 
+  });
+  
+  commands_.push_back({
+    "ai-predictive", "Predictive AI", "AI Advanced",
+    [this]() { setStatusMessage("Predictive AI (F10) - Coming soon!"); },
+    "F10"
+  });
+  
+  commands_.push_back({
+    "ai-collaborative", "Collaborative AI", "AI Advanced",
+    [this]() { setStatusMessage("Collaborative AI (F11) - Coming soon!"); },
+    "F11"
+  });
+  
+  commands_.push_back({
+    "ai-knowledge-graph", "Knowledge graphs", "AI Advanced", 
+    [this]() { setStatusMessage("Knowledge graphs (F12) - Coming soon!"); },
+    "F12"
+  });
+  
+  commands_.push_back({
+    "ai-expert-systems", "Expert systems", "AI Advanced",
+    [this]() { setStatusMessage("Expert systems (Alt+1) - Coming soon!"); },
+    "Alt+1"
+  });
+  
+  commands_.push_back({
+    "ai-workflows", "Intelligent workflows", "AI Advanced",
+    [this]() { setStatusMessage("Intelligent workflows (Alt+2) - Coming soon!"); },
+    "Alt+2"
+  });
+  
+  commands_.push_back({
+    "ai-note-merging", "Smart note merging", "AI Advanced",
+    [this]() { setStatusMessage("Smart note merging (Alt+3) - Coming soon!"); },
+    "Alt+3"
+  });
+  
+  commands_.push_back({
+    "ai-meta-learning", "Meta-learning analysis", "AI Advanced", 
+    [this]() { setStatusMessage("Meta-learning analysis (Alt+4) - Coming soon!"); },
+    "Alt+4"
+  });
+  
+  // System operations
+  commands_.push_back({
+    "quit", "Quit application", "System",
+    [this]() { 
+      setStatusMessage("Quitting...");
+      // The actual quit will be handled by the main loop
+    },
+    "q"
   });
 }
 
@@ -2993,7 +3301,10 @@ Element TUIApp::renderPreviewPane() const {
       int line_count = 0;
       int visual_line_count = 0;  // Track visual lines for wrapping
       
-      while (std::getline(stream, line) && line_count < 20) { // Limit preview
+      // Calculate visible range like the editor does
+      const int visible_lines = calculateVisibleEditorLinesCount();
+      
+      while (std::getline(stream, line)) {
         if (line_count >= state_.preview_scroll_offset) {
           
           // Check if word wrap is enabled
@@ -3027,11 +3338,11 @@ Element TUIApp::renderPreviewPane() const {
               preview_content.push_back(line_element);
               visual_line_count++;
               
-              // Limit total visual lines to prevent overflow
-              if (visual_line_count >= 15) break;
+              // Stop if we've shown enough visible lines
+              if (visual_line_count >= visible_lines) break;
             }
             
-            if (visual_line_count >= 15) break;
+            if (visual_line_count >= visible_lines) break;
           } else {
             // No word wrap - use original rendering
             HighlightResult highlight = state_.markdown_highlighter->highlightLine(line, static_cast<size_t>(line_count));
@@ -3044,6 +3355,9 @@ Element TUIApp::renderPreviewPane() const {
             
             preview_content.push_back(line_element);
             visual_line_count++;
+            
+            // Stop if we've shown enough visible lines
+            if (visual_line_count >= visible_lines) break;
           }
         }
         line_count++;
@@ -3129,29 +3443,44 @@ Element TUIApp::renderCommandPalette() const {
   palette_content.push_back(text(query_display) | bgcolor(Color::White) | color(Color::Black));
   palette_content.push_back(separator());
   
-  // Show filtered commands
+  // Show filtered commands with scrolling
   auto filtered_commands = getFilteredCommands(state_.command_palette_query);
   if (filtered_commands.empty()) {
     palette_content.push_back(text("No commands found") | dim | center);
   } else {
-    for (size_t i = 0; i < std::min(filtered_commands.size(), size_t(8)); ++i) {
+    const int visible_items = 8;
+    int start_index = state_.command_palette_scroll_offset;
+    int end_index = std::min(start_index + visible_items, static_cast<int>(filtered_commands.size()));
+    
+    // Show scroll indicator if there are more items above
+    if (start_index > 0) {
+      palette_content.push_back(text("↑ More above (" + std::to_string(start_index) + " more)") | dim | center);
+    }
+    
+    for (int i = start_index; i < end_index; ++i) {
       const auto& cmd = filtered_commands[i];
       std::string cmd_text = cmd.name + " - " + cmd.description;
       if (!cmd.shortcut.empty()) {
         cmd_text += " (" + cmd.shortcut + ")";
       }
       
-      // Highlight first command
+      // Highlight selected command
       auto cmd_element = text(cmd_text);
-      if (i == 0) {
+      if (i == state_.command_palette_selected_index) {
         cmd_element = cmd_element | inverted;
       }
       palette_content.push_back(cmd_element);
     }
+    
+    // Show scroll indicator if there are more items below
+    if (end_index < static_cast<int>(filtered_commands.size())) {
+      int remaining = static_cast<int>(filtered_commands.size()) - end_index;
+      palette_content.push_back(text("↓ More below (" + std::to_string(remaining) + " more)") | dim | center);
+    }
   }
   
   palette_content.push_back(separator());
-  palette_content.push_back(text("Enter to execute, Esc to cancel") | center | dim);
+  palette_content.push_back(text("↑↓ to navigate, Enter to execute, Esc to cancel") | center | dim);
   
   return vbox(palette_content) | 
          border | 
@@ -3170,109 +3499,83 @@ Element TUIApp::renderHelpModal() const {
   
   Elements help_content;
   
-  help_content.push_back(text("nx Notes - Keyboard Shortcuts") | bold | center);
+  help_content.push_back(text("nx Notes - Complete Keyboard Reference") | bold | center);
   help_content.push_back(separator());
   
-  help_content.push_back(text("Navigation:") | bold);
-  help_content.push_back(text("  h/←     Focus left pane (tags)"));
-  help_content.push_back(text("  j/↓     Move down in current pane"));
-  help_content.push_back(text("  k/↑     Move up in current pane"));
-  help_content.push_back(text("  Ctrl+J  Scroll panel down (no selection change)"));
-  help_content.push_back(text("  Ctrl+K  Scroll panel up (no selection change)"));
-  help_content.push_back(text("  l/→     Focus right pane (auto-edit)"));
-  help_content.push_back(text("  Tab     Cycle through panes"));
-  help_content.push_back(text("  ↑ from first note → search box"));
-  help_content.push_back(text("  ↓ from search box → first note"));
-  help_content.push_back(text("  ↑ from first tag → active filters"));
-  help_content.push_back(text("  ↓ from last filter → first tag"));
+  // Create a comprehensive but well-organized help
+  help_content.push_back(text("NAVIGATION") | bold | color(Color::Cyan));
+  help_content.push_back(text("  h/←     Focus left pane (tags)       j/↓     Move down in current pane"));
+  help_content.push_back(text("  k/↑     Move up in current pane      l/→     Focus right pane (auto-edit)"));
+  help_content.push_back(text("  Tab     Cycle through panes          Ctrl+J  Scroll panel down"));
+  help_content.push_back(text("  Ctrl+K  Scroll panel up              ↑ from first note → search"));
   help_content.push_back(text(""));
   
-  help_content.push_back(text("Actions:") | bold);
-  help_content.push_back(text("  n       New note"));
-  help_content.push_back(text("  e       Edit selected note (built-in editor)"));
-  help_content.push_back(text("  d       Delete selected note(s)"));
-  help_content.push_back(text("  r       Refresh data"));
-  help_content.push_back(text("  /       Start real-time search"));
-  help_content.push_back(text("  :       Open command palette"));
-  help_content.push_back(text("  Space   Multi-select toggle"));
-  help_content.push_back(text("  Enter   Activate/Remove filter/Edit note"));
-  help_content.push_back(text("  m       Move note to notebook"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("Panel Resizing (Notes panel):") | bold);
-  help_content.push_back(text("  +/=     Expand notes panel (shrink preview)"));
-  help_content.push_back(text("  -/_     Shrink notes panel (expand preview)"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("Auto-Edit:") | bold);
-  help_content.push_back(text("  Focusing preview panel → auto-edit mode"));
-  help_content.push_back(text("  Use → key or Tab to auto-start editing"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("Search Mode:") | bold);
-  help_content.push_back(text("  Real-time filtering as you type"));
-  help_content.push_back(text("  Searches note titles"));
-  help_content.push_back(text("  Enter: finish search"));
-  help_content.push_back(text("  Esc: cancel and show all"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("Editor Mode:") | bold);
-  help_content.push_back(text("  Ctrl+S  Save note"));
-  help_content.push_back(text("  Ctrl+Z  Undo operation"));
-  help_content.push_back(text("  Ctrl+Y  Redo operation"));
-  help_content.push_back(text("  Esc     Cancel editing"));
-  help_content.push_back(text("  Arrows  Move cursor (auto-scroll)"));
-  help_content.push_back(text("  ↓ on last line: create new line"));
-  help_content.push_back(text("  Enter   New line"));
-  help_content.push_back(text("  Bksp    Delete character"));
-  help_content.push_back(text("  Ctrl+Q  Brief AI explanation for term before cursor (test)"));
-  help_content.push_back(text("  Ctrl+E  Expand brief explanation to detailed"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("AI Features:") | bold);
-  help_content.push_back(text("  Ctrl+T  Suggest tags for all notes (AI)"));
-  help_content.push_back(text("  a       AI auto-tag selected note"));
-  help_content.push_back(text("  A       AI auto-title selected note"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("Phase 7 AI Features:") | bold);
-  help_content.push_back(text("  F11     Collaborative AI analysis"));
-  help_content.push_back(text("  F12     Knowledge graph generation"));
-  help_content.push_back(text("  Alt+1   Expert systems advice"));
-  help_content.push_back(text("  Alt+2   Intelligent workflows"));
-  help_content.push_back(text("  Alt+3   Smart note merging"));
-  help_content.push_back(text("  Alt+4   Meta-learning analysis"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("Display Options:") | bold);
-  help_content.push_back(text("  w/Alt+W Toggle word wrap in preview"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("Notebook Management:") | bold);
-  help_content.push_back(text("  Ctrl+N  Create new notebook"));
-  help_content.push_back(text("  Ctrl+R  Rename notebook (navigation pane)"));
-  help_content.push_back(text("  Ctrl+D  Delete notebook (navigation pane)"));
-  help_content.push_back(text("  N       Toggle notebook filter"));
-  help_content.push_back(text("  Space   Expand/collapse notebook"));
-  help_content.push_back(text("  →       Expand notebook"));
-  help_content.push_back(text("  ←       Collapse notebook"));
-  help_content.push_back(text("  t       Toggle tag filter"));
-  help_content.push_back(text("  C       Clear all filters"));
-  help_content.push_back(text(""));
-  
-  help_content.push_back(text("Other:") | bold);
-  help_content.push_back(text("  ?       Toggle this help"));
+  help_content.push_back(text("CORE ACTIONS") | bold | color(Color::Cyan));
+  help_content.push_back(text("  n       New note                     e       Edit selected note"));
+  help_content.push_back(text("  d       Delete selected note(s)      r       Refresh data"));
+  help_content.push_back(text("  /       Start real-time search       :       Command palette"));
+  help_content.push_back(text("  Space   Multi-select toggle          Enter   Activate/Edit"));
+  help_content.push_back(text("  m       Move note to notebook        ?       Toggle this help"));
   help_content.push_back(text("  q       Quit application"));
   help_content.push_back(text(""));
   
-  help_content.push_back(text("Press ? to close") | center | dim);
+  help_content.push_back(text("EDITOR MODE") | bold | color(Color::Yellow));
+  help_content.push_back(text("  Ctrl+S  Save note                    Ctrl+Z  Undo operation"));
+  help_content.push_back(text("  Ctrl+Y  Redo operation               Esc     Cancel editing"));
+  help_content.push_back(text("  Arrows  Move cursor (auto-scroll)    Enter   New line"));
+  help_content.push_back(text("  Bksp    Delete character             Ctrl+Q  AI explanation"));
+  help_content.push_back(text("  Ctrl+E  Expand AI explanation"));
+  help_content.push_back(text(""));
   
+  help_content.push_back(text("SEARCH & FILTERING") | bold | color(Color::Green));
+  help_content.push_back(text("  Real-time filtering as you type      Enter: finish search"));
+  help_content.push_back(text("  Searches note titles & content       Esc: cancel and show all"));
+  help_content.push_back(text(""));
+  
+  help_content.push_back(text("NOTEBOOK MANAGEMENT") | bold | color(Color::Magenta));
+  help_content.push_back(text("  Ctrl+N  Create new notebook          Ctrl+R  Rename notebook"));
+  help_content.push_back(text("  Ctrl+D  Delete notebook              N       Toggle notebook filter"));
+  help_content.push_back(text("  Space   Expand/collapse notebook     →       Expand notebook"));
+  help_content.push_back(text("  ←       Collapse notebook            t       Toggle tag filter"));
+  help_content.push_back(text("  C       Clear all filters"));
+  help_content.push_back(text(""));
+  
+  help_content.push_back(text("AI FEATURES") | bold | color(Color::Blue));
+  help_content.push_back(text("  a       AI auto-tag selected note    A       AI auto-title note"));
+  help_content.push_back(text("  Ctrl+T  AI tag all notes"));
+  help_content.push_back(text(""));
+  
+  help_content.push_back(text("ADVANCED AI (Phase 6-7)") | bold | color(Color::Blue));
+  help_content.push_back(text("  F6      Multi-modal analysis         F7      Voice integration"));
+  help_content.push_back(text("  F8      Contextual awareness         F9      Workspace AI"));
+  help_content.push_back(text("  F10     Predictive AI                F11     Collaborative AI"));
+  help_content.push_back(text("  F12     Knowledge graphs             Alt+1   Expert systems"));
+  help_content.push_back(text("  Alt+2   Intelligent workflows        Alt+3   Smart note merging"));
+  help_content.push_back(text("  Alt+4   Meta-learning analysis"));
+  help_content.push_back(text(""));
+  
+  help_content.push_back(text("PANEL CONTROLS") | bold | color(Color::Red));
+  help_content.push_back(text("  +/=     Expand notes panel           -/_     Shrink notes panel"));
+  help_content.push_back(text("  w/Alt+W Toggle word wrap preview     Auto-edit on preview focus"));
+  help_content.push_back(text(""));
+  
+  help_content.push_back(separator());
+  help_content.push_back(text("Press ? or Esc to close • Use Ctrl+J/K to scroll if needed") | center | dim);
+  
+  // Create a modal that takes most of the screen for comprehensive help
+  auto terminal_height = screen_.dimy();
+  auto terminal_width = screen_.dimx();
+  
+  // Use most of the terminal space but leave reasonable margins
+  int modal_width = std::min(std::max(90, terminal_width - 6), 120);
+  int modal_height = std::max(15, terminal_height - 8);
+  
+  // Create modal content
   return vbox(help_content) |
+         vscroll_indicator | 
          border |
-         size(WIDTH, GREATER_THAN, 80) |
-         size(WIDTH, LESS_THAN, 120) |
-         size(HEIGHT, GREATER_THAN, 35) |
-         size(HEIGHT, LESS_THAN, 55) |
+         size(WIDTH, EQUAL, modal_width) |
+         size(HEIGHT, EQUAL, modal_height) |
          bgcolor(Color::Blue) |
          color(Color::White);
 }
@@ -3496,6 +3799,91 @@ ftxui::Element TUIApp::createStyledLineWithCursor(const std::string& line, const
   return hbox(elements);
 }
 
+// Helper function to create a styled line with cursor and selection highlighting
+ftxui::Element TUIApp::createStyledLineWithSelection(const std::string& line, const HighlightResult& highlight, size_t cursor_pos, int line_index) const {
+  if (!state_.text_selection_active) {
+    // No selection, use normal rendering
+    return createStyledLineWithCursor(line, highlight, cursor_pos);
+  }
+  
+  // For now, implement a simple version that shows selection background
+  // Calculate if this line has any selection
+  int start_line = std::min(state_.selection_start_line, state_.selection_end_line);
+  int end_line = std::max(state_.selection_start_line, state_.selection_end_line);
+  
+  if (line_index < start_line || line_index > end_line) {
+    // No selection on this line
+    return createStyledLineWithCursor(line, highlight, cursor_pos);
+  }
+  
+  // Simple implementation: highlight the selected portion with background color
+  Elements elements;
+  
+  if (start_line == end_line && line_index == start_line) {
+    // Single line selection
+    int start_col = std::min(state_.selection_start_col, state_.selection_end_col);
+    int end_col = std::max(state_.selection_start_col, state_.selection_end_col);
+    
+    // Before selection
+    if (start_col > 0) {
+      elements.push_back(text(line.substr(0, start_col)));
+    }
+    
+    // Selected portion
+    if (start_col < static_cast<int>(line.length()) && end_col > start_col) {
+      int actual_end = std::min(end_col, static_cast<int>(line.length()));
+      std::string selected = line.substr(start_col, actual_end - start_col);
+      elements.push_back(text(selected) | bgcolor(ftxui::Color::Blue));
+    }
+    
+    // After selection
+    if (end_col < static_cast<int>(line.length())) {
+      elements.push_back(text(line.substr(end_col)));
+    }
+    
+    // Add cursor
+    if (cursor_pos == line.length()) {
+      elements.push_back(text(" ") | inverted);
+    } else if (cursor_pos < line.length()) {
+      // Insert cursor at appropriate position (simplified)
+      elements.push_back(text(line.substr(cursor_pos, 1)) | inverted);
+    }
+    
+  } else {
+    // Multi-line selection - simplified: just highlight the whole line portion
+    std::string line_part = line;
+    if (line_index == start_line) {
+      // First line: from start_col to end
+      int start_col = (state_.selection_start_line == start_line) ? state_.selection_start_col : state_.selection_end_col;
+      if (start_col > 0) {
+        elements.push_back(text(line.substr(0, start_col)));
+      }
+      if (start_col < static_cast<int>(line.length())) {
+        elements.push_back(text(line.substr(start_col)) | bgcolor(ftxui::Color::Blue));
+      }
+    } else if (line_index == end_line) {
+      // Last line: from beginning to end_col
+      int end_col = (state_.selection_end_line == end_line) ? state_.selection_end_col : state_.selection_start_col;
+      if (end_col > 0) {
+        elements.push_back(text(line.substr(0, end_col)) | bgcolor(ftxui::Color::Blue));
+      }
+      if (end_col < static_cast<int>(line.length())) {
+        elements.push_back(text(line.substr(end_col)));
+      }
+    } else {
+      // Middle line: entirely selected
+      elements.push_back(text(line) | bgcolor(ftxui::Color::Blue));
+    }
+    
+    // Add cursor (simplified)
+    if (cursor_pos == line.length()) {
+      elements.push_back(text(" ") | inverted);
+    }
+  }
+  
+  return elements.empty() ? text(" ") : hbox(elements);
+}
+
 // Helper function to highlight search terms in a line
 ftxui::Element TUIApp::highlightSearchInLine(const std::string& line, const std::string& query) const {
   if (query.empty() || line.empty()) {
@@ -3605,8 +3993,8 @@ Element TUIApp::renderEditor() const {
   for (int i = start_line; i < end_line; ++i) {
     std::string display_line = lines[static_cast<size_t>(i)];
     
-    // Apply markdown highlighting to the line
-    HighlightResult highlight = state_.markdown_highlighter->highlightLine(display_line, static_cast<size_t>(i));
+    // Apply markdown highlighting to the line (with caching)
+    HighlightResult highlight = getCachedHighlight(display_line, static_cast<size_t>(i));
     
     // Check if word wrap is enabled
     if (state_.word_wrap_enabled) {
@@ -3639,7 +4027,7 @@ Element TUIApp::renderEditor() const {
           if (cursor_pos >= char_offset && cursor_pos <= char_offset + wrapped_line.length()) {
             size_t local_cursor_pos = cursor_pos - char_offset;
             local_cursor_pos = std::min(local_cursor_pos, wrapped_line.length());
-            editor_content.push_back(createStyledLineWithCursor(wrapped_line, wrapped_highlight, local_cursor_pos));
+            editor_content.push_back(createStyledLineWithSelection(wrapped_line, wrapped_highlight, local_cursor_pos, i));
           } else {
             editor_content.push_back(createStyledLine(wrapped_line, wrapped_highlight));
           }
@@ -3656,7 +4044,7 @@ Element TUIApp::renderEditor() const {
         size_t cursor_pos = std::min(static_cast<size_t>(state_.edit_cursor_col), display_line.length());
         
         // Create a custom styled line with cursor embedded
-        editor_content.push_back(createStyledLineWithCursor(display_line, highlight, cursor_pos));
+        editor_content.push_back(createStyledLineWithSelection(display_line, highlight, cursor_pos, i));
       } else {
         // Regular line with markdown highlighting
         editor_content.push_back(createStyledLine(display_line, highlight));
@@ -3682,7 +4070,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
     if (state_.command_history->canUndo()) {
       auto undo_result = state_.command_history->undo(*state_.editor_buffer);
       if (undo_result) {
-        state_.edit_has_changes = true;
+        markEditorContentChanged();
         setStatusMessage("Undo successful");
       } else {
         setStatusMessage("Undo failed: " + undo_result.error().message());
@@ -3697,7 +4085,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
     if (state_.command_history->canRedo()) {
       auto redo_result = state_.command_history->redo(*state_.editor_buffer);
       if (redo_result) {
-        state_.edit_has_changes = true;
+        markEditorContentChanged();
         setStatusMessage("Redo successful");
       } else {
         setStatusMessage("Redo failed: " + redo_result.error().message());
@@ -3744,9 +4132,107 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
     }
     return;
   }
+  
+  // Handle word selection with Ctrl+Shift+Arrow keys
+  if (event == ftxui::Event::Custom && event.character() == "\x1b[1;6C") { // Ctrl+Shift+Right Arrow
+    // Select to next word boundary
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      const std::string& line = line_result.value();
+      auto next_boundary_result = UnicodeHandler::findNextWordBoundary(line, static_cast<size_t>(state_.edit_cursor_col));
+      if (next_boundary_result) {
+        // Start or extend text selection to next word boundary
+        if (!state_.text_selection_active) {
+          startSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+        }
+        state_.edit_cursor_col = static_cast<int>(std::min(next_boundary_result.value(), line.length()));
+        updateSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+        setStatusMessage("Selected to next word boundary");
+      }
+    }
+    return;
+  }
+  
+  if (event == ftxui::Event::Custom && event.character() == "\x1b[1;6D") { // Ctrl+Shift+Left Arrow  
+    // Select to previous word boundary
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      const std::string& line = line_result.value();
+      auto prev_boundary_result = UnicodeHandler::findPreviousWordBoundary(line, static_cast<size_t>(state_.edit_cursor_col));
+      if (prev_boundary_result) {
+        // Start or extend text selection to previous word boundary
+        if (!state_.text_selection_active) {
+          startSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+        }
+        state_.edit_cursor_col = static_cast<int>(prev_boundary_result.value());
+        updateSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+        setStatusMessage("Selected to previous word boundary");
+      }
+    }
+    return;
+  }
+  
+  // Handle character-by-character selection with Shift+Arrow keys
+  if (event == ftxui::Event::Custom && event.character() == "\x1b[1;2C") { // Shift+Right Arrow
+    if (!state_.text_selection_active) {
+      startSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+    }
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      auto line_length = EditorBoundsChecker::safeStringLength(line_result.value());
+      state_.edit_cursor_col = std::min(state_.edit_cursor_col + 1, static_cast<int>(line_length));
+    }
+    updateSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+    return;
+  }
+  
+  if (event == ftxui::Event::Custom && event.character() == "\x1b[1;2D") { // Shift+Left Arrow
+    if (!state_.text_selection_active) {
+      startSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+    }
+    if (state_.edit_cursor_col > 0) {
+      state_.edit_cursor_col--;
+    }
+    updateSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+    return;
+  }
+  
+  if (event == ftxui::Event::Custom && event.character() == "\x1b[1;2A") { // Shift+Up Arrow
+    if (!state_.text_selection_active) {
+      startSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+    }
+    if (state_.edit_cursor_line > 0) {
+      state_.edit_cursor_line--;
+      auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+      if (line_result) {
+        auto line_length = EditorBoundsChecker::safeStringLength(line_result.value());
+        state_.edit_cursor_col = std::min(state_.edit_cursor_col, static_cast<int>(line_length));
+      }
+    }
+    updateSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+    return;
+  }
+  
+  if (event == ftxui::Event::Custom && event.character() == "\x1b[1;2B") { // Shift+Down Arrow
+    if (!state_.text_selection_active) {
+      startSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+    }
+    size_t total_lines = state_.editor_buffer->getLineCount();
+    if (state_.edit_cursor_line < static_cast<int>(total_lines) - 1) {
+      state_.edit_cursor_line++;
+      auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+      if (line_result) {
+        auto line_length = EditorBoundsChecker::safeStringLength(line_result.value());
+        state_.edit_cursor_col = std::min(state_.edit_cursor_col, static_cast<int>(line_length));
+      }
+    }
+    updateSelection(state_.edit_cursor_line, state_.edit_cursor_col);
+    return;
+  }
 
   // Handle navigation first (no validation needed)
   if (event == ftxui::Event::ArrowUp && state_.edit_cursor_line > 0) {
+    clearSelection(); // Clear selection on normal movement
     state_.edit_cursor_line--;
     
     // Get current line and clamp column position
@@ -3764,6 +4250,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
   }
   
   if (event == ftxui::Event::ArrowDown) {
+    clearSelection(); // Clear selection on normal movement
     size_t total_lines = state_.editor_buffer->getLineCount();
     bool is_last_line = (state_.edit_cursor_line >= static_cast<int>(total_lines) - 1);
     
@@ -3778,7 +4265,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
         if (result) {
           state_.edit_cursor_line++;
           state_.edit_cursor_col = 0;
-          state_.edit_has_changes = true;
+          markEditorContentChanged();
         
           // Scroll down to show new line
           const int visible_lines = calculateVisibleEditorLinesCount();
@@ -3808,11 +4295,13 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
   }
   
   if (event == ftxui::Event::ArrowLeft && state_.edit_cursor_col > 0) {
+    clearSelection(); // Clear selection on normal movement
     state_.edit_cursor_col--;
     return;
   }
   
   if (event == ftxui::Event::ArrowRight) {
+    clearSelection(); // Clear selection on normal movement
     // Get current line length and clamp
     auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
     if (line_result) {
@@ -3825,6 +4314,13 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
   // Handle text input with Unicode and security validation
   if (event.is_character()) {
     const std::string& input = event.character();
+    
+    // If there's a selection, delete it first before inserting new text
+    if (state_.text_selection_active) {
+      // TODO: Implement deleteSelectedText() method to remove selected text
+      // For now, just clear the selection and continue with normal insertion
+      clearSelection();
+    }
     
     // First validate UTF-8
     auto utf8_validation = UnicodeHandler::validateUtf8(input);
@@ -3882,7 +4378,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
         auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
         if (insert_result) {
           state_.edit_cursor_col++;
-          state_.edit_has_changes = true;
+          markEditorContentChanged();
         } else {
           setStatusMessage("Insert failed: " + insert_result.error().message());
           break;
@@ -3894,16 +4390,17 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
   
   // Handle Tab with configurable tab width
   if (event == ftxui::Event::Tab) {
-    int tab_width = config_.tui_editor.tab_width;
+    int tab_width = 4;  // Default tab width (configurable)
     
-    if (config_.tui_editor.use_tabs) {
+    // Always use spaces for tabs (modern editor default)
+    if (false) {
       // Insert a single tab character
       auto command = CommandFactory::createInsertChar(
           CursorPosition(state_.edit_cursor_line, state_.edit_cursor_col), '\t');
       auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
       if (insert_result) {
         state_.edit_cursor_col++;
-        state_.edit_has_changes = true;
+        markEditorContentChanged();
       }
     } else {
       // Insert spaces up to the next tab stop
@@ -3916,7 +4413,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
         auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
         if (insert_result) {
           state_.edit_cursor_col++;
-          state_.edit_has_changes = true;
+          markEditorContentChanged();
         } else {
           setStatusMessage("Tab insert failed: " + insert_result.error().message());
           break;
@@ -3934,7 +4431,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
     if (split_result) {
       state_.edit_cursor_line++;
       state_.edit_cursor_col = 0;
-      state_.edit_has_changes = true;
+      markEditorContentChanged();
       
       // Ensure new line is visible
       const int visible_lines = calculateVisibleEditorLinesCount();
@@ -3982,7 +4479,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
           
           // Update cursor position to the start of the deleted character
           state_.edit_cursor_col = static_cast<int>(char_start);
-          state_.edit_has_changes = true;
+          markEditorContentChanged();
         }
       }
     } else if (state_.edit_cursor_line > 0) {
@@ -3997,7 +4494,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
           state_.edit_cursor_col = static_cast<int>(EditorBoundsChecker::safeStringLength(prev_line_result.value()));
         }
         state_.edit_cursor_line--;
-        state_.edit_has_changes = true;
+        markEditorContentChanged();
       }
     }
     return;
@@ -4005,19 +4502,65 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
   
   // Handle clipboard operations (Ctrl+C, Ctrl+V, Ctrl+X)
   if (event.character() == "\x03") { // Ctrl+C
-    // Copy current line to clipboard
-    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
-    if (line_result) {
-      auto copy_result = state_.clipboard->setContent(line_result.value());
-      if (copy_result) {
-        setStatusMessage("Line copied to clipboard");
+    if (state_.text_selection_active) {
+      // Copy selected text to clipboard
+      std::string selected_text = getSelectedText();
+      if (!selected_text.empty()) {
+        auto copy_result = state_.clipboard->setContent(selected_text);
+        if (copy_result) {
+          setStatusMessage("Selected text copied to clipboard");
+        } else {
+          setStatusMessage("Copy failed: " + copy_result.error().message());
+        }
       } else {
-        setStatusMessage("Copy failed: " + copy_result.error().message());
+        setStatusMessage("No text selected");
+      }
+    } else {
+      // Copy current line to clipboard (fallback behavior)
+      auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+      if (line_result) {
+        auto copy_result = state_.clipboard->setContent(line_result.value());
+        if (copy_result) {
+          setStatusMessage("Line copied to clipboard");
+        } else {
+          setStatusMessage("Copy failed: " + copy_result.error().message());
+        }
       }
     }
     return;
   }
   
+  if (event.character() == "\x18") { // Ctrl+X
+    // Cut current line to clipboard
+    auto line_result = state_.editor_buffer->getLine(state_.edit_cursor_line);
+    if (line_result) {
+      auto copy_result = state_.clipboard->setContent(line_result.value());
+      if (copy_result) {
+        // Delete the current line after copying
+        int line_length = static_cast<int>(line_result.value().length());
+        auto command = CommandFactory::createDeleteRange(
+            CursorPosition(state_.edit_cursor_line, 0),
+            CursorPosition(state_.edit_cursor_line, line_length),
+            line_result.value());
+        auto delete_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
+        if (delete_result) {
+          // Adjust cursor position after line deletion
+          if (state_.edit_cursor_line >= static_cast<int>(state_.editor_buffer->getLineCount())) {
+            state_.edit_cursor_line = std::max(0, static_cast<int>(state_.editor_buffer->getLineCount()) - 1);
+          }
+          state_.edit_cursor_col = 0;
+          markEditorContentChanged();
+          setStatusMessage("Line cut to clipboard");
+        } else {
+          setStatusMessage("Cut failed: " + delete_result.error().message());
+        }
+      } else {
+        setStatusMessage("Copy to clipboard failed: " + copy_result.error().message());
+      }
+    }
+    return;
+  }
+
   if (event.character() == "\x16") { // Ctrl+V
     // Paste from clipboard
     auto paste_result = state_.clipboard->getContent();
@@ -4044,7 +4587,7 @@ void TUIApp::handleEditModeInput(const ftxui::Event& event) {
             }
           }
         }
-        state_.edit_has_changes = true;
+        markEditorContentChanged();
         setStatusMessage("Content pasted");
       } else {
         setStatusMessage("Paste validation failed: " + validation_result.error().message());
@@ -4105,6 +4648,140 @@ void TUIApp::saveEditedNote() {
   } catch (const std::exception& e) {
     setStatusMessage("Error saving note: " + std::string(e.what()));
   }
+}
+
+// Text selection implementation
+void TUIApp::startSelection(int line, int col) {
+  state_.text_selection_active = true;
+  state_.selection_start_line = line;
+  state_.selection_start_col = col;
+  state_.selection_end_line = line;
+  state_.selection_end_col = col;
+}
+
+void TUIApp::updateSelection(int line, int col) {
+  if (state_.text_selection_active) {
+    state_.selection_end_line = line;
+    state_.selection_end_col = col;
+  }
+}
+
+void TUIApp::clearSelection() {
+  state_.text_selection_active = false;
+  state_.selection_start_line = 0;
+  state_.selection_start_col = 0;
+  state_.selection_end_line = 0;
+  state_.selection_end_col = 0;
+}
+
+bool TUIApp::isPositionSelected(int line, int col) const {
+  if (!state_.text_selection_active) {
+    return false;
+  }
+  
+  // Normalize selection coordinates (start should be before end)
+  int start_line = std::min(state_.selection_start_line, state_.selection_end_line);
+  int end_line = std::max(state_.selection_start_line, state_.selection_end_line);
+  int start_col = (state_.selection_start_line == start_line) ? state_.selection_start_col : state_.selection_end_col;
+  int end_col = (state_.selection_end_line == end_line) ? state_.selection_end_col : state_.selection_start_col;
+  
+  // If same line, check column range
+  if (start_line == end_line) {
+    return line == start_line && col >= std::min(start_col, end_col) && col < std::max(start_col, end_col);
+  }
+  
+  // Multi-line selection
+  if (line == start_line) {
+    return col >= start_col;
+  } else if (line == end_line) {
+    return col < end_col;
+  } else {
+    return line > start_line && line < end_line;
+  }
+}
+
+std::string TUIApp::getSelectedText() const {
+  if (!state_.text_selection_active || !state_.editor_buffer) {
+    return "";
+  }
+  
+  // Normalize selection coordinates
+  int start_line = std::min(state_.selection_start_line, state_.selection_end_line);
+  int end_line = std::max(state_.selection_start_line, state_.selection_end_line);
+  int start_col = (state_.selection_start_line == start_line) ? state_.selection_start_col : state_.selection_end_col;
+  int end_col = (state_.selection_end_line == end_line) ? state_.selection_end_col : state_.selection_start_col;
+  
+  if (start_line == end_line) {
+    // Same line selection
+    auto line_result = state_.editor_buffer->getLine(start_line);
+    if (line_result) {
+      const std::string& line = line_result.value();
+      int actual_start = std::min(start_col, end_col);
+      int actual_end = std::max(start_col, end_col);
+      if (actual_start < static_cast<int>(line.length())) {
+        return line.substr(actual_start, actual_end - actual_start);
+      }
+    }
+  } else {
+    // Multi-line selection
+    std::string result;
+    for (int line_idx = start_line; line_idx <= end_line; ++line_idx) {
+      auto line_result = state_.editor_buffer->getLine(line_idx);
+      if (line_result) {
+        const std::string& line = line_result.value();
+        if (line_idx == start_line) {
+          // First line: from start_col to end
+          if (start_col < static_cast<int>(line.length())) {
+            result += line.substr(start_col);
+          }
+        } else if (line_idx == end_line) {
+          // Last line: from beginning to end_col
+          result += line.substr(0, std::min(end_col, static_cast<int>(line.length())));
+        } else {
+          // Middle lines: entire line
+          result += line;
+        }
+        if (line_idx < end_line) {
+          result += "\n";
+        }
+      }
+    }
+    return result;
+  }
+  
+  return "";
+}
+
+// Performance optimization: cached highlighting
+HighlightResult TUIApp::getCachedHighlight(const std::string& line, size_t line_index) const {
+  // Create a cache key that includes line content and line index for context
+  std::string cache_key = std::to_string(line_index) + ":" + line;
+  
+  auto it = state_.highlight_cache.find(cache_key);
+  if (it != state_.highlight_cache.end()) {
+    return it->second;
+  }
+  
+  // Not in cache, compute and store
+  HighlightResult result = state_.markdown_highlighter->highlightLine(line, line_index);
+  
+  // Limit cache size to prevent memory bloat
+  if (state_.highlight_cache.size() > 1000) {
+    clearHighlightCache();
+  }
+  
+  state_.highlight_cache[cache_key] = result;
+  return result;
+}
+
+void TUIApp::clearHighlightCache() const {
+  state_.highlight_cache.clear();
+  state_.highlight_cache_version++;
+}
+
+void TUIApp::markEditorContentChanged() {
+  state_.edit_has_changes = true;
+  clearHighlightCache(); // Clear cache when content changes
 }
 
 Element TUIApp::renderNewNoteModal() const {
@@ -5195,6 +5872,43 @@ int TUIApp::calculateVisibleEditorLinesCount() const {
   return max_lines;
 }
 
+void TUIApp::scrollToSearchResult(const std::string& content, const std::string& query) {
+  if (query.empty() || content.empty()) {
+    return;
+  }
+  
+  std::istringstream stream(content);
+  std::string line;
+  int line_number = 0;
+  
+  // Convert query to lowercase for case-insensitive search
+  std::string query_lower = query;
+  std::transform(query_lower.begin(), query_lower.end(), query_lower.begin(), ::tolower);
+  
+  // Find the first line containing the search query
+  while (std::getline(stream, line)) {
+    std::string line_lower = line;
+    std::transform(line_lower.begin(), line_lower.end(), line_lower.begin(), ::tolower);
+    
+    if (line_lower.find(query_lower) != std::string::npos) {
+      // Found the first match - calculate optimal scroll position
+      const int visible_lines = calculateVisibleEditorLinesCount();
+      
+      // Try to center the match in the visible area, but not past the beginning
+      int optimal_scroll = std::max(0, line_number - visible_lines / 3);
+      
+      // Only update scroll if the match is not currently visible
+      if (line_number < state_.preview_scroll_offset || 
+          line_number >= state_.preview_scroll_offset + visible_lines) {
+        state_.preview_scroll_offset = optimal_scroll;
+      }
+      
+      return; // Found first match, stop searching
+    }
+    line_number++;
+  }
+}
+
 int TUIApp::calculatePreviewPanelWidth() const {
   int terminal_width = screen_.dimx();
   int width = 0;
@@ -5538,7 +6252,7 @@ void TUIApp::insertExplanationText(const std::string& explanation_text) {
     auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
     if (insert_result) {
       state_.edit_cursor_col++;
-      state_.edit_has_changes = true;
+      markEditorContentChanged();
     } else {
       setStatusMessage("Failed to insert explanation text");
       return;
@@ -5675,7 +6389,7 @@ void TUIApp::handleSmartCompletion() {
       auto insert_result = state_.command_history->executeCommand(*state_.editor_buffer, std::move(command));
       if (insert_result.has_value()) {
         state_.edit_cursor_col++;
-        state_.edit_has_changes = true;
+        markEditorContentChanged();
       } else {
         setStatusMessage("❌ Failed to insert completion character: " + insert_result.error().message());
         return;
@@ -6295,7 +7009,7 @@ void TUIApp::handleSmartExamples() {
         } else {
           state_.edit_cursor_col++;
         }
-        state_.edit_has_changes = true;
+        markEditorContentChanged();
       } else {
         setStatusMessage("❌ Failed to insert examples: " + insert_result.error().message());
         return;
@@ -6523,7 +7237,7 @@ void TUIApp::handleCodeGeneration() {
         } else {
           state_.edit_cursor_col++;
         }
-        state_.edit_has_changes = true;
+        markEditorContentChanged();
       } else {
         setStatusMessage("❌ Failed to insert generated code: " + insert_result.error().message());
         return;
@@ -6761,7 +7475,7 @@ void TUIApp::handleSmartSummarization() {
       }
     }
     
-    state_.edit_has_changes = true;
+    markEditorContentChanged();
     setStatusMessage("✨ Smart summary added to note (" + std::to_string(summary_result->length()) + " characters)");
   }
 }
@@ -7243,7 +7957,7 @@ void TUIApp::handleContentEnhancement() {
       }
     }
     
-    state_.edit_has_changes = true;
+    markEditorContentChanged();
     setStatusMessage("✨ Content enhancement suggestions added!");
   }
 }
@@ -7583,7 +8297,7 @@ void TUIApp::handleResearchAssistant() {
     CursorPosition cmd_pos(cursor_pos.line, cursor_pos.column);
     auto insert_cmd = CommandFactory::createInsertText(cmd_pos, suggestions_text);
     state_.command_history->executeCommand(*state_.editor_buffer, std::move(insert_cmd));
-    state_.edit_has_changes = true;
+    markEditorContentChanged();
     setStatusMessage("Research suggestions added to note");
   } else {
     setStatusMessage("Research suggestions: " + result.value());
@@ -7761,7 +8475,7 @@ void TUIApp::handleWritingCoach() {
     CursorPosition cmd_pos(cursor_pos.line, cursor_pos.column);
     auto insert_cmd = CommandFactory::createInsertText(cmd_pos, analysis_text);
     state_.command_history->executeCommand(*state_.editor_buffer, std::move(insert_cmd));
-    state_.edit_has_changes = true;
+    markEditorContentChanged();
     setStatusMessage("Writing analysis added to note");
   } else {
     setStatusMessage("Writing analysis: " + result.value());
@@ -7917,7 +8631,7 @@ void TUIApp::handleSmartContentGeneration() {
     CursorPosition cmd_pos(cursor_pos.line, cursor_pos.column);
     auto insert_cmd = CommandFactory::createInsertText(cmd_pos, content_text);
     state_.command_history->executeCommand(*state_.editor_buffer, std::move(insert_cmd));
-    state_.edit_has_changes = true;
+    markEditorContentChanged();
     setStatusMessage("Smart content generated and added to note");
   } else {
     setStatusMessage("Generated content: " + result.value());
@@ -7962,7 +8676,7 @@ void TUIApp::handleIntelligentTemplates() {
     CursorPosition cmd_pos(cursor_pos.line, cursor_pos.column);
     auto insert_cmd = CommandFactory::createInsertText(cmd_pos, suggestions_text);
     state_.command_history->executeCommand(*state_.editor_buffer, std::move(insert_cmd));
-    state_.edit_has_changes = true;
+    markEditorContentChanged();
     setStatusMessage("Template suggestions added to note");
   } else {
     setStatusMessage("Template suggestions available");
@@ -8002,7 +8716,7 @@ void TUIApp::handleCrossNoteInsights() {
     CursorPosition cmd_pos(cursor_pos.line, cursor_pos.column);
     auto insert_cmd = CommandFactory::createInsertText(cmd_pos, insights_text);
     state_.command_history->executeCommand(*state_.editor_buffer, std::move(insert_cmd));
-    state_.edit_has_changes = true;
+    markEditorContentChanged();
     setStatusMessage("Cross-note insights added to note");
   } else {
     setStatusMessage("Cross-note insights: " + result.value());
@@ -8089,7 +8803,7 @@ void TUIApp::handleSmartNoteMerging() {
     CursorPosition cmd_pos(cursor_pos.line, cursor_pos.column);
     auto insert_cmd = CommandFactory::createInsertText(cmd_pos, suggestions_text);
     state_.command_history->executeCommand(*state_.editor_buffer, std::move(insert_cmd));
-    state_.edit_has_changes = true;
+    markEditorContentChanged();
     setStatusMessage("Note merge suggestions added to note");
   } else {
     setStatusMessage("Found " + std::to_string(result.value().size()) + " merge suggestions");

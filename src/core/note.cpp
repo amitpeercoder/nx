@@ -50,8 +50,8 @@ const std::string& Note::title() const noexcept {
 }
 
 void Note::setTitle(const std::string& title) {
-  // Setting title directly is now deprecated - title is derived from content
-  // But we'll keep this for backward compatibility during transition
+  // Note: Title is typically auto-derived from content, but can be set explicitly
+  // for AI-generated titles and legacy compatibility
   metadata_.setTitle(title);
 }
 

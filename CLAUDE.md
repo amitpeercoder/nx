@@ -145,6 +145,9 @@ nx export md|json|pdf|html [--to dir]           # Export notes in various format
 ```
 
 #### AI Features (Optional)
+
+nx provides comprehensive AI integration with 20+ intelligent features supporting both Anthropic Claude and OpenAI models:
+
 ```bash
 nx ask "question"                                # RAG Q&A over note collection
 nx summarize <id> [--style bullets] [--apply]   # AI summarization
@@ -153,6 +156,74 @@ nx rewrite <id> [--tone crisp]                   # AI content rewriting
 nx tasks <id>                                    # Extract action items
 nx suggest-links <id>                            # Find related notes
 nx outline "topic"                               # Generate structured outlines
+```
+
+**AI Configuration:**
+```bash
+# Set API key (environment variable)
+export ANTHROPIC_API_KEY="your-api-key"  # Recommended
+# OR
+export OPENAI_API_KEY="your-api-key"
+
+# Configure by editing ~/.config/nx/config.toml:
+[ai]
+provider = "anthropic"
+enable_embeddings = true
+
+# Core AI Features
+[ai.explanations]           # Ctrl+Q - Brief explanations
+enabled = true
+
+[ai.smart_completion]       # Ctrl+W - Smart completion
+enabled = true
+
+[ai.semantic_search]        # S - Semantic search
+enabled = true
+
+[ai.grammar_style_check]    # Ctrl+G - Grammar check
+enabled = true
+
+[ai.smart_examples]         # Ctrl+X - Smart examples
+enabled = true
+
+[ai.code_generation]        # Ctrl+C - Code generation
+enabled = true
+
+[ai.smart_summarization]    # Ctrl+U - Summarization
+enabled = true
+
+# Advanced AI Features (Phase 6-7)
+[ai.multi_modal]            # F6 - Multi-modal analysis
+enabled = true
+
+[ai.voice_integration]      # F7 - Voice integration
+enabled = true
+
+[ai.context_awareness]      # F8 - Contextual awareness
+enabled = true
+
+[ai.workspace_ai]           # F9 - Workspace AI
+enabled = true
+
+[ai.predictive_ai]          # F10 - Predictive AI
+enabled = true
+
+[ai.collaborative_ai]       # F11 - Collaborative AI
+enabled = true
+
+[ai.knowledge_graph]        # F12 - Knowledge graphs
+enabled = true
+
+[ai.expert_systems]         # Alt+1 - Expert systems
+enabled = true
+
+[ai.intelligent_workflows]  # Alt+2 - Intelligent workflows
+enabled = true
+
+[ai.meta_learning]          # Alt+4 - Meta-learning
+enabled = true
+
+# Note: Direct config file editing required - nx config set has limited AI key support
 ```
 
 **TUI AI Features**:

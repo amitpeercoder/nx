@@ -214,14 +214,50 @@ auto_save = true
 ```
 
 ### AI Setup
+
+nx includes comprehensive AI integration with 20+ intelligent features for enhanced note-taking:
+
+**Core AI Features:**
+- **Ctrl+Q**: Brief explanations for technical terms
+- **Ctrl+W**: Smart completion based on context  
+- **S**: Semantic search by meaning, not keywords
+- **Ctrl+G**: Grammar & style checking
+- **Ctrl+X**: Generate relevant examples
+- **Ctrl+C**: Code generation from natural language
+- **Ctrl+U**: Intelligent summarization
+
+**Advanced AI Features:**
+- **F6**: Multi-modal analysis with images/documents
+- **F7**: Voice integration (demo mode)
+- **F8**: Contextual awareness and recommendations
+- **F9**: Workspace optimization
+- **F10**: Predictive assistance
+- **F11**: Collaborative intelligence
+- **F12**: Knowledge graph generation
+- **Alt+1-4**: Expert systems and meta-learning
+
 To enable AI features, set your API key:
 
 ```bash
-# For Anthropic Claude
+# For Anthropic Claude (recommended)
 export ANTHROPIC_API_KEY="your-api-key"
 
 # For OpenAI
 export OPENAI_API_KEY="your-api-key"
+
+# Configure by editing ~/.config/nx/config.toml:
+[ai]
+provider = "anthropic"
+enable_embeddings = true
+
+[ai.explanations]
+enabled = true
+
+[ai.smart_completion] 
+enabled = true
+
+[ai.semantic_search]
+enabled = true
 ```
 
 ## 📁 Data Storage

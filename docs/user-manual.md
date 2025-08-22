@@ -330,6 +330,10 @@ nx export json --to data.json
 
 ### AI Features
 
+nx includes comprehensive AI integration to enhance your note-taking and knowledge management workflow. AI features support both Anthropic Claude and OpenAI models, providing intelligent assistance across all aspects of note creation, organization, and discovery.
+
+#### CLI AI Commands
+
 ```bash
 # Ask questions about your notes
 nx ask "What are my main project goals?"
@@ -353,20 +357,125 @@ nx suggest-links abc123 --apply
 nx outline "Project Management" --create
 ```
 
-**AI Explanation Feature in TUI**:
+#### TUI AI Features - Detailed Reference
 
-The TUI editor includes an AI-powered explanation feature to help understand technical terms and abbreviations:
+The TUI provides real-time AI assistance through keyboard shortcuts, organized into phases of increasing sophistication:
 
-1. **Brief Explanations**: Place cursor after a term and press `Alt+?` to get a concise explanation (5-10 words)
-2. **Detailed Explanations**: Press `Ctrl+E` to expand a brief explanation into 2-3 sentences
-3. **Context-Aware**: Uses surrounding text to provide more accurate explanations
-4. **Caching**: Explanations are cached to reduce API calls and improve performance
+**Core AI Features (Phase 1-2):**
 
-Example workflow:
-1. Type "API" in your note
-2. Place cursor after "API" 
-3. Press `Alt+?` → "Application Programming Interface"
-4. Press `Ctrl+E` → "A set of protocols and tools for building software applications. APIs define how different software components should interact with each other."
+**Brief Explanations (Ctrl+Q)**: Provides concise, 5-10 word explanations for technical terms, abbreviations, or concepts under the cursor. Perfect for quickly understanding unfamiliar terminology while reading or writing. Uses surrounding context to provide accurate, domain-specific explanations that help maintain flow during note-taking sessions.
+
+**Smart Completion (Ctrl+W)**: Intelligent text completion that analyzes your writing context, note history, and current topic to suggest relevant continuations. Goes beyond simple autocomplete by understanding semantic meaning and writing style, helping you articulate ideas more effectively and maintain consistent terminology across related notes.
+
+**Semantic Search (S)**: Revolutionary search that finds notes by meaning rather than exact keyword matches. Enter queries like "project deadlines" to find notes about "delivery dates" or "milestones." Uses AI embeddings to understand conceptual relationships, making your knowledge base truly discoverable even when you don't remember exact phrasing.
+
+**Grammar & Style Check (Ctrl+G)**: Comprehensive writing analysis that checks grammar, suggests style improvements, and ensures consistency with configurable style preferences. Particularly useful for professional documentation, providing suggestions that improve clarity and readability while maintaining your personal writing voice.
+
+**Smart Examples (Ctrl+X)**: Generates contextually appropriate examples for concepts, ideas, or code snippets you're documenting. When explaining complex topics, this feature provides concrete examples that illustrate abstract concepts, making your notes more accessible and useful for future reference.
+
+**Code Generation (Ctrl+C)**: Transforms natural language descriptions into working code in your target programming language. Describe what you want to accomplish, and the AI generates syntactically correct, commented code that matches your requirements. Supports multiple languages and coding patterns.
+
+**Smart Summarization (Ctrl+U)**: Creates intelligent summaries of your notes with configurable styles (bullets, paragraphs, key points). Useful for generating executive summaries, creating note previews, or distilling complex information into digestible formats for different audiences.
+
+**Advanced AI Features (Phase 6-7):**
+
+**Multi-Modal Analysis (F6)**: Analyzes notes containing attached images, documents, or multimedia content. Automatically generates alt text for images, extracts text from documents, and provides insights about visual content. Particularly powerful for research notes, design documentation, or any workflow involving mixed media.
+
+**Voice Integration (F7)**: Processes voice commands for note operations using speech-to-text capabilities. Currently in demo mode, this feature allows hands-free note creation and editing, making it possible to capture ideas while away from the keyboard or during meetings.
+
+**Contextual Awareness (F8)**: Analyzes your reading and writing patterns to suggest related content and optimize your workflow. Learns from your note access patterns to proactively recommend relevant notes, identify knowledge gaps, and suggest connections you might have missed.
+
+**Workspace AI (F9)**: Provides intelligent workspace optimization by analyzing your note organization, suggesting improvements to folder structures, identifying duplicate content, and recommending reorganization strategies. Helps maintain a clean, efficient knowledge base as it grows.
+
+**Predictive AI (F10)**: Anticipates your needs based on current context and historical patterns. Proactively suggests notes to review, topics to explore, or actions to take based on your current work and past behavior patterns. Helps maintain momentum and discover new insights.
+
+**Collaborative AI (F11)**: Analyzes team dynamics and suggests collaboration improvements when working with shared notes or repositories. Identifies expertise gaps, suggests knowledge sharing opportunities, and helps optimize team workflows around shared knowledge bases.
+
+**Knowledge Graphs (F12)**: Generates and visualizes concept relationships across your entire note collection. Creates interactive maps of how ideas connect, helping you discover patterns, identify central concepts, and navigate complex knowledge domains more effectively.
+
+**Expert Systems (Alt+1)**: Provides domain-specific advice and recommendations based on the context of your current note. Acts as a specialized consultant, offering insights relevant to the field or topic you're working on, from technical best practices to research methodologies.
+
+**Intelligent Workflows (Alt+2)**: Automates complex multi-step processes by learning from your patterns and suggesting workflow optimizations. Can propose automated sequences for common tasks like research compilation, project planning, or content organization.
+
+**Meta-Learning (Alt+4)**: Analyzes your learning patterns and knowledge retention to optimize how you structure and review information. Suggests optimal review schedules, identifies areas where you need reinforcement, and recommends learning strategies based on your personal patterns.
+
+#### AI Configuration
+
+**Step 1: Set Your API Key**
+```bash
+# For Anthropic Claude (recommended)
+export ANTHROPIC_API_KEY="your-api-key"
+# OR for OpenAI
+export OPENAI_API_KEY="your-api-key"
+```
+
+**Step 2: Configure AI in config.toml**
+
+AI features are configured by editing your configuration file directly. Open `~/.config/nx/config.toml` and add:
+
+```toml
+[ai]
+provider = "anthropic"  # or "openai"
+model = "claude-3-5-sonnet-20241022"  # or your preferred model
+max_tokens = 2000
+temperature = 0.3
+enable_embeddings = true
+
+# Core AI Features
+[ai.explanations]
+enabled = true
+
+[ai.smart_completion]
+enabled = true
+
+[ai.semantic_search] 
+enabled = true
+
+[ai.grammar_style_check]
+enabled = true
+
+[ai.smart_examples]
+enabled = true
+
+[ai.code_generation]
+enabled = true
+
+[ai.smart_summarization]
+enabled = true
+
+# Advanced AI Features (Phase 6-7)
+[ai.multi_modal]
+enabled = true
+
+[ai.voice_integration]
+enabled = true
+
+[ai.context_awareness]
+enabled = true
+
+[ai.workspace_ai]
+enabled = true
+
+[ai.predictive_ai]
+enabled = true
+
+[ai.collaborative_ai]
+enabled = true
+
+[ai.knowledge_graph]
+enabled = true
+
+[ai.expert_systems]
+enabled = true
+
+[ai.intelligent_workflows]
+enabled = true
+
+[ai.meta_learning]
+enabled = true
+```
+
+**Note**: The `nx config set` command currently has limited support for AI configuration keys. Direct config file editing is the recommended approach for enabling AI features.
 
 ### System Maintenance
 
